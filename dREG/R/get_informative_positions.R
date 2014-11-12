@@ -3,7 +3,8 @@
 
 data.one_bigwig<- function(x, chr, bw, depth, window) {
   chr_n <- which(bw$chroms == chr)
-  qbw <- queryByStep.bigWig(bw, bw$chroms[chr_n], 0+x, bw$chromSizes[chr_n], window, do.sum=TRUE)
+#  qbw <- queryByStep.bigWig(bw, bw$chroms[chr_n], 0+x, bw$chromSizes[chr_n], window, do.sum=TRUE)
+  qbw <- step.bpQuery.bigWig(bw, bw$chroms[chr_n], 0+x, bw$chromSizes[chr_n], window, with.attributes=FALSE)
   
   if(NROW(qbw) == 0) {
     return(integer(0))
@@ -24,8 +25,12 @@ data.two_bigwig<- function(x, chr, bw1, bw2, depth, window) {
   chrbw1_n <- which(bw1$chroms == chr)
   chrbw2_n <- which(bw2$chroms == chr)
 
-  indx <- which((queryByStep.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, do.sum=TRUE)>depth) &
-           ((-1)*queryByStep.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, do.sum=TRUE)>depth) ) ## Assume minus values.
+#  indx <- which((queryByStep.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, do.sum=TRUE)>depth) &
+#           ((-1)*queryByStep.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, do.sum=TRUE)>depth) ) ## Assume minus values.
+  indx <- which((step.bpQuery.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, with.attributes=FALSE)>depth) &
+           (step.bpQuery.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, abs.value = TRUE, with.attributes=FALSE)>depth) )
+
+
   centers <- (indx-1)*window+x+as.integer(window/2) ## Index is 1-based.  x is the offset.
   return(centers)
 }
@@ -42,9 +47,11 @@ data.two_bigwig.OR <- function(x, chr, bw1, bw2, depth, window) {
   chrbw1_n <- which(bw1$chroms == chr)
   chrbw2_n <- which(bw2$chroms == chr)
   
-  q1 <- c(queryByStep.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, do.sum=TRUE))
-  q2 <- c(((-1)*queryByStep.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, do.sum=TRUE)))
-  
+#  q1 <- c(queryByStep.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, do.sum=TRUE))
+#  q2 <- c(((-1)*queryByStep.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, do.sum=TRUE))) 
+  q1 <- c(step.bpQuery.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, with.attributes=FALSE))
+  q2 <- c(step.bpQuery.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, abs.value=TRUE, with.attributes=FALSE))
+
   if(NROW(q1)==0 & NROW(q2)==0) {
     return(integer(0))
   } else if(NROW(q1)==0) {
