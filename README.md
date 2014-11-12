@@ -49,14 +49,6 @@ Users should change to the directory containing this README.md file, and can the
 
     make dreg
 
-By default, this will install dREG into the users home directory: ~/bin/dREG.  
-
-Uninstalling dREG
------------------
-Users can easily uninstall dREG by typing:
-
-    make uninstall
-
 Usage instructions:
 ===================
 dREG takes three files as input, and outputs one file.  Input files include the PRO-seq read distributions on the plus and minus strand (which are separate files), and parameters of the pre-trained support vector regression (SVR) model.  
