@@ -1,0 +1,225 @@
+## Collect files in K562 cells.
+cd /usr/projects/GROseq.parser/tss_detecter/
+
+## DNAse-1
+dnase=dnase.narrowpeak.bed
+cat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeUWDukeDnaseK562.fdr01peaks.hg19.bed | sort-bed - > $dnase
+
+## Ernst chromhmm tracks.
+chromhmm=chromhmm.bed
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer" | bedops --merge - | sort-bed - > $chromhmm
+
+## dREG
+dreg=k562.bed
+#zcat k562.bed.gz | sort-bed - > $dreg
+
+#dreg=gm12878.bed
+#zcat gm12878.bed.gz | sort-bed - > $dreg
+
+####
+## Individual overlaps.
+grep "" -c $dreg ## 36346
+bedmap --indicator $dreg $dnase | grep "1" -c     ## 28703 (79%)
+bedmap --indicator $dreg $chromhmm | grep "1" -c  ## 31839 (88%)
+bedops --merge $chromhmm $dnase | bedmap --indicator $dreg - | grep "1" -c     ## 32693 (90%)
+bedops --intersect $chromhmm $dnase | bedmap --indicator $dreg - | grep "1" -c ## 27679 (76%)
+
+grep "" -c $dnase ## 202266
+bedmap --indicator $dnase $dreg | grep "1" -c     ## 65126 (32%)
+bedmap --indicator $dnase $chromhmm | grep "1" -c ## 130070 (64%)
+bedops --merge $dreg $chromhmm | bedmap --indicator $dnase - | grep "1" -c     ## 131925 (65%)
+bedops --intersect $chromhmm $dreg | bedmap --indicator $dnase - | grep "1" -c ## 63254 (31%)
+
+grep "" -c $chromhmm ## 114760
+bedmap --indicator $chromhmm $dreg | grep "1" -c  ## 26911 (23%)
+bedmap --indicator $chromhmm $dnase | grep "1" -c ## 60216 (52%)
+bedops --merge $dreg $dnase | bedmap --indicator $chromhmm - | grep "1" -c     ## 62084 (54%)
+bedops --intersect $dnase $dreg | bedmap --indicator $chromhmm - | grep "1" -c ## 24005 (21%)
+
+####
+## Test overlap with the 'active' enhancer mark, H3K27ac.
+## Peaks called by ENCODE here:   http://ftp.ebi.ac.uk/pub/databases/ensembl/encode/integration_data_jan2011/byDataType/peaks/jan2011/histone_macs/optimal/hub/wgEncodeBroadHistoneK562H3k27acStdAln.bb
+
+h3k27ac=h3k27ac.bed
+zcat /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k27acStdAln.bed.gz | sort-bed - > $h3k27ac
+
+grep "" -c $dreg ## 36346
+bedmap --indicator $dreg $h3k27ac | grep "1" -c ## 22125 (61%)
+
+grep "" -c $h3k27ac ## 26601
+bedmap --indicator $h3k27ac $dreg | grep "1" -c ## 20417 (77%)
+
+
+h3k9ac=h3k9ac.bed
+zcat /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k9acStdAln.bed.gz | sort-bed - > $h3k9ac
+
+grep "" -c $dreg ## 36346
+bedmap --indicator $dreg $h3k9ac | grep "1" -c ## 20228 (56%)
+
+grep "" -c $h3k9ac ## 19645
+bedmap --indicator $h3k9ac $dreg | grep "1" -c ## 17596 (90%)
+
+
+h3k4me1=h3k4me1.bed
+zcat /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k4me1StdAln.bed.gz | sort-bed - > $h3k4me1
+
+grep "" -c $dreg ## 36346
+bedmap --indicator $dreg $h3k4me1 | grep "1" -c ## 25143 (69%)
+
+grep "" -c $h3k4me1 ## 50467
+bedmap --indicator $h3k4me1 $dreg | grep "1" -c ## 24399 (48%)
+
+## HMM.  Not as mcuh as I had thought.  Guess difference between dREG and chromHMM is the intersection of ALL non-overlapping chromatin marks.
+bedmap --indicator $h3k4me1 $dnase | grep "1" -c ## 44583 (88%) 
+grep "" -c $dnase ## 202266
+bedmap --indicator $dnase $h3k4me1 | grep "1" -c ## 95691 (47%)
+
+## Overlap with Pugh K564 data.
+IIB=IIB.bed
+cat ~/work/tss_detector/PughPeaks/IIB_peaks.narrowPeak | sort-bed - > $IIB
+grep "" -c $dreg ## 36346
+bedmap --indicator $dreg $IIB | grep "1" -c ## 4925 (14%)
+grep "" -c $IIB ## 7448
+bedmap --indicator $IIB $dreg | grep "1" -c ## 6668 (90%)
+
+polii=polii.bed
+cat ~/work/tss_detector/PughPeaks/polII_peaks.narrowPeak | sort-bed - > $polii
+grep "" -c $dreg ## 36346
+bedmap --indicator $dreg $polii | grep "1" -c ## 13903 (38%) ## HRM... WHY IS THIS?!
+cat $dreg | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200}' | sort-bed - | bedmap --indicator - $polii | grep "1" -c ## 14124
+
+grep "" -c $polii ## 58554
+bedmap --indicator $polii $dreg | grep "1" -c ## 19858 (34%)
+cat $dreg | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200}' | sort-bed - | bedmap --indicator $polii - | grep "1" -c ## 20874 (36%)  {NOTE: Even within 5kb is still only 49%}
+bedmap --indicator $polii $h3k9ac | grep "1" -c ## 23157 (40%)
+bedmap --indicator $polii $h3k27ac | grep "1" -c ## 22867 (39%)
+
+tbp=tbp.bed
+cat ~/work/tss_detector/PughPeaks/TBP_peaks.narrowPeak | sort-bed - > $tbp
+grep "" -c $dreg ## 36346
+bedmap --indicator $dreg $tbp | grep "1" -c ## 6302 (17%)
+grep "" -c $tbp ## 8511
+bedmap --indicator $tbp $dreg | grep "1" -c ## 7638 (90%)
+
+####
+## Overlap.
+## Problem with just taking raw overlap: Different numbers of each.
+## Solution: First merge everything together.  For each element in this 'superset', assocaite each with DNAse-1, chromHMM, and dREG.
+dreg=k562.bed
+zcat ../k562.predictions.bed.gz > $dreg
+
+## Add Insulators to Ernst tracks!!
+chromhmmPath=/home/cgd24/work/tss_detector/chromHMM.Ernst2011 #/usr/data/GROseq.parser/hg19/k562/chromhmm/
+chromhmm=/home/cgd24/work/tss_detector/assayOverlap/k562.chromhmm.bed
+zcat $chromhmmPath/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - | bedops --merge - > $chromhmm
+
+insulator=insulator.bed
+zcat $chromhmmPath/wgEncodeBroadHmmK562HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > $insulator
+enh=enh.bed
+zcat $chromhmmPath/wgEncodeBroadHmmK562HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $enh
+pro=pro.bed
+zcat $chromhmmPath/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > $pro
+
+
+## Take hte union of DNAse-1 peaks
+dnase=/home/cgd24/work/tss_detector/assayOverlap/k562.dnase.UW.DUKE.inters.bed
+zcat /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz | sort-bed - > d1
+zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz  | sort-bed - > d2
+bedops --element-of -1 d1 d2 > tmp1
+bedops --element-of -1 d2 d1 > tmp2
+bedops --merge tmp1 tmp2 > $dnase.tmp
+zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
+rm d1 d2 tmp1 tmp2 $dnase.tmp
+
+bedops --merge $chromhmm $dnase $dreg > superset.bed
+
+grep "" -c superset.bed ## 169882
+bedmap --indicator superset.bed $dreg     > dreg.sup
+bedmap --indicator superset.bed $dnase    > dnase.sup
+bedmap --indicator superset.bed $chromhmm > chromhmm.sup
+bedmap --indicator superset.bed $insulator > insulator.sup
+bedmap --indicator superset.bed $h3k27ac  > h3k27ac.sup
+paste superset.bed dreg.sup dnase.sup chromhmm.sup insulator.sup h3k27ac.sup > superset.nums.bed
+
+## Get BED of subsets.
+bedops --not-element-of -1 $chromhmm $dnase > /home/cgd24/work/tss_detector/assayOverlap/k562.chromHMM.only.bed
+bedops --not-element-of -1 $dnase $dreg | bedops --element-of -1 - $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/k562.plus.DNAse.bed
+bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/k562.plus.dREG.bed
+bedops --element-of -1 $dreg $dnase $enh | bedops --not-element-of -1 - $pro > /home/cgd24/work/tss_detector/assayOverlap/k562.plus.dREG.ENHONLY.bed
+
+###############################################
+## Also write out a file for gm12878.
+dreg=gm12878.bed
+zcat ../gm12878.predictions.bed.gz > $dreg
+
+chromhmmPath=/home/cgd24/work/tss_detector/chromHMM.Ernst2011 #/usr/data/GROseq.parser/hg19/gm12878/chromhmm/
+chromhmm=/home/cgd24/work/tss_detector/assayOverlap/gm12878.chromhmm.bed
+zcat $chromhmmPath/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - | bedops --merge - > $chromhmm
+zcat $chromhmmPath/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $chromhmm.enh
+
+insulator=insulator.bed
+zcat $chromhmmPath/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > $insulator
+enh=enh.bed
+zcat $chromhmmPath/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $enh
+pro=pro.bed
+zcat $chromhmmPath/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > $pro
+
+## Take hte union of DNAse-1 peaks
+dnase=/home/cgd24/work/tss_detector/assayOverlap/gm12878.dnase.UW.DUKE.inters.bed
+cat /usr/data/GROseq.parser/hg19/gm12878/dnase/uw.merge.narrowPeak.bed | sort-bed - > d1
+zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz  | sort-bed - > d2
+bedops --element-of -1 d1 d2 > tmp1
+bedops --element-of -1 d2 d1 > tmp2
+bedops --merge tmp1 tmp2 > $dnase.tmp
+zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
+rm d1 d2 tmp1 tmp2 $dnase.tmp
+
+bedops --merge $chromhmm $dnase $dreg > superset.bed
+
+grep "" -c superset.bed ## 169882
+bedmap --indicator superset.bed $dreg     > dreg.sup
+bedmap --indicator superset.bed $dnase    > dnase.sup
+bedmap --indicator superset.bed $chromhmm > chromhmm.sup
+bedmap --indicator superset.bed $insulator > insulator.sup
+bedmap --indicator superset.bed $h3k27ac  > h3k27ac.sup
+paste superset.bed dreg.sup dnase.sup chromhmm.sup insulator.sup h3k27ac.sup > gm12878.superset.nums.bed
+
+## Get BED of subsets
+bedops --not-element-of -1 $chromhmm $dnase > /home/cgd24/work/tss_detector/assayOverlap/gm12878.chromHMM.only.bed
+bedops --not-element-of -1 $dnase $dreg | bedops --element-of -1 - $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/gm12878.plus.DNAse.bed
+bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/gm12878.plus.dREG.bed
+bedops --element-of -1 $dreg $dnase $enh | bedops --not-element-of -1 - $pro > /home/cgd24/work/tss_detector/assayOverlap/gm12878.plus.dREG.ENHONLY.bed
+
+rm *sup* pro.bed enh.bed insulator.bed
+gzip *.*.bed
+
+## Now write a venn diagriam, and some stacked barplots.
+R --no-save < venn.R
+rm *.sup superset.bed
+
+rm *superset.* *sup
+
+#bedops --merge $dreg $h3k27ac > superset.bed
+#grep "" -c superset.bed ## 169882
+#bedmap --indicator superset.bed $dreg     > dreg.sup
+#bedmap --indicator superset.bed $h3k27ac  > h3k27ac.sup
+#paste superset.bed dreg.sup h3k27ac.sup > superset.nums.hist.bed
+#R --no-save < venn.R
+#rm *.sup superset.bed
+
+
+####
+## Basepair overlaps.
+featureBits hg19 $dreg
+featureBits hg19 $dreg $chromhmm
+featureBits hg19 $dreg $dnase
+
+featureBits hg19 $chromhmm
+
+featureBits hg19 $dreg ## 1.283%
+featureBits hg19 $h3k27ac ## HRM: 2.685% of genome in intersection.
+featureBits hg19 $dreg $h3k27ac ## Both: 1.041%
+
+## Cleanup.
+rm $dnase $chromhmm $dreg $h3k27ac superset.bed superset.nums.bed
+

@@ -1,0 +1,29 @@
+#!/usr/bin/bash
+
+## Get sites (using PIQ).
+bash piq/makePIQ_starch.bsh
+
+## Get peaks.
+zcat /usr/data/GROseq.parser/hg19/k562/sydh_tfs/wgEncodeSydhTfbsK562Nrf1IggrabPk.narrowPeak.gz | sort-bed - > Nrf1.binding.bed
+cat /usr/data/GROseq.parser/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Elf1sc631V0416102PkRep1.broadPeak /usr/data/GROseq.parser/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Elf1sc631V0416102PkRep2.broadPeak | sort-bed - | bedops --merge - >  Elf1.binding.bed
+cat /usr/data/GROseq.parser/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Sp1Pcr1xPkRep1.broadPeak /usr/data/GROseq.parser/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Sp1Pcr1xPkRep2.broadPeak | sort-bed - | bedops --merge - >  Sp1.binding.bed
+cat /usr/data/GROseq.parser/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562MaxV0416102PkRep1.broadPeak /usr/data/GROseq.parser/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562MaxV0416102PkRep2.broadPeak | sort-bed - | bedops --merge - >  Max.binding.bed
+
+## For each TF, get MAX dREG score in +/- 200 bp.
+zcat ../k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200,"n",$4}' | sort-bed - |  
+	bedmap --echo --max piq/NRF1.starch - | bedmap --echo --indicator - Nrf1.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" > NRF1.scores.bed
+	
+zcat ../k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200,"n",$4}' | sort-bed - |  
+	bedmap --echo --max piq/ELF1.starch - | bedmap --echo --indicator - Elf1.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" > ELF1.scores.bed
+
+zcat ../k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200,"n",$4}' | sort-bed - |  
+	bedmap --echo --max piq/SP1.starch - | bedmap --echo --indicator - Sp1.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" > SP1.scores.bed
+
+zcat ../k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200,"n",$4}' | sort-bed - |  
+	bedmap --echo --max piq/MAX.starch - | bedmap --echo --indicator - Max.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" > MAX.scores.bed
+
+zcat ../k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200,"n",$4}' | sort-bed - |
+        bedmap --echo --max piq/SP1JASPAR.starch - | bedmap --echo --indicator - Sp1.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" > SP1JASPAR.scores.bed
+
+## Cleanup
+rm *.binding.bed

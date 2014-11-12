@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+#Makes STARCH file for PIQ
+
+piq_path=/home/cgd24/bin/thashim-piq-single-b73d9ff9853d/output
+
+function makestarch {
+  ## Get score file ready.
+  cat $piq_path/$1-$2-calls.all.csv $piq_path/$1-$2.RC-calls.all.csv | grep '^""' -v | awk -F "," 'BEGIN{OFS="\t"} {print $3,$4,$5,$6,$7}' > tmp
+  cat $piq_path/$1-$2-calls.all.bed $piq_path/$1-$2.RC-calls.all.bed | grep '^tr' -v > tmp2
+  paste tmp2 tmp | sort-bed - > tmp.bed
+  rm tmp tmp2
+
+#  bedops --merge --exact tmp.bed > uniqueSites.bed  ## Sometimes they are slightly off-center from one another.  Only merge exact, so remove col 4-6 in bed files and UNIQ.
+  cat $piq_path/$1-$2-calls.all.bed $piq_path/$1-$2.RC-calls.all.bed | grep '^tr' -v | sort-bed - | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | uniq > uniqueSites.bed
+#  cat tmp.bed | bedmap --max uniqueSites.bed - > tmp 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap --exact --max uniqueSites.bed - > tmp2 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$8,$6}' | bedmap --exact --max uniqueSites.bed - > tmp3 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$9,$6}' | bedmap --exact --max uniqueSites.bed - > tmp4 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$10,$6}' | bedmap --exact --max uniqueSites.bed - > tmp5 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$11,$6}' | bedmap --exact --max uniqueSites.bed - > tmp6 ## 
+
+  cat uniqueSites.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"'$2'","0","."}' > tmp0
+  paste tmp0 tmp2 tmp3 tmp4 tmp5 tmp6 | starch - > $2.starch
+
+  rm tmp*
+}
+
+makestarch 1 NRF1
+makestarch 2 ELF1
+makestarch 3 SP1
+makestarch 4 MAX
+makestarch 5 SP1JASPAR

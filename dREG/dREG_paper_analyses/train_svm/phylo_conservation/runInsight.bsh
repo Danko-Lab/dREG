@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+. runInsightFunction.bsh
+
+#cd /home/cgd24/work/tss_detector/assayOverlap/insight
+#cp ../gm12878*.bed.gz .
+#gunzip *.bed.gz
+
+###############################################################################################
+##
+## Also run DNAse-1 for comparison!
+inpath=/home/cgd24/work/tss_detector/assayOverlap/insight
+
+#runINSIGHT chrom gm12878.chromHMM.only.bed
+runINSIGHT dnase gm12878.plus.DNAse.bed
+runINSIGHT dreg gm12878.plus.dREG.bed
+runINSIGHT dreg_e gm12878.plus.dREG.ENHONLY.bed
+runINSIGHT dreg_p gm12878.plus.dREG.PROONLY.bed
+#runINSIGHT ins gm12878.insulator.bed
+
+#rm *.bed

@@ -1,0 +1,70 @@
+cd /home/cgd24/work/tss_detector/assayOverlap
+
+## H3K27ac explained by iRNAs.
+bigBedToBed /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k27acStdAln.bb tmp.bed
+cat tmp.bed | grep "" -c # 26601
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 20372
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 8772
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 3559
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 140
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 1201
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 1329
+
+## iRNAs explained by H3K27ac.  
+## NOTE: that this is conditional on DNAse-1.
+cat k562.plus.dREG.bed | grep "" -c # 32435
+cat tmp.bed | sort-bed - | bedmap --indicator k562.plus.dREG.bed - | grep "1" -c # 22018 (67%).
+
+cat tmp.bed | sort-bed - | bedmap --echo --indicator k562.plus.dREG.bed - | grep "|0" > iRNA.noH3K27ac.bed
+cat tmp.bed | sort-bed - | bedmap --echo --indicator - k562.plus.dREG.bed | grep "|0" > H3K27ac.noiRNA.bed
+zcat ../k562.predictions.bed.gz | sort-bed - | bedops --not-element-of -1 - k562.plus.dREG.bed > iRNA.nothingelse.bed
+
+## Perfect!  Now can I demonstrate that these sites have some H3K27ac that's under the limit of detection for the peak caller?
+
+R
+
+require(bigWig)
+
+## Now get ... data!
+irna_nok27ac <- read.table("iRNA.noH3K27ac.bed")
+k27ac_noirna <- read.table("H3K27ac.noiRNA.bed")
+
+pdf("OneActiveEnhancerClass.pdf")
+
+## k27ac at dREG peaks w/o k27 peaks.
+h3k27ac <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k27acStdSig.bigWig")
+
+halfWindow=2000; step=25
+irna_nok27ac_meta <- meta.subsample(irna_nok27ac, h3k27ac, h3k27ac, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
+N = length(irna_nok27ac_meta)
+x = ((1:N) - N/2)* step
+plot(x, irna_nok27ac_meta, type="l", col="black", main="H3K27ac signal at dREG sites without H3K27ac peaks") ## Shows a clean peak (~2-fold).
+
+## GROseq at k27ac peaks w/o dREG.
+ps_plus <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/proseq/K562_unt.sort.bed.gz_plus.bw")
+ps_minus <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/proseq/K562_unt.sort.bed.gz_minus.bw")
+
+halfWindow=2000; step=25
+k27ac_noirna_meta_plus  <- meta.subsample(k27ac_noirna, ps_plus, ps_plus, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
+k27ac_noirna_meta_minus <- meta.subsample(k27ac_noirna, ps_minus, ps_minus, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
+N = length(irna_nok27ac_meta)
+x = ((1:N) - N/2)* step
+
+plot(x, k27ac_noirna_meta_plus, type="l", col="red", main="PRO-seq at H3K27ac peaks without dREG") ## Shows a weak, but present peak (~+~50%).
+points(x, k27ac_noirna_meta_minus, type="l", col="blue") ## Shows a clean peak (~2-fold).
+
+## k27ac and DNAse-1 at dREG peaks w/o other evidence of function.
+irna_nada    <- read.table("iRNA.nothingelse.bed")
+
+dnase.d <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562BaseOverlapSignal.bigWig")
+dnase.u <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeUwDgfK562Sig.bigWig")
+
+halfWindow=2000; step=25
+irna_nada_meta_dd <- meta.subsample(irna_nada, dnase.d, dnase.d, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
+irna_nada_meta_ud <- meta.subsample(irna_nada, dnase.u, dnase.u, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
+N = length(irna_nada_meta)
+x = ((1:N) - N/2)* step
+plot(x, irna_nada_meta_dd, type="l", col="black", main="Duke DNAse-1 at dREG sites without other marks") ## Shows a clean peak (~2-fold).
+plot(x, irna_nada_meta_ud, type="l", col="black",main="UW DNAse-1 at dREG sites without other marks") ## Shows a clean peak (~2-fold).
+
+dev.off()

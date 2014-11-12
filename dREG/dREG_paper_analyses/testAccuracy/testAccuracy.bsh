@@ -1,0 +1,44 @@
+#!/bin/bash
+infPos=$1
+TH=$2
+
+GCPATH=/usr/projects/GROseq.parser/tss_detecter/andre_hmm
+DATAPATH=/usr/data/GROseq.parser/hg19/k562/
+
+## Collapse Andre's TSS.
+cat $GCPATH/hg19.k562.new_hmm2b.post2.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' | sort-bed - > andrehmm.nostrand.bed
+grocap=andrehmm.nostrand.bed
+grocap_pair_p=$GCPATH/hg19.k562.new_hmm2b.post2.pair_plus.bed
+grocap_pair_m=$GCPATH/hg19.k562.new_hmm2b.post2.pair_minus.bed
+grep "" -c $grocap
+
+## DNAse-1
+dnase=dnase.narrowpeak.bed
+zcat $DATAPATH/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz > $dnase
+
+## Ernst chromhmm tracks.
+chromhmm=chromhmm.bed
+zcat $DATAPATH/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed - > $chromhmm
+
+## Combined file.
+cat $dnase $grocap $chromhmm $cage | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | sort-bed - > all
+cp all k562.allSites.bed
+
+## Threshold
+echo "Threshold: $TH"
+
+## Now report sensitivity and specificity.
+zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > '"$TH"') {print $1,$2-50,$3+51,$4}' | grep "chrM\|rRNA" -v | sort-bed - | bedops --merge - | perl bed_merge.pl 500 > tmp.mergepred.bed
+
+## Compute SENS/ SPEC.
+SPECnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map - all | grep "|0|" -c -v` ## Specificity
+SPECden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map - all | grep "" -c` ## Specificity
+echo "Specificity: $[($SPECnum*100)/$SPECden]"
+
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap - | grep "" -c`  ## Sensitivity
+echo "Sensitivity for GRO-cap sites: $[($SENSnum*100)/$SENSden]"
+
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_p - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_p - | grep "" -c`  ## Sensitivity
+echo "Sensitivity for GRO-cap pairs: $[($SENSnum*100)/$SENSden]"

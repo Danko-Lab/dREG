@@ -1,0 +1,41 @@
+#######################################
+## Collect files in K562 cells.
+cd /usr/projects/GROseq.parser/tss_detecter/
+
+## Ernst chromhmm tracks.
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > prom
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > enh
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > ins
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Txn" | bedops --merge - | sort-bed - > txn
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Rep\|Het" | bedops --merge - | sort-bed - > het
+
+bedmap --indicator k562.bed prom   > prom.sup
+bedmap --indicator k562.bed enh    > enh.sup
+bedmap --indicator k562.bed ins    > ins.sup
+bedmap --indicator k562.bed txn    > txn.sup
+bedmap --indicator k562.bed het    > het.sup
+
+paste k562.bed prom.sup enh.sup ins.sup txn.sup het.sup > k562.chromhmmclass
+
+#######################################
+## Collect files in gm12878 cells.
+
+## Ernst chromhmm tracks.
+zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > prom
+zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > enh
+zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > ins
+zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Txn" | sort-bed - | bedops --merge - > txn
+zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Rep\|Het" | sort-bed - | bedops --merge - > het
+
+bedmap --indicator gm12878.bed prom   > prom.sup
+bedmap --indicator gm12878.bed enh    > enh.sup
+bedmap --indicator gm12878.bed ins    > ins.sup
+bedmap --indicator gm12878.bed txn    > txn.sup
+bedmap --indicator gm12878.bed het    > het.sup
+
+paste gm12878.bed prom.sup enh.sup ins.sup txn.sup het.sup > gm12878.chromhmmclass
+
+## Cleanup
+rm prom enh ins txn het *.sup
+
+

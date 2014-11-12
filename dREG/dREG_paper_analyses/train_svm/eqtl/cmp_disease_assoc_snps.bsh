@@ -1,0 +1,54 @@
+#!/usr/bin/bash
+##
+## Computes enrichments of (putitavely causal) disease-associauted SNPs in dREG sites.
+##
+
+schaub=Schaub/all.bed
+types=`cat $schaub | awk '{print $5}' | uniq` # | grep Breast
+min_n=5
+min_m=2
+enrichment_file=data.enr.tsv
+rm $enrichment_file
+
+for i in $types 
+do
+  echo $i
+  cat $schaub | grep $i | sort-bed - > $i.bed
+  if [ `grep "" -c $i.bed` -gt $min_n ]
+  then
+    for j in ../*.bed.gz
+    do
+      echo $j
+      if [ `zcat $j | bedmap --indicator $i.bed - | grep "1" -c` -gt $min_m ]
+      then 
+        featureBits -enrichment hg19 $i.bed $j 2>> $enrichment_file
+      fi
+    done
+  fi
+  rm $i.bed
+done
+
+###############################################################################################
+## If featureBits goes slowly ... this might be nicer.
+
+#genome=3137161264 # This is hg19 #`cat thisTrack | gawk '{print $4}'`
+#for i in $types 
+#do
+#  echo $i
+#  cat $schaub | grep $i > $i.bed
+#  if [ `grep "" -c $i.bed` -gt $min_n ]
+#  then
+#   a=`cat tmp.bed | sort-bed - | bedops --merge - |  awk '{size+= $3-$2} END{print size}'`
+#   b=`zcat ../CD4.predictions.bed.gz | sort-bed - | bedops --merge - | awk '{size+= $3-$2} END{print size}'`
+#   c=`zcat ../CD4.predictions.bed.gz | sort-bed - | bedops --intersect - |  awk '{size+= $3-$2} END{print size}'`
+#   if [ "$c" = "" ]
+#   then
+#     c=0
+#   fi
+#   enrichment=[ ($c/$b)/ ($a/$genome) ]
+#  fi
+#done
+
+
+
+

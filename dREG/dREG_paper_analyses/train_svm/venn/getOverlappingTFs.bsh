@@ -1,0 +1,69 @@
+#!/usr/bin/bash
+
+cd /home/cgd24/work/tss_detector/assayOverlap
+gzip *.*.bed ## Assumes *.bed.gz extensions.
+
+function writeOverlaps {
+    echo $dpre
+
+#	zcat $dp/$dpre.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | bedmap --echo --max dp/$dpre.bed - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' > $dpre.scores.bed
+
+	## USE ALL
+#	zcat $dpre.dnase.UW.DUKE.inters.bed.gz > dnase1.$dpre.narrowpeak.bed
+#	zcat $dp/$dpre.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | bedmap --echo --max dnase1.$dpre.narrowpeak.bed - | sed "s/|/\t/g" > data.tmp
+#	rm dnase1.$dpre.narrowpeak.bed
+    zcat $dpre.chromHMM.only.bed.gz | sort-bed - > $dpre.chromhmm.tsv
+	zcat $dpre.plus.DNAse.bed.gz | sort-bed - > $dpre.dnase.tsv
+	zcat $dpre.plus.dREG.bed.gz | sort-bed - > $dpre.dreg.tsv
+    zcat $dpre.plus.dREG.ENHONLY.bed.gz | sort-bed - > $dpre.dreg.ENHONLY.tsv
+	zcat $dpre.insulator.bed.gz | sort-bed - > $dpre.insulator.tsv
+	
+	###
+	## Get overlap with TF peaks.
+	path=/usr/data/GROseq.parser/hg19/all/ENCODE_tf_peak_calls
+
+	###
+	## Get IDx for files.
+
+	#zcat wgEncodeRegTfbsClusteredInputsV3.tab.gz | grep $query -n 
+	zcat $path/wgEncodeRegTfbsClusteredInputsV3.tab.gz | grep $query > $dpre.colNames.txt
+	lines=`zcat $path/wgEncodeRegTfbsClusteredInputsV3.tab.gz | grep $query -n | cut -d \: -f 1`
+
+	### 
+	## Get peaks, and intersect.
+
+	## Schema for wgEncodeRegTfbsClusteredV3.bed.gz described here: http://genome.ucsc.edu/cgi-bin/hgTables?db=hg19&hgta_group=regulation&hgta_track=wgEncodeRegTfbsClusteredV3&hgta_table=wgEncodeRegTfbsClusteredV3&hgta_doSchema=describe+table+schema
+
+	for i in $lines 
+	do
+	 k=$[($i-1)] ## Lines are 1-based.  wgEncodeRegTfbsClusteredV3.bed.gz seems to be 0-based.
+	 
+	 zcat $path/wgEncodeRegTfbsClusteredV3.bed.gz | awk 'BEGIN{OFS="\t"} {split($7,a,","); {for(i=1;i<=$6;i++) {if(a[i]=='"$k"') {print $1,$2,$3,$4,$5; break}}}}' | sort-bed - > tmp.bed # grep "" -c
+	  
+	 cat tmp.bed | sort-bed - | bedmap --echo --indicator $dpre.chromhmm.tsv - | sed "s/|/\t/g" > chromhmm.tmp
+	 cat tmp.bed | sort-bed - | bedmap --echo --indicator $dpre.dnase.tsv - | sed "s/|/\t/g" > dnase.tmp
+     cat tmp.bed | sort-bed - | bedmap --echo --indicator $dpre.dreg.tsv - | sed "s/|/\t/g" > dreg.tmp
+     cat tmp.bed | sort-bed - | bedmap --echo --indicator $dpre.dreg.ENHONLY.tsv - | sed "s/|/\t/g" > dreg.ENHONLY.tmp
+	 cat tmp.bed | sort-bed - | bedmap --echo --indicator $dpre.insulator.tsv - | sed "s/|/\t/g" > insulator.tmp
+
+	 mv chromhmm.tmp $dpre.chromhmm.tsv
+	 mv dnase.tmp $dpre.dnase.tsv
+	 mv dreg.tmp $dpre.dreg.tsv	
+	 mv dreg.ENHONLY.tmp $dpre.dreg.ENHONLY.tsv
+	 mv insulator.tmp $dpre.insulator.tsv
+	done
+
+	rm tmp.bed
+}
+
+dp=..
+
+#K562
+dpre=k562
+query="K562[[:space:]]None" 
+writeOverlaps
+
+#GM12878
+dpre=gm12878
+query="GM12878[[:space:]]None"
+writeOverlaps

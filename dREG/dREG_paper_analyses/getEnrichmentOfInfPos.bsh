@@ -1,0 +1,53 @@
+#!/usr/bin/bash
+
+##
+## This line gets the number of GRO-cap sites inside of informative positions (within 50 bp).
+## The result is 92.76408% of GRO-cap sites.
+zcat predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-50,$3+50}'  | sort-bed - | bedmap --count andre_hmm/hg19.k562.new_hmm2b.post2.bed - | grep "^0" -c -v
+
+##
+##
+## The remainder of this bash script gets the enrichment of informative positions in a variety of different 
+## types of functional elements.
+##
+cd /usr/projects/GROseq.parser/tss_detecter ## current working directory.
+
+## Collapse Andre's TSS.
+cat /usr/projects/GROseq.parser/tss_new/hg19.k562.new_hmm2.bed | grep -v "^t" | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' > andrehmm.nostrand.bed
+~/bin/tcolapse andrehmm.nostrand.bed 4 1000 1000 | sort-bed - > andrehmm.nostrand.merge.bed #andre.hmm.tmp # 
+grep "" -c andrehmm.nostrand.merge.bed
+
+## Dataset of informative positions.
+infPos=predictions.ANDOR.10-10.25-10.50-30.500-20.5000-20.bedGraph
+allData=`cat $infPos | grep "" -c` ## Slight underestimate b/c throwing away all cases where there's a partial overlap.
+
+##
+## Create dataset of regions neighboring Andre's HMM predictions.
+noFlank=`cat andrehmm.nostrand.merge.bed | awk 'BEGIN{OFS="\t"} {print $1,$2-5000,$2-100} {print $1,$3+100,$3+5000}' | 
+	bedmap --echo --count - andrehmm.nostrand.merge.bed | grep "|0" | sed "s/|/\t/g" | bedmap --echo --count $infPos - | grep "|0" -c`
+  # Get fraction of informative positions in hmm flanks.
+
+echo "Fraction enrichment of informative positions in nearby (but not in) real TSS."
+inFlank=$[$allData-$noFlank]
+echo $[($inFlank*100)/$allData] ## ~33% of informative positions are inside of flanks.
+
+##
+## Create dateset of regions w/ overlapping transcription patterns.
+GenCode=/usr/projects/GROseq/NHP/annotations/gencode.v17.transcript.tsv
+cat $GenCode | grep "_+" | sort-bed - > GenCode.p.tmp
+cat $GenCode | grep "_-" | sort-bed - > GenCode.m.tmp
+bedops --intersect GenCode.p.tmp GenCode.m.tmp > GencodeMerge.IntersectOpStrand.bed
+
+echo "Fraction enrichment of informative positions in divergent overlapping regions."
+noMerge=`cat GencodeMerge.IntersectOpStrand.bed | bedmap --echo --count $infPos - | grep "|0" -c`
+inMerge=$[$allData-$noMerge]
+echo $[($inMerge*100)/$allData] ## Only ~6% of informative positions are inside of convergent/ oppostie strand annotations.
+
+echo "Fraction enrichment of real TSS in divergent overlapping regions."
+nReal=`cat andrehmm.nostrand.merge.bed | grep "" -c`
+noMerge=`cat GencodeMerge.IntersectOpStrand.bed | bedmap --echo --count andrehmm.nostrand.merge.bed - | grep "|0" -c`
+inMerge=$[$nReal-$noMerge]
+echo $[($inMerge*100)/$nReal] ## Only ~6% of informative positions are inside of convergent/ oppostie strand annotations.
+
+
+rm GenCode.p.tmp GenCode.m.tmp # Cleanup.

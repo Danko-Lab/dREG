@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+TH=$1
+
+## Create bed files larger than the specified threshold.
+for i in `ls $2`
+do
+  j=`echo $i | cut -d \. -f 1,2`
+  echo $j
+
+  ## Merge into peaks.
+  zcat $i | awk 'BEGIN{OFS="\t"} ($4 > '"$TH"') {print $1,$2-50,$3+51}' | sort-bed - | bedops --merge - | ~/perl/bed_merge.pl 500 > $j.no_score.bed
+
+  ## Get max score in each peak. 
+  zcat $i | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | sort-bed - | bedmap --echo --max $j.no_score.bed - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | gzip > $j.bed.gz
+
+  ## Clean temporary files.  
+  rm $j.no_score.bed
+done
+
+

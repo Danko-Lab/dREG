@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+cd /home/cgd24/bin/thashim-piq-single-b73d9ff9853d
+
+## Convert BAM to binary...
+Rscript bam2rdata.r common.r matches/d0.RData /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Aln.bam
+
+## For just 1st motif...
+for i in {1..5}
+do
+ Rscript pwmmatch.exact.r common.r /home/cgd24/src/featureDetector/test_functions/train_svm/erna_regression/jaspar.format.txt $i matches/
+ Rscript pertf.r common.r matches/ ~/no-backup/tmp/ output/ matches/d0.RData $i
+ rm -Rf /home/cgd24/no-backup/tmp/*
+done
+

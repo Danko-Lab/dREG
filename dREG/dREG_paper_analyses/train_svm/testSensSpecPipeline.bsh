@@ -1,0 +1,188 @@
+cd /usr/projects/GROseq.parser/tss_detecter
+
+## Collapse Andre's TSS.
+cat /usr/projects/GROseq.parser/tss_detecter/andre_hmm/hg19.k562.new_hmm2b.post2.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' | sort-bed - > andrehmm.nostrand.bed
+
+## Remove sites used during training.
+trn=trainingset.bed
+cat /home/cgd24/work/tss_detector/train_holdout_svm/TrainingSet.bed | sort-bed - > $trn
+bedops --not-element-of -1 andrehmm.nostrand.bed $trn > andrehmm.nostrand.notrain.bed
+bedops --not-element-of -1 andre_hmm/hg19.k562.new_hmm2b.post2.pair_plus.bed $trn > andre.pair.plus.bed
+bedops --not-element-of -1 andre_hmm/hg19.k562.new_hmm2b.post2.pair_minus.bed $trn > andre.pair.minus.bed
+
+#~/bin/tcolapse andrehmm.nostrand.bed 0 500 500 1 | sort-bed - > andrehmm.nostrand.merge.bed 
+grocap=andrehmm.nostrand.notrain.bed
+grocap_pair_p=andre.pair.plus.bed #andre_hmm/hg19.k562.new_hmm2b.post2.pair_plus.bed
+grocap_pair_m=andre.pair.minus.bed #andre_hmm/hg19.k562.new_hmm2b.post2.pair_minus.bed
+grep "" -c $grocap
+
+## DNAse-1
+dnase=dnase.narrowpeak.bed
+zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz > $dnase
+
+## Ernst chromhmm tracks.
+chromhmm=chromhmm.bed
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed - > $chromhmm
+
+## CAGE.
+cage=cage.tss.bed
+#zcat /usr/data/GROseq.parser/hg19/k562/cage/wgEncodeRikenCageK562CellPapTssHmm.bedRnaElements.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"N",1,$6}' | sort-bed - > $cage
+sort-bed cage_signal.k562.bed | grep "chrM" -v | bedops -m - > $cage
+
+## RefGene ... 
+exprGene=refGene.cage.tss.bed
+hgsql hg19 -s -e "select chrom,txStart,txEnd,name,score,strand from refGene" | sort-bed - > refGene.bed
+cat refGene.bed | awk 'BEGIN{OFS="\t"} {if($6 == "+") print $1,$2,$2+1,$4,$5,$6; else print $1,$3,$3+1,$4,$5,$6}' | sort-bed - > refTss.bed
+bedops --intersect refTss.bed $cage > $exprGene 
+
+## GROcap in gene bodies.
+grocapBodies=grocapBodies.bed
+bedmap --echo --indicator $grocap refGene.bed | grep "|1" | sed "s/|1//g" > $grocapBodies
+
+## GROcap at enhancers.
+grocapEnhancers=grocapEnhancers.bed
+cat $chromhmm | grep "Enhancer" | bedmap --echo --indicator $grocap - | grep "|1" | sed "s/|1//g" > $grocapEnhancers
+
+## GROcap at promoters.
+grocapPromoter=grocapPromoter.bed
+cat $chromhmm | grep "Promoter" | bedmap --echo --indicator $grocap - | grep "|1" | sed "s/|1//g" > $grocapPromoter
+
+## Combined file.
+cat $dnase $grocap $chromhmm $cage $trn | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | sort-bed - > all
+cp all k562.allSites.bed
+
+chgrp bscb07 *
+
+#########################################################
+## Get positions enriched for error/ poor mapping.
+#noMapBed=/usr/data/GROseq.parser/hg19/all/mappability/30mers.unmap.bed.gz # Mappability
+#
+#rnaReps=rnaReps.tsv # Repeats
+#hgsql hg19 --skip-column-names -e "select genoName,genoStart,genoEnd,strand,repName from rmsk where milliDiv < 100" | sort-bed - > $rnaReps 
+#
+#infPos=k562.predictions.bedGraph.gz
+#
+## DOES NOT SEEM TO HELP TO DEPLETE ALL OF THIS.
+#zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > 0.7) {print $1,$2-50,$3+51,$4}' | sort-bed - |  bedops --merge - | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | gzip > k562.bed.gz
+#
+### Remove regions that are ... 
+#zcat $infPos | sort-bed - > $infPos.tmp
+#zcat $noMapBed | bedmap --echo --count $infPos.tmp - | grep "|0" | sed "s/|0//g" > $infPos.tmp1 # Not mappable at 30bp.
+#cat $rnaReps | bedmap --echo --count $infPos.tmp1 - | grep "|0" | sed "s/|0//g" > $infPos.tmp # Remove sites inside of known Pol III repeats.
+#rm $infPos.tmp1
+
+
+################################################################
+################################################################
+## Test sensitivity ...
+
+## Use threshold 0.79 @ 10% FDR, merging elements within 500 bp.
+#infPos=~/work/tss_detector/k562.predictions.bedGraph.gz
+infPos=~/work/tss_detector/train_holdout_svm/k562.ts.predictions.bedGraph.gz
+zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > 0.79) {print $1,$2-50,$3+51,$4}' | sort-bed - | bedops --merge - | perl ~/perl/bed_merge.pl 500 > tmp.mergepred.bed
+
+## Compute SENS/ SPEC.
+echo "Specificity"
+SPECnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map - all | grep "|0|" -c -v` ## Specificity
+SPECden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map - all | grep "" -c` ## Specificity
+echo $[($SPECnum*100)/$SPECden]
+
+echo "Sensitivity for GRO-cap sites"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+echo "Sensitivity for GRO-cap pairs"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_p - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_p - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for CAGE.
+echo "Sensitivity for all of CAGE"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $cage - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $cage - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for expresse TSS (by CAGE).
+echo "Expressed TSS by CAGE"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $exprGene - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $exprGene - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for GROcap in gene bodies.
+echo "Sensitivity for GROcap in Gene Bodies"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapBodies - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapBodies - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for GROcap at enhancers.
+echo "Sensitivity for GROcap at Enhancers"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapEnhancers - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapEnhancers - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for GROcap at promoters.
+echo "Sensitivity for GROcap at Promoters"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapPromoter - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapPromoter - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+####################################################################
+## Fraction in promtoers, enhancers.
+
+## Fraction of sites in RefSeq annotated TSS.
+SENSnum=`cat refTss.bed | awk 'BEGIN{OFS="\t"} {print $1,$2-5000,$3+5000}' | sort-bed - | bedmap --echo --count --echo-map tmp.mergepred.bed - | grep "|0|" -v -c`
+SENSden=`cat refTss.bed | awk 'BEGIN{OFS="\t"} {print $1,$2-5000,$3+5000}' | sort-bed - | bedmap --echo --count --echo-map tmp.mergepred.bed - | grep "" -c`
+echo $[($SENSnum*100)/$SENSden]
+
+####################################################################
+## Sensitivity for Ernst tracks.
+
+for class in `less $chromhmm | awk '{print $4}' | sort | uniq` 
+do
+ SENSnum=`cat $chromhmm | grep $class | sort-bed - | bedmap --echo --count --echo-map - tmp.mergepred.bed | grep "|0|" -v -c`  ## Sensitivity
+ SENSgrc=`cat $chromhmm | grep $class | sort-bed - | bedmap --echo --count --echo-map - $grocap | grep "|0|" -v -c`  ## Sensitivity
+ SENSden=`cat $chromhmm | grep $class -c`  ## Sensitivity
+ echo "$class $[($SENSnum*100)/$SENSden] $[($SENSgrc*100)/$SENSden]"
+done
+
+## How many dREG sites fall within each promoter class?
+for class in `less $chromhmm | awk '{print $4}' | sort | uniq` 
+do
+ OL=`cat $chromhmm | grep $class | sort-bed - | bedmap --echo --count --echo-map tmp.mergepred.bed - | grep "|0|" -v -c`
+ OLall=`cat tmp.mergepred.bed | grep "" -c`
+ echo "$class $[($OL*100)/$OLall]"
+done
+
+## How many dREG sites fall within each promoter class?
+for class in "Promoter" "Enhancer"
+do
+ OL=`cat $chromhmm | grep $class | sort-bed - | bedmap --echo --count --echo-map tmp.mergepred.bed - | grep "|0|" -v -c`
+ OLall=`cat tmp.mergepred.bed | grep "" -c`
+ echo "$class $[($OL*100)/$OLall]"
+done
+
+
+featureBits hg19 tmp.mergepred.bed
+featureBits hg19 $chromhmm
+
+# Unique classes:
+#[dankoc@swiftgen tss_detecter]$ less $chromhmm | awk '{print $4}' | sort | uniq
+#1_Active_Promoter
+#2_Weak_Promoter
+#3_Poised_Promoter
+#4_Strong_Enhancer
+#5_Strong_Enhancer
+#6_Weak_Enhancer
+#7_Weak_Enhancer
+
+## Cleanup
+rm tmp.mergepred.out tmp.mergepred.merge.bed.out
+rm $infPos.tmp
+
+
+## Sensitivity for CAGE TSS "TSS HMM Clusters"

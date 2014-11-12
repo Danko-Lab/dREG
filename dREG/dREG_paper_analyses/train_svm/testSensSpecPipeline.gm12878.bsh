@@ -1,0 +1,189 @@
+##
+## Testing sensivitiy and specificity in GM12878.
+##
+
+cd /usr/projects/GROseq.parser/tss_detecter
+
+## Collapse Andre's TSS.
+cat /usr/projects/GROseq.parser/tss_detecter/andre_hmm/hg19.gm12878.new_hmm2b.post2.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' | sort-bed - > andrehmm.nostrand.bed
+#~/bin/tcolapse andrehmm.nostrand.bed 0 500 500 1 | sort-bed - > andrehmm.nostrand.merge.bed 
+grocap=andrehmm.nostrand.bed
+grocap_pair_p=andre_hmm/hg19.gm12878.new_hmm2b.post2.pair_plus.bed
+grocap_pair_m=andre_hmm/hg19.gm12878.new_hmm2b.post2.pair_minus.bed
+grep "" -c $grocap
+
+## DNAse-1
+dnase=dnase.narrowpeak.bed
+zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz | sort-bed - > $dnase
+
+## Ernst chromhmm tracks.
+chromhmm=chromhmm.bed
+zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed -  > $chromhmm
+
+## CAGE.
+cage=cage.tss.bed
+sort-bed cage_signal.gm12878.bed | grep "chrM" -v | bedops -m - > $cage
+
+## RefGene ... 
+exprGene=refGene.cage.tss.bed
+hgsql hg19 -s -e "select chrom,txStart,txEnd,name,score,strand from refGene" | sort-bed - > refGene.bed
+cat refGene.bed | awk 'BEGIN{OFS="\t"} {if($6 == "+") print $1,$2,$2+1,$4,$5,$6; else print $1,$3,$3+1,$4,$5,$6}' | sort-bed - > refTss.bed
+bedops --intersect refTss.bed $cage > $exprGene 
+
+## GROcap in gene bodies.
+grocapBodies=grocapBodies.bed
+bedmap --echo --indicator $grocap refGene.bed | grep "|1" | sed "s/|1//g" > $grocapBodies
+
+## GROcap at enhancers.
+grocapEnhancers=grocapEnhancers.bed
+cat $chromhmm | grep "Enhancer" | bedmap --echo --indicator $grocap - | grep "|1" | sed "s/|1//g" > $grocapEnhancers
+
+## GROcap at promoters.
+grocapPromoter=grocapPromoter.bed
+cat $chromhmm | grep "Promoter" | bedmap --echo --indicator $grocap - | grep "|1" | sed "s/|1//g" > $grocapPromoter
+
+## Combined file.
+cat $dnase $grocap $chromhmm $cage | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | sort-bed - > all
+
+chgrp bscb07 *
+
+#########################################################
+## Get positions enriched for error/ poor mapping.
+#noMapBed=/usr/data/GROseq.parser/hg19/all/mappability/30mers.unmap.bed.gz # Mappability
+#
+#rnaReps=rnaReps.tsv # Repeats
+#hgsql hg19 --skip-column-names -e "select genoName,genoStart,genoEnd,strand,repName from rmsk where milliDiv < 100" | sort-bed - > $rnaReps 
+#
+#infPos=gm12878.predictions.bedGraph.gz
+#zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > 0.7) {print $1,$2-50,$3+51,$4}' | sort-bed - |  bedops --merge - | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | gzip > gm12878.bed.gz
+#
+### Remove regions that are ... 
+#zcat $infPos | sort-bed - > $infPos.tmp
+#zcat $noMapBed | bedmap --echo --count $infPos.tmp - | grep "|0" | sed "s/|0//g" > $infPos.tmp1 # Not mappable at 30bp.
+#cat $rnaReps | bedmap --echo --count $infPos.tmp1 - | grep "|0" | sed "s/|0//g" > $infPos.tmp # Remove sites inside of known Pol III repeats.
+#rm $infPos.tmp1
+
+
+################################################################
+################################################################
+## Test sensitivity ...
+
+## Use threshold 0.80 @ 10% FDR.
+infPos=~/work/tss_detector/gm12878.d1t.bedGraph.gz #gm12878.predictions.bedGraph.gz
+zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > 0.96) {print $1,$2-50,$3+51,$4}' | sort-bed - | bedops --merge - | perl ~/perl/bed_merge.pl 500 > tmp.mergepred.bed
+
+## Compute SENS/ SPEC.
+echo "Specificity"
+SPECnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map - all | grep "|0|" -c -v` ## Specificity
+SPECden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map - all | grep "" -c` ## Specificity
+echo $[($SPECnum*100)/$SPECden]
+
+echo "Sensitivity for GRO-cap sites"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+echo "Sensitivity for GRO-cap pairs"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_p - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_p - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for CAGE.
+echo "Sensitivity for all of CAGE"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $cage - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $cage - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for expresse TSS (by CAGE).
+echo "Expressed TSS by CAGE"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $exprGene - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $exprGene - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for GROcap in gene bodies.
+echo "Sensitivity for GROcap in Gene Bodies"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapBodies - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapBodies - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for GROcap at enhancers.
+echo "Sensitivity for GROcap at Enhancers"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapEnhancers - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapEnhancers - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for GROcap at promoters.
+echo "Sensitivity for GROcap at Promoters"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapPromoter - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocapPromoter - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+####################################################################
+## Sensitivity for Ernst tracks.
+
+for class in `less $chromhmm | awk '{print $4}' | sort | uniq` 
+do
+ SENSnum=`cat $chromhmm | grep $class | sort-bed - | bedmap --echo --count --echo-map - tmp.mergepred.bed | grep "|0|" -v -c`  ## Sensitivity
+ SENSgrc=`cat $chromhmm | grep $class | sort-bed - | bedmap --echo --count --echo-map - $grocap | grep "|0|" -v -c`  ## Sensitivity
+ SENSden=`cat $chromhmm | grep $class -c`  ## Sensitivity
+ echo "$class $[($SENSnum*100)/$SENSden] $[($SENSgrc*100)/$SENSden]"
+done
+
+cat $chromhmm | grep "Active_Promoter\|Strong_Enhancer" | sort-bed - > tmp.bed
+featureBits hg19 tmp.bed
+
+# Unique classes:
+#[dankoc@swiftgen tss_detecter]$ less $chromhmm | awk '{print $4}' | sort | uniq
+#1_Active_Promoter
+#2_Weak_Promoter
+#3_Poised_Promoter
+#4_Strong_Enhancer
+#5_Strong_Enhancer
+#6_Weak_Enhancer
+#7_Weak_Enhancer
+
+
+####################################################################
+## Sensitivity for eQTLs from recent Dermitzakis paper.
+## Populations: YRI89 EUR373 
+## Confidence: best all
+## Types: gene exon repeat trratio
+EQTLeb="/usr/data/GROseq.parser/hg19/gm12878/eqtl/EUR373.gene.cis.FDR5.best.rs137.txt.gz"
+EQTLyb="/usr/data/GROseq.parser/hg19/gm12878/eqtl/YRI89.gene.cis.FDR5.best.rs137.txt.gz" ## YRI89, EUR373 
+
+## Using 'best' makes more sense than using 'all' -- presumably all will include entire haplotypes, rather than simply the single best SNP.
+#EQTLea="/usr/data/GROseq.parser/hg19/gm12878/eqtl/EUR373.gene.cis.FDR5.all.rs137.txt.gz" ## YRI89, EUR373 
+#EQTLya="/usr/data/GROseq.parser/hg19/gm12878/eqtl/YRI89.gene.cis.FDR5.all.rs137.txt.gz" ## YRI89, EUR373 
+
+zcat $EQTLyb $EQTLeb | awk 'BEGIN{OFS="\t"} {print "chr"$5,int($7),int($7)+1}' | sort-bed - > eqtl.bed
+
+bedmap --count eqtl.bed tmp.mergepred.bed | grep "^0" -v -c
+bedmap --count eqtl.bed $grocap | grep "^0" -v -c
+bedmap --count eqtl.bed $chromhmm | grep "^0" -v -c
+bedmap --count eqtl.bed $dnase | grep "^0" -v -c
+bedmap --count eqtl.bed $cage | grep "^0" -v -c
+bedmap --count eqtl.bed tmp.bed | grep "^0" -v -c
+grep "" -c eqtl.bed ## Total 
+
+## Fractions of the genome covered by each.
+featureBits hg19 -enrichment tmp.mergepred.bed eqtl.bed
+featureBits hg19 -enrichment $grocap  eqtl.bed
+featureBits hg19 -enrichment $chromhmm  eqtl.bed
+featureBits hg19 -enrichment $dnase  eqtl.bed
+featureBits hg19 -enrichment $cage  eqtl.bed
+featureBits hg19 -enrichment tmp.bed eqtl.bed
+
+## Create plots ...
+
+
+####################################################################
+## Cleanup
+rm tmp.mergepred.out tmp.mergepred.merge.bed.out
+rm $infPos.tmp
+
+
+## Sensitivity for CAGE TSS "TSS HMM Clusters"

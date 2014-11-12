@@ -1,0 +1,134 @@
+#!/usr/bin/bash
+
+cd /home/cgd24/work/tss_detector/erna_regression
+
+function writeOverlaps {
+    echo $dpre
+
+#	zcat $dp/$dpre.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | bedmap --echo --max dp/$dpre.bed - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' > $dpre.scores.bed
+
+	## USE ALL
+	zcat $dnase | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5}' > dnase1.$dpre.narrowpeak.bed
+	zcat $dp/$dpre.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | bedmap --echo --max dnase1.$dpre.narrowpeak.bed - | sed "s/|/\t/g" | sed "s/NAN/NA/g" > data.tmp
+	rm dnase1.$dpre.narrowpeak.bed
+
+	###
+	## Get overlap with TF peaks.
+	path=/usr/data/GROseq.parser/hg19/all/ENCODE_tf_peak_calls
+
+	###
+	## Get IDx for files.
+
+	#zcat wgEncodeRegTfbsClusteredInputsV3.tab.gz | grep $query -n 
+	zcat $path/wgEncodeRegTfbsClusteredInputsV3.tab.gz | grep $query > $dpre.colNames.txt
+	lines=`zcat $path/wgEncodeRegTfbsClusteredInputsV3.tab.gz | grep $query -n | cut -d \: -f 1`
+
+	### 
+	## Get peaks, and intersect.
+
+	## Schema for wgEncodeRegTfbsClusteredV3.bed.gz described here: http://genome.ucsc.edu/cgi-bin/hgTables?db=hg19&hgta_group=regulation&hgta_track=wgEncodeRegTfbsClusteredV3&hgta_table=wgEncodeRegTfbsClusteredV3&hgta_doSchema=describe+table+schema
+
+	for i in $lines 
+	do
+	 k=$[($i-1)] ## Lines are 1-based.  wgEncodeRegTfbsClusteredV3.bed.gz seems to be 0-based.
+	 
+	 zcat $path/wgEncodeRegTfbsClusteredV3.bed.gz | awk 'BEGIN{OFS="\t"} {split($7,a,","); {for(i=1;i<=$6;i++) {if(a[i]=='"$k"') {print $1,$2,$3,$4,$5; break}}}}' | sort-bed - > tmp.bed # grep "" -c
+	# zcat wgEncodeRegTfbsClusteredV3.bed.gz | awk 'BEGIN{OFS="\t"} {if($7~/'"$k"'/) {print $1,$2,$3,$4,$5,$6,$7,$8}}' | grep "" -c # sanity check.  should be same row counts for subset of numbers appearing once (e.g., 204, but NOT 20).
+	  
+	 cat tmp.bed | sort-bed - | bedmap --echo --indicator data.tmp - | sed "s/|/\t/g" > data1.tmp
+	 mv data1.tmp data.tmp
+	done
+
+	mv data.tmp $dpre.overlaps.tsv
+	rm tmp.bed
+}
+
+function KittlerExtra {
+  path=/usr/data/GROseq.parser/hg19/mcf7/KittlerTfPeaks
+  for i in `ls $path/*.bed.gz`
+  do
+    tf=`echo $i | cut -d "_" -f 2 | cut -d "." -f 1`
+    echo $tf
+	
+	 zcat $i | sort-bed - | bedmap --echo --indicator $dpre.overlaps.tsv - | sed "s/|/\t/g" > data1.tmp
+	 mv data1.tmp $dpre.overlaps.tsv
+	 
+	 echo $i$'\t'MCF-7+Kittler$'\t'$tf$'\t'$tf$'\t'MCF-7$'\t'None$'\t'UC >> $dpre.colNames.txt
+  done
+}
+
+
+function AddHistones {
+  ## Focus on enhancers, rather than promoters.  Narrow down to H3K4me3- sites!?
+  hist=$1
+  echo $hist
+  bigBedToBed $hist tmp.hist.bb.bed
+  cat tmp.hist.bb.bed | sort-bed - | bedmap --echo --indicator $dpre.overlaps.tsv - | sed "s/|/\t/g" > data1.tmp
+  mv data1.tmp $dpre.overlaps.tsv
+  echo $hist$'\t'Histone$'\t'H3K4me3$'\t'H3K4me3$'\t'Same$'\t'None$'\t'UC >> $dpre.colNames.txt
+}
+
+function AddMe1Me3Ratios {
+  R --no-save --args $dpre.overlaps.tsv $1 $2 < getRatios.R
+  paste $dpre.overlaps.tsv lr.tmp > tmp
+  mv tmp $dpre.overlaps.tsv
+  rm lr.tmp
+  echo Me3_Me1_Ratio$'\t'Histone$'\t'Me3_Me1_ratio$'\t'Me3_Me1_ratio$'\t'Same$'\t'None$'\t'Broad >> $dpre.colNames.txt
+}
+
+dp=..
+
+#K562
+dnase=/home/cgd24/work/tss_detector/assayOverlap/k562.dnase.UW.DUKE.inters.bed.gz
+dpre=k562
+query="K562[[:space:]]None" 
+#writeOverlaps
+HP=/usr/data/GROseq.parser/hg19/k562/histones
+##AddHistones $HP/wgEncodeBroadHistoneK562H3k4me3StdAln.bb
+#AddMe1Me3Ratios $HP/wgEncodeBroadHistoneK562H3k4me3StdSig.bigWig $HP/wgEncodeBroadHistoneK562H3k4me1StdSig.bigWig
+#R --no-save --args $dpre < erna_regression.R > $dpre.log &
+####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
+
+#GM12878
+dnase=/home/cgd24/work/tss_detector/assayOverlap/gm12878.dnase.UW.DUKE.inters.bed.gz
+dpre=gm12878
+query="GM12878[[:space:]]None"
+#writeOverlaps
+HP=/usr/data/GROseq.parser/hg19/gm12878/histones
+##AddHistones $HP/wgEncodeBroadHistoneGm12878H3k4me3StdAln.bb
+#AddMe1Me3Ratios $HP/wgEncodeBroadHistoneGm12878H3k4me3StdSig.bigWig $HP/wgEncodeBroadHistoneGm12878H3k4me1StdSig.bigWig
+#R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
+
+#MCF7
+dnase=/usr/data/GROseq.parser/hg19/mcf7/dnase/wgEncodeAwgDnaseUwdukeMcf7UniPk.narrowPeak.gz # mcf7.peaks.bed.gz
+dpre=mcf7
+query="MCF-7[[:space:]]\(None\|vehicle\)" 
+#writeOverlaps
+#KittlerExtra
+#AddHistones
+#R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
+
+#HeLa
+dnase=/usr/data/GROseq.parser/hg19/hela/dnase/wgEncodeUWDukeDnaseHeLaS3.fdr01peaks.hg19.bed.gz  ##wgEncodeOpenChromDnaseHelas3Pk.narrowPeak.gz
+dpre=hela
+query="HeLa-S3[[:space:]]None" #HeLa-S3
+writeOverlaps
+##AddHistones
+R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
+
+## LEGACY.
+
+#path=/usr/data/GROseq.parser/hg19/k562/tf_peaks
+#names=`cat $path/tf_names_and_files.txt | awk '{print $1}'`
+#files=`cat $path/tf_names_and_files.txt | awk '{print $2}'`
+#for f in $files
+#do 
+#  bigBedToBed $path/$f tmp.bed
+#  cat tmp.bed | sort-bed - | bedmap --echo --indicator data.tmp - | sed "s/|/\t/g" > data1.tmp
+#  mv data1.tmp data.tmp
+#done 
+#mv data.tmp overlaps.tsv
+

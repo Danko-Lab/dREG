@@ -1,0 +1,24 @@
+#!/usr/bin/bash 
+
+function runINSIGHT {
+ dataID=$1
+ inbed=$2
+
+ cd /usr/projects/INSIGHT
+
+ outpath=/home/cgd24/work/tss_detector/assayOverlap/insight/${dataID}
+ setupfile=/usr/projects/INSIGHT/preprocessedHumanData/humanSetupFile-10KB-uniformPriors-general.txt
+
+ ## Run INSIGHT
+ bash scripts/runINSIGHT.sh ${inpath}/${inbed} ${dataID} ${outpath} 100 ${setupfile} 15 0
+
+ ## Summary plot.
+ R --vanilla < /usr/projects/GROseq/NHP/tss_caller/plotResults-INSIGHT.r --args \
+         ${outpath}/${dataID}.insight.results.txt ${outpath}/${dataID}.insight.results.pdf 0.01
+
+ ## Then get poly-div stats.
+ sh ./scripts/executeEM/getPolyDivStats.sh ${outpath}/emInput/${dataID}.ins ${outpath}/emInput/${dataID}.flankPoly.forBetas.ins ${outpath}/${dataID}.polyDiv.summary 15 PolyDiv
+
+ cd -
+}
+

@@ -1,0 +1,161 @@
+## Collect files in K562 cells.
+cd /usr/projects/GROseq.parser/tss_detecter/
+
+########################################
+## Compare UW and Duke DNAse-1
+
+zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | sort-bed - | bedops --merge - > k562.duke.dnase.bed
+zcat /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz | sort-bed - | bedops --merge -  > k562.uw.dnase.bed
+
+bedops --element-of  -1 k562.duke.dnase.bed k562.uw.dnase.bed > tmp1
+bedops --element-of  -1 k562.uw.dnase.bed k562.duke.dnase.bed > tmp2
+bedops --merge tmp1 tmp2 > k562.inter.bed
+rm tmp1 tmp2
+
+bedops --not-element-of  -1 k562.duke.dnase.bed k562.uw.dnase.bed > k562.dukeAlone.bed
+bedops --not-element-of  -1 k562.uw.dnase.bed k562.duke.dnase.bed > k562.uwAlone.bed
+
+grep "" -c k562.duke.dnase.bed
+grep "" -c k562.uw.dnase.bed
+
+grep "" -c k562.dukeAlone.bed
+grep "" -c k562.uwAlone.bed
+grep "" -c k562.inter.bed
+
+
+chromhmmAll=chromhmm.ALLTYPES.bed
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | sort-bed - > $chromhmmAll
+
+DUKEALONE=`grep "" -c k562.dukeAlone.bed`  
+UWALONE=`grep "" -c k562.uwAlone.bed`  
+INTERS=`grep "" -c k562.inter.bed`
+for class in `less $chromhmmAll | awk '{print $4}' | sort | uniq` 
+do
+ SENSnumI=`cat $chromhmmAll | grep $class | sort-bed - | bedmap --echo --count --echo-map k562.inter.bed - | grep "|0|" -v -c`  ## Sensitivity
+ #echo "Intersection $class $[($SENSnumI*100)/$INTERS] $SENSnum"
+
+ SENSnumD=`cat $chromhmmAll | grep $class | sort-bed - | bedmap --echo --count --echo-map k562.dukeAlone.bed - | grep "|0|" -v -c`  ## Sensitivity
+ #echo "Duke $class $[($SENSnumD*100)/$DUKEALONE] $SENSnum"
+
+ SENSnumW=`cat $chromhmmAll | grep $class | sort-bed - | bedmap --echo --count --echo-map k562.uwAlone.bed - | grep "|0|" -v -c`  ## Sensitivity
+ #echo "UW $class $[($SENSnumW*100)/$UWALONE] $SENSnum"
+ 
+ echo "$class $[($SENSnumI*100)/$INTERS] $[($SENSnumD*100)/$DUKEALONE] $[($SENSnumW*100)/$UWALONE]"
+done
+
+## Neglidgable.
+ NONEI=`cat $chromhmmAll | sort-bed - | bedops --not-element-of -1 k562.inter.bed - | grep "" -c`
+ NONED=`cat $chromhmmAll | sort-bed - | bedops --not-element-of -1 k562.dukeAlone.bed - | grep "" -c`
+ NONEW=`cat $chromhmmAll | sort-bed - | bedops --not-element-of -1 k562.uwAlone.bed - | grep "" -c`
+ echo "None $[($NONEI*100)/$INTERS] $[($NONED*100)/$DUKEALONE] $[($NONEW*100)/$UWALONE]"
+
+########################################
+## Compare DNAse-1 hierarchically to ... Open/Active -> Txn -> Repressed -> Other
+
+ zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - | bedops --merge - > chromHMM.pei.bed
+ zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Txn" | sort-bed - | bedops --merge - > chromHMM.txn.bed
+ zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Heterochrom\|Repressed" | sort-bed - | bedops --merge - > chromHMM.rep.bed
+ 
+ bedops --not-element-of -1 k562.inter.bed chromHMM.pei.bed > I.N_pei.bed
+ bedops --not-element-of -1 I.N_pei.bed chromHMM.txn.bed > I.N_txn.bed
+ bedops --not-element-of -1 I.N_txn.bed chromHMM.rep.bed > I.N_rep.bed
+
+ PEII=`bedops --element-of -1 k562.inter.bed chromHMM.pei.bed | grep "" -c`
+ TXNI=`bedops --element-of -1 I.N_pei.bed chromHMM.txn.bed | grep "" -c`
+ REPI=`bedops --element-of -1 I.N_txn.bed chromHMM.rep.bed | grep "" -c`
+ OTHI=`cat I.N_rep.bed | grep "" -c`
+ 
+ bedops --not-element-of -1 k562.dukeAlone.bed chromHMM.pei.bed > D.N_pei.bed
+ bedops --not-element-of -1 D.N_pei.bed chromHMM.txn.bed > D.N_txn.bed
+ bedops --not-element-of -1 D.N_txn.bed chromHMM.rep.bed > D.N_rep.bed
+
+ PEID=`bedops --element-of -1 k562.dukeAlone.bed chromHMM.pei.bed | grep "" -c`
+ TXND=`bedops --element-of -1 D.N_pei.bed chromHMM.txn.bed | grep "" -c`
+ REPD=`bedops --element-of -1 D.N_txn.bed chromHMM.rep.bed | grep "" -c`
+ OTHD=`cat D.N_rep.bed | grep "" -c`
+ 
+ bedops --not-element-of -1 k562.uwAlone.bed chromHMM.pei.bed > U.N_pei.bed
+ bedops --not-element-of -1 U.N_pei.bed chromHMM.txn.bed > U.N_txn.bed
+ bedops --not-element-of -1 U.N_txn.bed chromHMM.rep.bed > U.N_rep.bed
+ 
+ PEIU=`bedops --element-of -1 k562.uwAlone.bed chromHMM.pei.bed | grep "" -c`
+ TXNU=`bedops --element-of -1 U.N_pei.bed chromHMM.txn.bed | grep "" -c`
+ REPU=`bedops --element-of -1 U.N_txn.bed chromHMM.rep.bed | grep "" -c`
+ OTHU=`cat U.N_rep.bed | grep "" -c`
+ 
+ echo "PEI $[($PEII*100)/$INTERS] $[($PEID*100)/$DUKEALONE] $[($PEIU*100)/$UWALONE]"
+ echo "TXN $[($TXNI*100)/$INTERS] $[($TXND*100)/$DUKEALONE] $[($TXNU*100)/$UWALONE]"
+ echo "REP $[($REPI*100)/$INTERS] $[($REPD*100)/$DUKEALONE] $[($REPU*100)/$UWALONE]"
+ echo "OTH $[($OTHI*100)/$INTERS] $[($OTHD*100)/$DUKEALONE] $[($OTHU*100)/$UWALONE]"
+
+ 
+########################################
+## Compare DNAse-1 to chromHMM
+
+## DNAse-1
+dnase=dnase.narrowpeak.bed
+zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | sort-bed - > $dnase
+
+## Ernst chromhmm tracks.  NOTE THAT I AM MERGING THESE!!
+chromhmm=chromhmm.bed
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer" | bedops --merge - | sort-bed - > $chromhmm
+
+####
+## Individual overlaps.
+grep "" -c $dnase ## 112025
+bedmap --indicator $dnase $chromhmm | grep "1" -c ## 63280 (56%)
+
+grep "" -c $chromhmm ## 114760
+bedmap --indicator $chromhmm $dnase | grep "1" -c ## 45733 (40%)
+
+####
+## Get regions that don't overlap.
+bedmap --echo --indicator $dnase $chromhmm | grep "0$" | sed "s/|0//g" > $dnase.noOl
+bedmap --echo --indicator $chromhmm $dnase | grep "0$" | sed "s/|0//g" > $chromhmm.noOl
+
+####
+## Are DNAse-1 sites that don't overlap chromHMM "promoter | enahncer" in another chromHMM site?
+chromhmmAll=chromhmm.ALLTYPES.bed
+zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | sort-bed - > $chromhmmAll
+
+DNAseNOOLnum=`grep "" -c $dnase.noOl`  ## Sensitivity
+for class in `less $chromhmmAll | awk '{print $4}' | sort | uniq` 
+do
+ SENSnum=`cat $chromhmmAll | grep $class | sort-bed - | bedmap --echo --count --echo-map $dnase.noOl - | grep "|0|" -v -c`  ## Sensitivity
+ echo "$class $[($SENSnum*100)/$DNAseNOOLnum] $SENSnum"
+done
+
+chromHMMNOOLnum=`grep "" -c $chromhmm.noOl`  ## Sensitivity
+for class in `less $chromhmmAll | awk '{print $4}' | sort | uniq` 
+do
+ SENSnum=`cat $chromhmmAll | grep $class | sort-bed - | bedmap --echo --count --echo-map $chromhmm.noOl - | grep "|0|" -v -c`  ## Sensitivity
+ echo "$class $[($SENSnum*100)/$chromHMMNOOLnum] $SENSnum"
+done
+cat $chromhmmAll | grep "Weak_Enhancer" | sort-bed - | bedmap --indicator $chromhmm.noOl - | grep "0" -v -c  # 64806 (94%)
+
+####
+## Now distinguish chromHMM sites with DNAse-1 peaks, from those without (i.e., 'weak enhancers').  
+## These TFs might be involved in opening chromatin.
+
+#zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz > dnase1.k562.narrowpeak.bed
+cat $dnase | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$7}' | bedmap --echo --max $chromhmm - | sed "s/|/\t/g" > data.tmp
+zcat k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | bedmap --echo --max data.tmp - | sed "s/|/\t/g" > data1.tmp ## Add dreg scores.
+mv data1.tmp data.tmp
+
+## Get overlap with TF peaks.
+path=/usr/data/GROseq.parser/hg19/k562/tf_peaks
+
+names=`cat $path/tf_names_and_files.txt | awk '{print $1}'`
+files=`cat $path/tf_names_and_files.txt | awk '{print $2}'`
+for f in $files
+do 
+  bigBedToBed $path/$f tmp.bed
+  cat tmp.bed | sort-bed - | bedmap --echo --indicator data.tmp - | sed "s/|/\t/g" > data1.tmp
+  mv data1.tmp data.tmp
+done 
+mv data.tmp overlaps.dnase1.chromhmm.tsv
+
+rm tmp.bed
+
+
+rm *.noOl $chromhmmAll

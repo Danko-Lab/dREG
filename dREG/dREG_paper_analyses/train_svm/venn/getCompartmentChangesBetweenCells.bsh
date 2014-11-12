@@ -1,0 +1,122 @@
+#!/usr/bin/bash
+## 
+## Changes in chromHMM, +DNAse-1, +DREG between cell types.
+## 
+
+function writeCompartmentChanges {
+ FROM=$1
+ TO=$2
+ 
+ CHROM=chromHMM.only.bed
+ DNASE=plus.DNAse.bed
+ TRANS=plus.dREG.bed
+ TRPRO=plus.dREG.PROONLY.bed
+ TRENH=plus.dREG.ENHONLY.bed
+ INS=insulator.bed
+ 
+ ## 16 distinct combinations:
+ ## None -> -,Chrom,DNAse-1,Trans ... Will be assessed for the other cell type.
+ #bedops --not-element-of -1 $TO.$CHROM $FROM.$CHROM $FROM.$DNASE $FROM.$TRANS | grep "" -c 
+ #bedops --not-element-of -1 $TO.$DNASE $FROM.$CHROM $FROM.$DNASE $FROM.$TRANS | grep "" -c 
+ #bedops --not-element-of -1 $TO.$TRANS $FROM.$CHROM $FROM.$DNASE $FROM.$TRANS | grep "" -c 
+ 
+# echo "TO_NONE TO_CHROM TO_DNASE TO_TRANS TO_INS"
+ echo "TO_NONE TO_CHROM TO_DNASE TO_TRANS_ENH TO_TRANS_PRO TO_INS"
+
+ ## Chrom-> None,-,DNAse-1,Trans
+ a=`bedops --not-element-of -1 $FROM.$CHROM $TO.$INS $TO.$TRANS $TO.$DNASE $TO.$CHROM | grep "" -c`
+ b=`bedops --not-element-of -1 $FROM.$CHROM $TO.$TRANS $TO.$DNASE | bedops --element-of -1 - $TO.$CHROM | grep "" -c`
+ c=`bedops --not-element-of -1 $FROM.$CHROM $TO.$TRANS | bedops --element-of -1 - $TO.$DNASE | grep "" -c`
+ de=`bedops --not-element-of -1 $FROM.$CHROM $TO.$TRPRO | bedops --element-of -1 - $TO.$TRENH | grep "" -c`
+ dp=`bedops --element-of -1 $FROM.$CHROM $TO.$TRPRO | grep "" -c`
+ d=`bedops --element-of -1 $FROM.$CHROM $TO.$TRANS | grep "" -c`
+ ins=`bedops --not-element-of -1 $FROM.$CHROM $TO.$TRANS $TO.$DNASE $TO.$CHROM | bedops --element-of -1 - $TO.$INS | grep "" -c`
+ #echo "FROM_CHROM" $a $b $c $d $ins ## > $OUTDIR/$FROM.$TO
+ echo "FROM_CHROM" $a $b $c $de $dp $ins ## > $OUTDIR/$FROM.$TO
+
+ ## DNAse1-> None,Chrom,-,Trans
+ e=`bedops --not-element-of -1 $FROM.$DNASE $TO.$INS $TO.$TRANS $TO.$DNASE $TO.$CHROM | grep "" -c`
+ f=`bedops --not-element-of -1 $FROM.$DNASE $TO.$TRANS $TO.$DNASE| bedops --element-of -1 - $TO.$CHROM | grep "" -c`
+ g=`bedops --not-element-of -1 $FROM.$DNASE $TO.$TRANS | bedops --element-of -1 - $TO.$DNASE | grep "" -c`
+ he=`bedops --not-element-of -1 $FROM.$DNASE $TO.$TRPRO | bedops --element-of -1 - $TO.$TRENH | grep "" -c`
+ hp=`bedops --element-of -1 $FROM.$DNASE $TO.$TRPRO | grep "" -c`
+ h=`bedops --element-of -1 $FROM.$DNASE $TO.$TRANS | grep "" -c`
+ ins=`bedops --not-element-of -1 $FROM.$DNASE $TO.$TRANS $TO.$DNASE $TO.$CHROM | bedops --element-of -1 - $TO.$INS | grep "" -c`
+ #echo "FROM_DNASE" $e $f $g $h $ins ## >> $OUTDIR/$FROM.$TO
+ echo "FROM_DNASE" $e $f $g $he $hp $ins ## >> $OUTDIR/$FROM.$TO
+
+ ## Trans ENH-> None,Chrom,DNAse-1,-
+ m=`bedops --not-element-of -1 $FROM.$TRENH $TO.$INS $TO.$TRANS $TO.$DNASE $TO.$CHROM | grep "" -c`
+ n=`bedops --not-element-of -1 $FROM.$TRENH $TO.$TRANS $TO.$DNASE| bedops --element-of -1 - $TO.$CHROM | grep "" -c`
+ o=`bedops --not-element-of -1 $FROM.$TRENH $TO.$TRANS | bedops --element-of -1 - $TO.$DNASE | grep "" -c`
+ pe=`bedops --not-element-of -1 $FROM.$TRENH $TO.$TRPRO | bedops --element-of -1 - $TO.$TRENH | grep "" -c`
+ pp=`bedops --element-of -1 $FROM.$TRENH $TO.$TRPRO | grep "" -c`
+ p=`bedops --element-of -1 $FROM.$TRENH $TO.$TRANS | grep "" -c`
+ ins=`bedops --not-element-of -1 $FROM.$TRENH $TO.$TRANS $TO.$DNASE $TO.$CHROM | bedops --element-of -1 - $TO.$INS | grep "" -c`
+# echo "FROM_TRENH" $m $n $o $p $ins ## >> $OUTDIR/$FROM.$TO
+ echo "FROM_TRENH" $m $n $o $pe $pp $ins ## >> $OUTDIR/$FROM.$TO
+  
+ ## Trans PRO-> None,Chrom,DNAse-1,-
+ q=`bedops --not-element-of -1 $FROM.$TRPRO $TO.$INS $TO.$TRANS $TO.$DNASE $TO.$CHROM | grep "" -c`
+ r=`bedops --not-element-of -1 $FROM.$TRPRO $TO.$TRANS $TO.$DNASE| bedops --element-of -1 - $TO.$CHROM | grep "" -c`
+ s=`bedops --not-element-of -1 $FROM.$TRPRO $TO.$TRANS | bedops --element-of -1 - $TO.$DNASE | grep "" -c`
+ te=`bedops --element-of -1 $FROM.$TRPRO $TO.$TRENH | grep "" -c`
+ tp=`bedops --element-of -1 $FROM.$TRPRO $TO.$TRPRO | grep "" -c`
+ t=`bedops --element-of -1 $FROM.$TRPRO $TO.$TRANS | grep "" -c`
+ ins=`bedops --not-element-of -1 $FROM.$TRPRO $TO.$TRANS $TO.$DNASE $TO.$CHROM | bedops --element-of -1 - $TO.$INS | grep "" -c`
+# echo "FROM_TRPRO" $q $r $s $t $ins ## >> $OUTDIR/$FROM.$TO
+  echo "FROM_TRPRO" $q $r $s $te $tp $ins ## >> $OUTDIR/$FROM.$TO
+
+ ## Insulator-> None,Chrom,DNAse-1,-
+ u=`bedops --not-element-of -1 $FROM.$INS $TO.$INS $TO.$TRANS $TO.$DNASE $TO.$CHROM | grep "" -c`
+ v=`bedops --not-element-of -1 $FROM.$INS $TO.$INS $TO.$TRANS $TO.$DNASE| bedops --element-of -1 - $TO.$CHROM | grep "" -c`
+ w=`bedops --not-element-of -1 $FROM.$INS $TO.$INS $TO.$TRANS | bedops --element-of -1 - $TO.$DNASE | grep "" -c`
+ xe=`bedops --not-element-of -1 $FROM.$INS $TO.$INS | bedops --element-of -1 - $TO.$TRENH | grep "" -c`
+ xp=`bedops --not-element-of -1 $FROM.$INS $TO.$INS | bedops --element-of -1 - $TO.$TRPRO | grep "" -c`
+ x=`bedops --not-element-of -1 $FROM.$INS $TO.$INS | bedops --element-of -1 - $TO.$TRANS | grep "" -c`
+ ins=`bedops --element-of -1 $FROM.$INS $TO.$INS | grep "" -c`
+# echo "FROM_INS" $u $v $w $x $ins ## >> $OUTDIR/$FROM.$TO
+ echo "FROM_INS" $u $v $w $xe $xp $ins ## >> $OUTDIR/$FROM.$TO
+
+}
+
+writeCompartmentChanges $1 $2
+
+#OUTDIR="cellSwitch"
+
+#FROM=gm12878  #TO=k562
+#writeCompartmentChanges gm12878 k562 > $OUTDIR/gm12878.k562
+
+#FROM=gm12878  #TO=cd4
+#writeCompartmentChanges gm12878 cd4 > $OUTDIR/gm12878.cd4
+
+#FROM=gm12878  #TO=hela
+#writeCompartmentChanges gm12878 hela > $OUTDIR/gm12878.hela
+
+#FROM=k562  #TO=gm12878
+#writeCompartmentChanges k562 gm12878 > $OUTDIR/k562.gm12878
+
+#FROM=k562  #TO=cd4
+#writeCompartmentChanges k562 cd4 > $OUTDIR/k562.cd4
+
+#FROM=k562  #TO=hela
+#writeCompartmentChanges k562 hela > $OUTDIR/k562.hela
+
+#FROM=cd4  #TO=k562
+#writeCompartmentChanges cd4 k562 > $OUTDIR/cd4.k562
+
+#FROM=cd4  #TO=gm12878
+#writeCompartmentChanges cd4 gm12878 > $OUTDIR/cd4.gm12878
+
+#FROM=cd4  #TO=hela
+#writeCompartmentChanges cd4 hela > $OUTDIR/cd4.hela
+
+#FROM=hela  #TO=k562
+#writeCompartmentChanges hela k562 > $OUTDIR/hela.k562
+
+#FROM=hela  #TO=gm12878
+#writeCompartmentChanges hela gm12878 > $OUTDIR/hela.gm12878
+
+#FROM=hela  #TO=cd4
+#writeCompartmentChanges hela cd4 > $OUTDIR/hela.cd4
+

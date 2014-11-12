@@ -1,0 +1,164 @@
+#!/usr/bin/bash
+
+## ENRICHMENT
+featureBits hg19 -enrichment gm12878.plus.dREG.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 10.15x 
+featureBits hg19 -enrichment gm12878.plus.dREG.ENHONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 5.67x    
+featureBits hg19 -enrichment gm12878.plus.dREG.PROONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 10.56x 
+
+featureBits hg19 -enrichment gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 3.94x
+featureBits hg19 -enrichment gm12878.chromHMM.only.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed	            # 1.68x
+
+## NUMBERS
+featureBits hg19 gm12878.plus.dREG.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 523      ## 33456  ## 0.01563247
+featureBits hg19 gm12878.plus.dREG.ENHONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 93       ## 17103  ## 0.005437643
+featureBits hg19 gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 78       ## 34531  ## 0.00225884
+featureBits hg19 gm12878.chromHMM.only.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed	            # 115      ## 73461  ## 0.001565457
+
+## DNAse-1 after removing insulators ... Still ~2-fold lower 
+featureBits hg19 gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 65       ## 22236  ## 0.002923188
+featureBits hg19 gm12878.insulator.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 22       ## 33265  ## 0.0006613558
+
+## TOTAL: 523+93+65+22+115= 818
+
+R                                                                                                            # 432      ## 16411  ## 0.02632381
+## GET A P-VALUE BY FISHER'S EXACT.
+fisher.test(data.frame(c(523, 33456), c(78, 34531))) ## dREG:DNAse      # p= 1.735257e-84
+fisher.test(data.frame(c(523, 33456), c(65, 22236))) ## dREG:DNAse      # p= 1.735257e-84
+fisher.test(data.frame(c(523, 33456), c(115, 73461))) ## dREG:chromHMM  # p= 5.311698e-153
+
+## dreg ENHANCERS
+fisher.test(data.frame(c(93, 17045), c(78, 34531))) ## dREG:DNAse       # p= 3.969e-08
+fisher.test(data.frame(c(93, 17045), c(65, 22236))) ## dREG:DNAse       # p= 1.045-4
+fisher.test(data.frame(c(93, 17045), c(115, 73461))) ## dREG:chromHMM   # p= 9.541892e-17
+
+## And surmise promoters --> 523-91; 33456-17045
+fisher.test(data.frame(c(523-91, 33456-17045), c(78, 34531))) ## dREG:DNAse       # p= 1.488419e-131
+fisher.test(data.frame(c(523-91, 33456-17045), c(115, 73461))) ## dREG:chromHMM   # p= 3.093346e-207
+
+fisher.test(data.frame(c(78, 34531), c(115, 73461))) ## DNAse:chromHMM   # p= 0.01341
+
+## PLOT RESULTS.
+df <- data.frame(Assay= c("dREG", "dREG", "dREG", "dnase-1", "chromHMM", "Insulator"), 
+                 Type=  c("All", "Promoter", "Enhancer", "Enhancer", "Enhancer", "Insulator"), 
+				 Score= c(0.01563247, 0.02632381,  0.005437643, 0.002923188, 0.001565457, 0.0006613558))
+df
+df$Assay <- factor(df$Assay, levels= levels(df$Assay)[c(3,2,1,4)])
+
+
+require(lattice)
+
+my.settings <- list(
+  superpose.polygon=list(col=c("#4f81bd", "#000000", "#e30000", "#218a15"), border="transparent"),
+  strip.background=list(col=c("#4f81bd", "#000000", "#e30000", "#218a15")),
+  strip.border=list(col="black")
+)
+
+pdf("Supplementary.eQTL.Enrichment.pdf")
+barchart(Score~Assay, groups=Type, data=df, ylab="eQTL Enrichment", xlab="Assay", 
+		par.settings = my.settings, par.strip.text=list(col="white", font=2),
+		auto.key=list(space="top", columns=3))
+dev.off()
+
+q("no")
+## MOREOVER, IF TRANSCRIBED REGULTORY ELEMENTS COMPRISE ALL ACTIVE REGULATORY REGIONS IN A CELL, ONE EXPECTS THAT THE 78 AND 115 eQTLs IN DNASE-1 AND CHROMHMM
+## SITES ARE ENRICHED FOR CASES IN WHICH GM12878 CONTAINS THE LOSS-OF-EXPRESSION ALLELE.  
+##
+## THIS IMPLIES A SWITCH FROM A TRANSCRIBED --> NON-TRANSCRIBED ELEMENT IN THESE CELL TYPES SPECIFIC TO GM12878.
+## FUTURE STUDIES WILL BE REQUIRED TO DETERMINE IF THIS IS TRUE.
+
+################################################################################################
+## Now test if there's any way to explain this based on some other parmater, like distance
+## relative to the nearest RefSeq gene.
+hgsql hg19 -e "select chrom,txStart,txEnd,name2,exonCount,strand from refGene" > refGene.bed
+cat refGene.bed | awk 'BEGIN{OFS="\t"} ($6=="+") {print $1,$2,($2+1),$4,$5,$6} ($6=="-") {print $1,$3,($3+1),$4,$5,$6}' | sort-bed - > refGene.tss.bed
+
+closestBed  -d -a gm12878.insulator.bed.gz -b refGene.tss.bed > ins.dist
+closestBed  -d -a gm12878.chromHMM.only.bed.gz -b refGene.tss.bed > chrom.dist
+closestBed  -d -a gm12878.plus.DNAse.bed.gz -b refGene.tss.bed > dnase.dist
+closestBed  -d -a gm12878.plus.dREG.ENHONLY.bed.gz -b refGene.tss.bed > dreg.E.dist
+closestBed  -d -a gm12878.plus.dREG.bed.gz -b refGene.tss.bed > dreg.dist
+#rm *.dist
+
+##############################################################################
+R
+id <- read.table("ins.dist")$V10
+cd <- read.table("chrom.dist")$V10
+dd <- read.table("dnase.dist")$V13
+dE <- read.table("dreg.E.dist")$V12
+dr <- read.table("dreg.dist")$V12
+
+breaks=seq(0,pretty(max(id, cd, dd, dE, dr))[2],5000)
+
+## Include this as a supplementary figure.
+pdf("Distance_from_nearest_RefSeq_gene.pdf")
+par(mfrow=(c(5,1)))
+hist(id, breaks, xlim=c(0,300000), main="Insulator", freq=FALSE, xlab="Distance [bp]", yaxt="n"); axis(2,cex.axis=0.5)
+hist(cd, breaks, xlim=c(0,300000), main="Chromatin", freq=FALSE, xlab="Distance [bp]", yaxt="n"); axis(2,cex.axis=0.5)
+hist(dd, breaks, xlim=c(0,300000), main="+HS", freq=FALSE, xlab="Distance [bp]", yaxt="n"); axis(2,cex.axis=0.5)
+hist(dE, breaks, xlim=c(0,300000), main="+eRNA (enhancers)", freq=FALSE, xlab="Distance [bp]", yaxt="n"); axis(2,cex.axis=0.5)
+hist(dr, breaks, xlim=c(0,300000), main="+eRNA (all)", freq=FALSE, xlab="Distance [bp]", yaxt="n"); axis(2,cex.axis=0.5)
+#dev.off()
+
+## Final sanity check.
+sum(cd>150000)/NROW(cd) #0.1241227
+sum(dd>150000)/NROW(dd) #0.08910124
+sum(dE>150000)/NROW(dE) #0.08121429
+sum(dr>150000)/NROW(dr) #0.0562134
+
+sum(cd<5000)/NROW(cd) #0.1276275
+sum(dd<5000)/NROW(dd) #0.1558611
+sum(dE<5000)/NROW(dE) #0.1563422
+sum(dr<5000)/NROW(dr) #0.3850083
+
+## Alternative visualization.
+id_cdf <- sapply(breaks, function(x) {sum(id>x)/NROW(cd)})
+cd_cdf <- sapply(breaks, function(x) {sum(cd>x)/NROW(cd)})
+dd_cdf <- sapply(breaks, function(x) {sum(dd>x)/NROW(dd)})
+dE_cdf <- sapply(breaks, function(x) {sum(dE>x)/NROW(dE)})
+dr_cdf <- sapply(breaks, function(x) {sum(dr>x)/NROW(dr)})
+
+par(mfrow=(c(1,1)))
+
+#pdf("Distance_from_nearest_RefSeq_gene.CDF.pdf")
+plot(breaks, cd_cdf, type="l", xlim=c(0,300000), col="#4f81bd")
+points(breaks, dd_cdf, type="l", col="#000000")
+points(breaks, dE_cdf, type="l", col="#e30000")
+points(breaks, dr_cdf, type="l", col="#e30000")
+points(breaks, id_cdf, type="l", col="dark green")
+dev.off()
+
+q("no")
+
+## Get those sites that DO overlap and test their enrichment
+
+cat ins.dist | awk 'BEGIN{OFS="\t"} ($10 == 0){print $0}' > ins.overlap.bed
+cat chrom.dist | awk 'BEGIN{OFS="\t"} ($10 == 0){print $0}' > chrom.overlap.bed
+cat dnase.dist | awk 'BEGIN{OFS="\t"} ($13 == 0){print $0}' > dnase.overlap.bed
+cat dreg.E.dist | awk 'BEGIN{OFS="\t"} ($12 == 0){print $0}' > dreg.E.overlap.bed
+cat dreg.dist | awk 'BEGIN{OFS="\t"} ($12 == 0){print $0}' > dreg.overlap.bed
+
+featureBits hg19 ins.overlap.bed /usr/projects/GROseq.parser/tss_detecter/eqtl.bed     ##  1   ## 524    ## 0.001908397
+featureBits hg19 chrom.overlap.bed /usr/projects/GROseq.parser/tss_detecter/eqtl.bed   ##  10  ## 2435   ## 0.004106776
+featureBits hg19 dnase.overlap.bed /usr/projects/GROseq.parser/tss_detecter/eqtl.bed   ##  14  ## 1651   ## 0.008479709
+#featureBits hg19 dreg.E.overlap.bed /usr/projects/GROseq.parser/tss_detecter/eqtl.bed ##  7   ## 525    ## 0.01333333      ## Depletes for TSS.
+featureBits hg19 dreg.overlap.bed /usr/projects/GROseq.parser/tss_detecter/eqtl.bed    ##  364 ## 24641  ## 0.01477213
+
+
+##########################################################################33
+
+
+
+closestBed  -d -a eqtl.bed -b gm12878.chromHMM.only.bed.gz > chrom.dist
+closestBed  -d -a eqtl.bed -b gm12878.plus.DNAse.bed.gz > dnase.dist
+closestBed  -d -a eqtl.bed -b gm12878.plus.dREG.ENHONLY.bed.gz > dreg.E.dist
+closestBed  -d -a eqtl.bed -b gm12878.plus.dREG.bed.gz > dreg.dist
+
+R
+cd <- read.table("chrom.dist")$V7
+dd <- read.table("dnase.dist")$V7
+dE <- read.table("dreg.E.dist")$V9
+dr <- read.table("dreg.dist")$V9
+
+
+
+
