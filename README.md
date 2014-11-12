@@ -21,6 +21,7 @@ Required software
 -----------------
 * R (http://www.r-project.org/)
 * mysql-dev (http://dev.mysql.com/downloads/).
+* bigWig R package (https://github.com/andrelmartins/bigWig; will be public very soon).
 
 This software is already installed on many UNIX systems.  Users can install the most appropriate version of these files for Ubuntu using: 
 
