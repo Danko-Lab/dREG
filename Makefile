@@ -17,6 +17,3 @@ dreg:
 	#make -C dREG/src/lib
 	R CMD INSTALL dREG --clean
 
-uninstall: 
-	rm -Rf ${R_LIBS}
-
