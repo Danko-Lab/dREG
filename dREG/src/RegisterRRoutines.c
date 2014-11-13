@@ -16,7 +16,7 @@
  *      Register entry points...
  *
  **************************************************************/
-void R_init_featureDetector(DllInfo *info) {
+void R_init_dREG(DllInfo *info) {
      R_CallMethodDef callMethods[]  = {
        {"get_genomic_data_R", (DL_FUNC)&get_genomic_data_R, 5},
        {NULL, NULL, 0}

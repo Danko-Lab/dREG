@@ -1,5 +1,5 @@
 Package: dREG
-Version: 0.0.1
+Version: 0.0.5
 Date: 2013-02-05
 Title: Detection of Regulatory DNA using GRO-seq Data (dREG).
 Author: Charles G. Danko <dankoc@gmail.com>

@@ -18,7 +18,7 @@ MFLGSESC := $(subst $(space),\$(space),$(MFLGS))
 #.c.o:
 #	$(CC) $(CFLAGS) $< -o $@
 
-featureDetector.so:
+dREG.so:
 	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${BWPATH}/libs/bigwiglib.a ${LIBS}
 
 clean:
