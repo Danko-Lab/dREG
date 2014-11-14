@@ -28,7 +28,7 @@ data.two_bigwig<- function(x, chr, bw1, bw2, depth, window) {
 #  indx <- which((queryByStep.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, do.sum=TRUE)>depth) &
 #           ((-1)*queryByStep.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, do.sum=TRUE)>depth) ) ## Assume minus values.
   indx <- which((step.bpQuery.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, with.attributes=FALSE)>depth) &
-           (step.bpQuery.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, abs.value = TRUE, with.attributes=FALSE)>depth) )
+           (step.bpQuery.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, abs.value = TRUE, with.attributes=FALSE)>depth) )
 
 
   centers <- (indx-1)*window+x+as.integer(window/2) ## Index is 1-based.  x is the offset.

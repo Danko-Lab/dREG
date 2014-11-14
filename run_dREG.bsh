@@ -1,5 +1,4 @@
 #!/usr/bin/bash
-export R_LIBS="~/bin/dREG"
 
 if [ "$#" -lt 4 ]; then
 	echo ""
