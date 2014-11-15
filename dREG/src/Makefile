@@ -19,7 +19,7 @@ MFLGSESC := $(subst $(space),\$(space),$(MFLGS))
 #	$(CC) $(CFLAGS) $< -o $@
 
 dREG.so:
-	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${BWPATH}/libs/bigwiglib.a ${LIBS}
+	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${BWPATH}/lib/bigwiglib.a ${LIBS}
 
 clean:
 	rm -f *.o *.so
