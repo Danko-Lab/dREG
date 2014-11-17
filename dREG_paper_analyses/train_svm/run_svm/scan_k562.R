@@ -4,7 +4,7 @@ require(featureDetector)
 ps_plus_path  <- "K562_unt.sort.bed.gz_plus.bw"
 ps_minus_path <- "K562_unt.sort.bed.gz_minus.bw"
 
-load("asvm.RData")
+load("asvm.intersDNase.getTrainSet.RData")#"asvm.RData")
 
 ## Now scan all positions in the genome ...
 inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
@@ -14,6 +14,6 @@ pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, b
 
 final_data <- data.frame(inf_positions, pred_val)
 options("scipen"=100, "digits"=4)
-write.table(final_data, file="k562.predictions.bedGraph", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+write.table(final_data, file="k562.predictions.dn.bedGraph", row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
 
 
