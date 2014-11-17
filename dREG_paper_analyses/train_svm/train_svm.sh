@@ -1,7 +1,7 @@
 #$ -S /bin/bash
 #$ -cwd
-#$ -N tss_detector
-#$ -o tss_detector.out.$JOB_ID
+#$ -N train_dREG.SVR
+#$ -o train_dREG.SVR.out.$JOB_ID
 #$ -j y
 #$ -pe bscb 6
 #$ -M dankoc@gmail.com
@@ -12,7 +12,8 @@
 STARTDIR=`pwd`
 
 ## Copy files to scratch space (/workdir and /SSD).
-SCRATCH=/SSD/
+SCRATCH=/SSD/cgd24/train_SVR
+mkdir $SCRATCH
 cp /home/cgd24/projects/tss_detector/train_svm/train_svm.R $SCRATCH ## 
 cp /home/cgd24/projects/tss_detector/andre_hmm/hg19.k562.new_hmm2b.post2.bed $SCRATCH ## Andre's HMM Predictions
 cp /home/cgd24/projects/tss_detector/data/GencodeMerge.IntersectOpStrand.bed $SCRATCH ## Gene overlap files
@@ -22,7 +23,9 @@ cp /home/cgd24/projects/tss_detector/data/k562/K562_unt.sort.bed.gz_*.bw $SCRATC
 cd $SCRATCH
 
 ## Intersect w/ DNase.
-zcat k562.dnase.UW.DUKE.inters.bed.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-100,$3+100}' | bedops --merge - | bedmap --echo --count hg19.k562.new_hmm2b.post2.bed - | grep "|1" | sed "s/|1//g" > hg19.k562.new_hmm2b.post2.dnase.bed
+zcat k562.dnase.UW.DUKE.inters.bed.gz > k562.dnase.UW.DUKE.inters.bed
+cat hg19.k562.new_hmm2b.post2.bed | awk 'BEGIN{OFS="\t"} {print $1,$2-100,$3+100}' | bedops --merge - | bedmap --echo --count gunzip k562.dnase.UW.DUKE.inters.bed - | grep -v "|0" | sed "s/|/\t/g" > hg19.k562.new_hmm2b.post2.dnase.bed
+head hg19.k562.new_hmm2b.post2.dnase.bed
 
 
 ## Run R.
@@ -34,3 +37,4 @@ cp TrainIndx.Rflat $STARTDIR
 cp *.bedGraph $STARTDIR
 cp *.RData $STARTDIR
 
+rm -rf $SCRATCH

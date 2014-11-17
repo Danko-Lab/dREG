@@ -1,4 +1,4 @@
-require(featureDetector)
+require(dREG)
 
 ## Read PRO-seq data.
 ps_plus_path  <- "K562_unt.sort.bed.gz_plus.bw"
