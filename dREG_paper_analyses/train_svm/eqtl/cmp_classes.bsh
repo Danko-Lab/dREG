@@ -1,0 +1,60 @@
+#!/usr/bin/bash
+## Compares GWAS SNPs in different classes of functional element.
+## For GWAS categories with extremely high cell-type specific enrichments.
+
+schaub=Schaub/all.bed
+types=`cat $schaub | awk '{print $5}' | grep "Celiac\|Rheumatoid\|Type_1_diabetes\|lupus\|asthma" | uniq`
+pth=../assayOverlap
+celltype="cd4 gm12878"
+
+## Compare to each class in T-cells and B-cells.
+for i in $types
+do
+ for ct in $celltype
+ do
+  echo $i $ct
+
+  cat $schaub | grep $i | sort-bed - > tmp.bed
+  zcat $pth/$ct.insulator.bed.gz | bedmap --echo --indicator tmp.bed - | grep "|1" -c
+  zcat $pth/$ct.chromHMM.only.bed.gz | bedmap --echo --indicator tmp.bed - | grep "|1" -c
+  zcat $pth/$ct.plus.DNAse.bed.gz | bedmap --echo --indicator tmp.bed - | grep "|1" -c
+  zcat $pth/$ct.plus.dREG.bed.gz | bedmap --echo --indicator tmp.bed - | grep "|1" -c
+
+  rm tmp.bed
+ done
+done
+
+## Totals.
+for ct in $celltype
+do
+  echo $ct
+
+  cat $schaub | grep $i > tmp.bed
+  zcat $pth/$ct.insulator.bed.gz | grep "" -c
+  zcat $pth/$ct.chromHMM.only.bed.gz | grep "" -c
+  zcat $pth/$ct.plus.DNAse.bed.gz | grep "" -c
+  zcat $pth/$ct.plus.dREG.bed.gz | grep "" -c
+
+done
+
+for i in $types
+do
+  echo $i
+  cat $schaub | grep $i -c
+done
+
+## Then test enrichments in R
+R
+
+## CD4.
+fisher.test(data.frame(c(15, 19227), c(0, 14087))) ## Ins
+fisher.test(data.frame(c(15, 19227), c(10, 44769))) ## MCO
+fisher.test(data.frame(c(15, 19227), c(4, 19795))) ## DNase
+
+## GM12878
+fisher.test(data.frame(c(40, 33456), c(3, 33265))) ## Ins
+fisher.test(data.frame(c(40, 33456), c(12, 53900))) ## MCO
+fisher.test(data.frame(c(40, 33456), c(3, 22236))) ## DNase
+
+
+
