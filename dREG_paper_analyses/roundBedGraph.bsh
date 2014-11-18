@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+zcat $1 | awk '{printf("%s\t%s\t%s\t%.2f\n", $1,$2,$3,$4)}'
