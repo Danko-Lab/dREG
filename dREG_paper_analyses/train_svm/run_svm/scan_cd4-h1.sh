@@ -16,6 +16,7 @@ mkdir $SCRATCH
 cp /home/cgd24/projects/tss_detector/train_svm/asvm.intersDNase.getTrainSet.RData $SCRATCH ## 
 cp /bscb/bscb07/cgd24/projects/CD4/Alignments/J-U-cc_*.bw $SCRATCH ## Combined
 cp /bscb/bscb07/cgd24/projects/CD4/Alignments/J-PI-cc_*.bw $SCRATCH
+cp /home/cgd24/projects/tss_detector/run_svm_cd4/scan_cd4-h1.R $SCRATCH
 cd $SCRATCH
 
 ## Run R.
