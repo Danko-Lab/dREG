@@ -20,13 +20,24 @@ zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.
 chromhmm=chromhmm.bed
 zcat /bscb/bscb07/cgd24/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed -  > $chromhmm
 
+## Active enhancers by histone acetylation peaks.
+actEnh=actEnh.bed
+bigBedToBed /bscb/bscb07/cgd24/data/hg19/gm12878/histones/wgEncodeBroadHistoneGm12878H3k27acStdAln.bb tmp1.bed
+bigBedToBed /bscb/bscb07/cgd24/data/hg19/gm12878/histones/wgEncodeBroadHistoneGm12878H3k9acStdAln.bb tmp2.bed
+cat tmp1.bed tmp2.bed | sort-bed - | bedops --merge - > $actEnh
+rm tmp1.bed tmp2.bed
+
+
 ## CAGE.
+cageEnh=cage.enh.bed
+cageEnhSrc=ext_files/CAGE.enhancers.Bcell.bed #ext_files/gm12878.30pct.bed #
+sort-bed $cageEnhSrc | awk 'BEGIN {OFS="\t"} {print $1,$2-1000,$3+1000}' | sort-bed - | grep "chrM" -v > $cageEnh
 cage=cage.tss.bed
 sort-bed cage_signal.gm12878.bed | grep "chrM" -v | bedops -m - > $cage
 
 ## RefGene ... 
 exprGene=refGene.cage.tss.bed
-hgsql hg19 -s -e "select chrom,txStart,txEnd,name,score,strand from refGene" | sort-bed - > refGene.bed
+#hgsql hg19 -s -e "select chrom,txStart,txEnd,name,score,strand from refGene" | sort-bed - > refGene.bed
 cat refGene.bed | awk 'BEGIN{OFS="\t"} {if($6 == "+") print $1,$2,$2+1,$4,$5,$6; else print $1,$3,$3+1,$4,$5,$6}' | sort-bed - > refTss.bed
 bedops --intersect refTss.bed $cage > $exprGene 
 
@@ -90,6 +101,18 @@ echo $[($SENSnum*100)/$SENSden]
 
 SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "|0|" -v -c`  ## Sensitivity
 SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for active enhancers, by histone acetylation.
+echo "Sensitivity for active enhancers, by histone acetylation"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $actEnh - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $actEnh - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for CAGE enhancers.
+echo "Sensitivity for CAGE enhancers"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $cageEnh - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $cageEnh - | grep "" -c`  ## Sensitivity
 echo $[($SENSnum*100)/$SENSden]
 
 ## Compute SENS for CAGE.
