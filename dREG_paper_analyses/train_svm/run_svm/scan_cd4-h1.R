@@ -1,4 +1,5 @@
 require(dREG)
+load("asvm.intersDNase.getTrainSet.RData")
 
 ## Read PRO-seq data.
 gs_plus_path  <- c("J-U-cc_plus.bw") #c("H1-U_plus.bw", "J-U_plus.bw", "H1-PI_plus.bw", "J-PI_plus.bw")
@@ -6,7 +7,6 @@ gs_minus_path <- c("J-U-cc_minus.bw") #c("H1-U_minus.bw", "J-U_minus.bw", "H1-PI
 
 outnames <- c("J-U.predictions.bedGraph") #c("H1-U.predictions.bedGraph", "J-U.predictions.bedGraph", "H1-PI.predictions.bedGraph", "J-PI.predictions.bedGraph")
 
-load("asvm.intersDNase.getTrainSet.RData")
 gdm <- genomic_data_model(window_sizes= c(10, 25, 50, 500, 5000), half_nWindows= c(10, 10, 30, 20, 20)) 
 
 for(i in 1:length(gs_plus_path)) {

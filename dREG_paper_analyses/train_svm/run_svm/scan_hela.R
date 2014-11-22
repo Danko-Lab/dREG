@@ -1,10 +1,10 @@
 require(dREG)
 
+load("asvm.intersDNase.getTrainSet.RData")
+
 ## Read PRO-seq data.
 ps_plus_path  <- "HeLa.combined_plus.bw"
 ps_minus_path <- "HeLa.combined_minus.bw"
-
-load("asvm.intersDNase.getTrainSet.RData")
 
 ## Now scan all positions in the genome ...
 inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
