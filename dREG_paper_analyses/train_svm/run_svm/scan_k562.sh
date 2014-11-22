@@ -6,13 +6,14 @@
 #$ -pe bscb 16
 #$ -M dankoc@gmail.com
 #$ -m be
-#$ -l h_rt=48:00:00
+#$ -l h_rt=96:00:00
 #$ -q long_term.q
 
 STARTDIR=`pwd`
 
 ## Copy files to scratch space (/workdir and /SSD).
-SCRATCH=/SSD/
+SCRATCH=/SSD/cgd24_scan_k562/
+mkdir $SCRATCH
 cp /home/cgd24/projects/tss_detector/train_svm/scan_k562.R $SCRATCH ## 
 #cp /home/cgd24/projects/tss_detector/train_svm/asvm.RData $SCRATCH ## 
 cp /home/cgd24/projects/tss_detector/train_svm/asvm.intersDNase.getTrainSet.RData $SCRATCH
@@ -25,3 +26,5 @@ gzip k562.predictions.dn.bedGraph
 
 ## Copy data files back.
 cp k562.predictions.dn.bedGraph.gz $STARTDIR
+
+rm -rf $SCRATCH

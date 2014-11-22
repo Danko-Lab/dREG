@@ -1,10 +1,10 @@
-require(featureDetector)
+require(dREG)
 
 ## Read PRO-seq data.
 gs_plus_path  <- "groseq_plus.bigWig"
 gs_minus_path <- "groseq_minus.bigWig"
 
-load("dnase1..asvm.RData") #asvm.RData")
+load("asvm.intersDNase.getTrainSet.RData")#"asvm.RData")
 
 ## Now scan all positions in the genome ...
 inf_positions <- get_informative_positions(gs_plus_path, gs_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
