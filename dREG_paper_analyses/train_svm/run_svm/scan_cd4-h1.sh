@@ -11,16 +11,11 @@
 STARTDIR=`pwd`
 
 ## Copy files to scratch space (/workdir and /SSD).
-SCRATCH=/SSD/cgd24_tssDetector_cd4
+SCRATCH=/SSD/cgd24_tssDetector_cd4_Jurkat
 mkdir $SCRATCH
-cp /home/cgd24/projects/tss_detector/run_svm_cd4/scan_cd4-h1.R $SCRATCH ## 
-cp /home/cgd24/projects/tss_detector/train_svm/asvm.RData $SCRATCH ## 
-cp ~/nextgen/projects/GROseq/CD4/Alignments/H1-U_*.bw $SCRATCH
-cp ~/nextgen/projects/GROseq/CD4/Alignments/J-U_*.bw $SCRATCH 
-cp ~/nextgen/projects/GROseq/CD4/Alignments/J-U-cc_*.bw $SCRATCH
-cp ~/nextgen/projects/GROseq/CD4/Alignments/H1-PI_*.bw $SCRATCH
-cp ~/nextgen/projects/GROseq/CD4/Alignments/J-PI_*.bw $SCRATCH 
-cp ~/nextgen/projects/GROseq/CD4/Alignments/J-PI-cc_*.bw $SCRATCH
+cp /home/cgd24/projects/tss_detector/train_svm/asvm.intersDNase.getTrainSet.RData $SCRATCH ## 
+cp /bscb/bscb07/cgd24/projects/CD4/Alignments/J-U-cc_*.bw $SCRATCH ## Combined
+cp /bscb/bscb07/cgd24/projects/CD4/Alignments/J-PI-cc_*.bw $SCRATCH
 cd $SCRATCH
 
 ## Run R.

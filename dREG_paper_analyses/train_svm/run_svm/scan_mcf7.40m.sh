@@ -11,12 +11,12 @@
 STARTDIR=`pwd`
 
 ## Copy files to scratch space (/workdir and /SSD).
-SCRATCH=/SSD/cgd24_dREG_mcf7
+SCRATCH=/SSD/cgd24_dREG_mcf7_40
 mkdir $SCRATCH
 
 cp /home/cgd24/projects/tss_detector/run_svm_MCF7/scan_mcf7.40m.R $SCRATCH ## 
-cp /home/cgd24/projects/tss_detector/train_svm/asvm.RData $SCRATCH ## 
-cp ~/nextgen/data/GROseq.parser/hg19/mcf7/groseq/*.bw $SCRATCH ## bigWig files.
+cp /home/cgd24/projects/tss_detector/train_svm/asvm.intersDNase.getTrainSet.RData $SCRATCH ## 
+cp /bscb/bscb07/cgd24/data/hg19/mcf7/groseq/*.bw $SCRATCH ## bigWig files.
 
 cd $SCRATCH
 
