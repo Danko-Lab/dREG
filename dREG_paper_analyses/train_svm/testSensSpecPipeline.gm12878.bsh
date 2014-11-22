@@ -2,14 +2,14 @@
 ## Testing sensivitiy and specificity in GM12878.
 ##
 
-cd /usr/projects/GROseq.parser/tss_detecter
+cd /bscb/bscb07/cgd24/home/work/tss_detector/validation
 
 ## Collapse Andre's TSS.
-cat /usr/projects/GROseq.parser/tss_detecter/andre_hmm/hg19.gm12878.new_hmm2b.post2.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' | sort-bed - > andrehmm.nostrand.bed
+cat ~/projects/tss_detector/andre_hmm/hg19.gm12878.new_hmm2b.post2.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' | sort-bed - > andrehmm.nostrand.bed
 #~/bin/tcolapse andrehmm.nostrand.bed 0 500 500 1 | sort-bed - > andrehmm.nostrand.merge.bed 
 grocap=andrehmm.nostrand.bed
-grocap_pair_p=andre_hmm/hg19.gm12878.new_hmm2b.post2.pair_plus.bed
-grocap_pair_m=andre_hmm/hg19.gm12878.new_hmm2b.post2.pair_minus.bed
+grocap_pair_p=~/projects/tss_detector/andre_hmm//hg19.gm12878.new_hmm2b.post2.pair_plus.bed
+grocap_pair_m=~/projects/tss_detector/andre_hmm//hg19.gm12878.new_hmm2b.post2.pair_minus.bed
 grep "" -c $grocap
 
 ## DNAse-1
@@ -18,7 +18,7 @@ zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.
 
 ## Ernst chromhmm tracks.
 chromhmm=chromhmm.bed
-zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed -  > $chromhmm
+zcat /bscb/bscb07/cgd24/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed -  > $chromhmm
 
 ## CAGE.
 cage=cage.tss.bed
@@ -69,8 +69,8 @@ chgrp bscb07 *
 ## Test sensitivity ...
 
 ## Use threshold 0.80 @ 10% FDR.
-infPos=~/work/tss_detector/gm12878.d1t.bedGraph.gz #gm12878.predictions.bedGraph.gz
-zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > 0.96) {print $1,$2-50,$3+51,$4}' | sort-bed - | bedops --merge - | perl ~/perl/bed_merge.pl 500 > tmp.mergepred.bed
+infPos=../gm12878.predictions.dn.bedGraph.gz
+zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > 0.83) {print $1,$2-50,$3+51,$4}' | sort-bed - | bedops --merge - | perl ~/perl/bed_merge.pl 500 > tmp.mergepred.bed
 
 ## Compute SENS/ SPEC.
 echo "Specificity"

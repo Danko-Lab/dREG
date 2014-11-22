@@ -15,8 +15,8 @@ SCRATCH=/SSD/cgd24_dREG_HELA
 mkdir $SCRATCH
 
 cp /home/cgd24/projects/tss_detector/run_svm_hela/scan_hela.R $SCRATCH ## 
-cp /home/cgd24/projects/tss_detector/train_svm/asvm.RData $SCRATCH ## 
-cp ~/nextgen/data/GROseq.parser/hg19/hela/groseq/HeLa*.bw $SCRATCH ## bigWig files.
+cp /home/cgd24/projects/tss_detector/train_svm/asvm.intersDNase.getTrainSet.RData $SCRATCH ## 
+cp /bscb/bscb07/cgd24/data/hg19/hela/groseq/HeLa*.bw $SCRATCH ## bigWig files.
 
 cd $SCRATCH
 

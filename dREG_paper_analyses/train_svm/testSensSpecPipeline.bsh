@@ -1,14 +1,14 @@
-cd /usr/projects/GROseq.parser/tss_detecter
+cd /bscb/bscb07/cgd24/home/work/tss_detector/validation
 
 ## Collapse Andre's TSS.
-cat /usr/projects/GROseq.parser/tss_detecter/andre_hmm/hg19.k562.new_hmm2b.post2.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' | sort-bed - > andrehmm.nostrand.bed
+cat ~/projects/tss_detector/andre_hmm/hg19.k562.new_hmm2b.post2.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,"N",$5,"+"}' | sort-bed - > andrehmm.nostrand.bed
 
 ## Remove sites used during training.
 trn=trainingset.bed
-cat /home/cgd24/work/tss_detector/train_holdout_svm/TrainingSet.bed | sort-bed - > $trn
+cat /home/cgd24/projects/tss_detector/train_svm/TrainingSet.bed | sort-bed - > $trn
 bedops --not-element-of -1 andrehmm.nostrand.bed $trn > andrehmm.nostrand.notrain.bed
-bedops --not-element-of -1 andre_hmm/hg19.k562.new_hmm2b.post2.pair_plus.bed $trn > andre.pair.plus.bed
-bedops --not-element-of -1 andre_hmm/hg19.k562.new_hmm2b.post2.pair_minus.bed $trn > andre.pair.minus.bed
+bedops --not-element-of -1 ~/projects/tss_detector/andre_hmm/hg19.k562.new_hmm2b.post2.pair_plus.bed $trn > andre.pair.plus.bed
+bedops --not-element-of -1 ~/projects/tss_detector/andre_hmm/hg19.k562.new_hmm2b.post2.pair_minus.bed $trn > andre.pair.minus.bed
 
 #~/bin/tcolapse andrehmm.nostrand.bed 0 500 500 1 | sort-bed - > andrehmm.nostrand.merge.bed 
 grocap=andrehmm.nostrand.notrain.bed
@@ -18,11 +18,11 @@ grep "" -c $grocap
 
 ## DNAse-1
 dnase=dnase.narrowpeak.bed
-zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz > $dnase
+zcat /bscb/bscb07/cgd24/data/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz > $dnase
 
 ## Ernst chromhmm tracks.
 chromhmm=chromhmm.bed
-zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed - > $chromhmm
+zcat /bscb/bscb07/cgd24/data/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed - > $chromhmm
 
 ## CAGE.
 cage=cage.tss.bed
@@ -78,7 +78,7 @@ chgrp bscb07 *
 
 ## Use threshold 0.79 @ 10% FDR, merging elements within 500 bp.
 #infPos=~/work/tss_detector/k562.predictions.bedGraph.gz
-infPos=~/work/tss_detector/train_holdout_svm/k562.ts.predictions.bedGraph.gz
+infPos=../k562.predictions.dn.bedGraph.gz
 zcat $infPos | awk 'BEGIN{OFS="\t"} ($4 > 0.79) {print $1,$2-50,$3+51,$4}' | sort-bed - | bedops --merge - | perl ~/perl/bed_merge.pl 500 > tmp.mergepred.bed
 
 ## Compute SENS/ SPEC.
