@@ -3,7 +3,7 @@
 #$ -N dREG.hela
 #$ -o dREG.hela.$JOB_ID
 #$ -j y
-#$ -pe bscb 32
+#$ -pe bscb 16
 #$ -M dankoc@gmail.com
 #$ -m be
 #$ -l h_rt=24:00:00
