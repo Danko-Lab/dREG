@@ -3,14 +3,14 @@ require(dREG)
 ## Process command arguments
 args <- commandArgs(trailingOnly=TRUE)
 
+load(dreg_model) ## Should have (by default) gdm and asvm.
+
 ## Read PRO-seq data.
 ps_plus_path  <- args[1]
 ps_minus_path <- args[2]
 outfile <- args[3]
 dreg_model <- args[4]
 ncores <- as.integer(args[5])
-
-load(dreg_model) ## Should have (by default) gdm and asvm.
 
 ## Now scan all positions in the genome ...
 inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
