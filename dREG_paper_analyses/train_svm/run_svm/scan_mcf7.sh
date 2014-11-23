@@ -6,7 +6,8 @@
 #$ -pe bscb 16
 #$ -M dankoc@gmail.com
 #$ -m be
-#$ -l h_rt=24:00:00
+#$ -l h_rt=48:00:00
+#$ -q long_term.q
 
 STARTDIR=`pwd`
 
