@@ -24,6 +24,13 @@ zcat /bscb/bscb07/cgd24/data/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narr
 chromhmm=chromhmm.bed
 zcat /bscb/bscb07/cgd24/data/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer" | sort-bed - > $chromhmm
 
+## Active enhancers by histone acetylation peaks.
+actEnh=actEnh.bed
+bigBedToBed /bscb/bscb07/cgd24/data/hg19/k562/histones/wgEncodeBroadHistoneK562H3k27acStdAln.bb tmp1.bed
+bigBedToBed /bscb/bscb07/cgd24/data/hg19/k562/histones/wgEncodeBroadHistoneK562H3k9acStdAln.bb tmp2.bed
+cat tmp1.bed tmp2.bed | sort-bed - | bedops --merge -  > $actEnh
+rm tmp1.bed tmp2.bed
+
 ## CAGE.
 cage=cage.tss.bed
 #zcat /usr/data/GROseq.parser/hg19/k562/cage/wgEncodeRikenCageK562CellPapTssHmm.bedRnaElements.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"N",1,$6}' | sort-bed - > $cage
@@ -31,7 +38,7 @@ sort-bed cage_signal.k562.bed | grep "chrM" -v | bedops -m - > $cage
 
 ## RefGene ... 
 exprGene=refGene.cage.tss.bed
-hgsql hg19 -s -e "select chrom,txStart,txEnd,name,score,strand from refGene" | sort-bed - > refGene.bed
+#hgsql hg19 -s -e "select chrom,txStart,txEnd,name,score,strand from refGene" | sort-bed - > refGene.bed
 cat refGene.bed | awk 'BEGIN{OFS="\t"} {if($6 == "+") print $1,$2,$2+1,$4,$5,$6; else print $1,$3,$3+1,$4,$5,$6}' | sort-bed - > refTss.bed
 bedops --intersect refTss.bed $cage > $exprGene 
 
@@ -99,6 +106,12 @@ echo $[($SENSnum*100)/$SENSden]
 
 SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "|0|" -v -c`  ## Sensitivity
 SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $grocap_pair_m - | grep "" -c`  ## Sensitivity
+echo $[($SENSnum*100)/$SENSden]
+
+## Compute SENS for active enhancers, by histone acetylation.
+echo "Sensitivity for active enhancers, by histone acetylation"
+SENSnum=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $actEnh - | grep "|0|" -v -c`  ## Sensitivity
+SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $actEnh - | grep "" -c`  ## Sensitivity
 echo $[($SENSnum*100)/$SENSden]
 
 ## Compute SENS for CAGE.
