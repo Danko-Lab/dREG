@@ -13,7 +13,7 @@ for(i in 1:length(gs_plus_path)) {
 	## Now scan all positions in the genome ...
 	inf_positions <- get_informative_positions(gs_plus_path[i], gs_minus_path[i], depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
 
-	pred_val<- eval_reg_svm(gdm, asvm, inf_positions, gs_plus_path[i], gs_minus_path[i], batch_size= 10000, ncores=32)
+	pred_val<- eval_reg_svm(gdm, asvm, inf_positions, gs_plus_path[i], gs_minus_path[i], batch_size= 50000, ncores=32)
 
 	final_data <- data.frame(inf_positions, pred_val)
 	options("scipen"=100, "digits"=4)

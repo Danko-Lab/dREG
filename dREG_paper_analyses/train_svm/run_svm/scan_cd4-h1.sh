@@ -1,12 +1,13 @@
 #$ -S /bin/bash
 #$ -cwd
-#$ -N tss_detector
-#$ -o tss_detector.out.$JOB_ID
+#$ -N tss_JURKAT
+#$ -o tss_JURKAT.out.$JOB_ID
 #$ -j y
 #$ -pe bscb 16
 #$ -M dankoc@gmail.com
 #$ -m be
-#$ -l h_rt=24:00:00
+#$ -l h_rt=36:00:00
+#$ -q long_term.q
 
 STARTDIR=`pwd`
 
