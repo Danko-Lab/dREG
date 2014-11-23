@@ -47,27 +47,49 @@ roc.plot(dREG, main=paste("AUC=", AUC))
 
 ##########################################
 ## Fig. 1D (Accuracy on data types)
+
+## 10% fdr		 
 acc <- read.csv(text="Cell type, Comparison, Sensitivity
-K562, GRO-cap Pairs, 93
-K562, GRO-cap Sites, 84
-K562, CAGE TSS, 92
+K562, DHS TSS, 91
+K562, DHS Acetyl, 84
+K562, CAGE TSS, 94
+K562, GRO-cap Pairs, 94
+K562, GRO-cap Gene body, 88
+K562, GRO-cap Enhancers, 80
+K562, GRO-cap Promoters, 95
+K562, GRO-cap Sites, 86
+GM12878, DHS TSS, 93
+GM12878, DHS Acetyl, 79
+GM12878, CAGE TSS, 90
 GM12878, GRO-cap Pairs, 97
-GM12878, GRO-cap Sites, 90
-GM12878, CAGE TSS, 90", header=TRUE)
+GM12878, GRO-cap Gene body, 86
+GM12878, GRO-cap Enhancers, 85
+GM12878, GRO-cap Promoters, 96
+GM12878, GRO-cap Sites, 90", header=TRUE)
 
 barchart(Comparison~Sensitivity,data=acc,groups=Cell.type, #col=col,
          scales=list(x=list(rot=0,cex=x_cex), y=list(rot=35, cex=y_cex)), xlim=c(0,100),
 		 auto.key=list(columns = 2, space = "top"),
 		 lwd=1, pch=1, xlab= list(cex=x_lab_cex))
 
-		 
+## 5% fdr		 
 acc <- read.csv(text="Cell type, Comparison, Sensitivity
-K562, GRO-cap Gene body, 85
-K562, GRO-cap Enhancers, 78
-K562, GRO-cap Promoters, 94
-GM12878, GRO-cap Gene body, 90
-GM12878, GRO-cap Enhancers, 85
-GM12878, GRO-cap Promoters, 95", header=TRUE)
+K562, DHS TSS, 86
+K562, DHS Acetyl, 79
+K562, CAGE TSS, 91
+K562, GRO-cap Pairs, 89
+K562, GRO-cap Gene body, 79
+K562, GRO-cap Enhancers, 70
+K562, GRO-cap Promoters, 92
+K562, GRO-cap Sites, 79
+GM12878, DHS TSS, 87
+GM12878, DHS Acetyl, 72
+GM12878, CAGE TSS, 86
+GM12878, GRO-cap Pairs, 92
+GM12878, GRO-cap Gene body, 81
+GM12878, GRO-cap Enhancers, 73
+GM12878, GRO-cap Promoters, 91
+GM12878, GRO-cap Sites, 83", header=TRUE)
 
 barchart(Comparison~Sensitivity,data=acc,groups=Cell.type, #col=col,
          scales=list(x=list(rot=0,cex=x_cex), y=list(rot=35, cex=y_cex)), xlim=c(0,100),
