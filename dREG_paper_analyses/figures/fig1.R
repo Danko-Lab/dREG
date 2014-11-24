@@ -54,7 +54,7 @@ K562, DHS TSS, 91
 K562, DHS Acetyl, 84
 K562, CAGE TSS, 94
 K562, GRO-cap Pairs, 94
-K562, GRO-cap Gene body, 88
+K562, GRO-cap Gene body, 84
 K562, GRO-cap Enhancers, 80
 K562, GRO-cap Promoters, 95
 K562, GRO-cap Sites, 86
@@ -62,7 +62,7 @@ GM12878, DHS TSS, 93
 GM12878, DHS Acetyl, 79
 GM12878, CAGE TSS, 90
 GM12878, GRO-cap Pairs, 97
-GM12878, GRO-cap Gene body, 86
+GM12878, GRO-cap Gene body, 89
 GM12878, GRO-cap Enhancers, 85
 GM12878, GRO-cap Promoters, 96
 GM12878, GRO-cap Sites, 90", header=TRUE)
@@ -78,7 +78,7 @@ K562, DHS TSS, 86
 K562, DHS Acetyl, 79
 K562, CAGE TSS, 91
 K562, GRO-cap Pairs, 89
-K562, GRO-cap Gene body, 79
+K562, GRO-cap Gene body, 77
 K562, GRO-cap Enhancers, 70
 K562, GRO-cap Promoters, 92
 K562, GRO-cap Sites, 79
@@ -86,7 +86,7 @@ GM12878, DHS TSS, 87
 GM12878, DHS Acetyl, 72
 GM12878, CAGE TSS, 86
 GM12878, GRO-cap Pairs, 92
-GM12878, GRO-cap Gene body, 81
+GM12878, GRO-cap Gene body, 80
 GM12878, GRO-cap Enhancers, 73
 GM12878, GRO-cap Promoters, 91
 GM12878, GRO-cap Sites, 83", header=TRUE)
@@ -96,7 +96,27 @@ barchart(Comparison~Sensitivity,data=acc,groups=Cell.type, #col=col,
 		 auto.key=list(columns = 2, space = "top"),
 		 lwd=1, pch=1, xlab= list(cex=x_lab_cex))
 
-		 
+
+acc <- read.csv(text="Cell type, Comparison, TSS, Intronic, Intergenic
+K562, DHS TSS, 91
+K562, DHS Acetyl, 84
+K562, CAGE TSS, 94
+K562, GRO-cap Pairs, 94
+K562, GRO-cap Gene body, 88
+K562, GRO-cap Enhancers, 80
+K562, GRO-cap Promoters, 95
+K562, GRO-cap Sites, 86
+GM12878, DHS TSS, 93
+GM12878, DHS Acetyl, 79
+GM12878, CAGE TSS, 90
+GM12878, GRO-cap Pairs, 97
+GM12878, GRO-cap Gene body, 86
+GM12878, GRO-cap Enhancers, 85
+GM12878, GRO-cap Promoters, 96
+GM12878, GRO-cap Sites, 90", header=TRUE)
+
+
+
 acc <- read.csv(text="Cell type, Method, Ernst classes, Sensitivity
 K562, GRO-cap, 1_Active_Promoter, 80
 K562, dREG, 1_Active_Promoter, 88
