@@ -42,7 +42,9 @@ else:
 # prepare to run through!
 i=0
 print 'Opening file', infile_path
-for line in gzip.open(infile_path):
+if '.gz' in infile_path: f = gzip.open(infile_path)
+else: f = open(infile_path)
+for line in f:
     if i%5000000==0:
         print str(100*float(i)/num_lines)+'%'
     i+=1
