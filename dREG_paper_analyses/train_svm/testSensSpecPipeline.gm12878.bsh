@@ -145,6 +145,75 @@ SENSden=`cat tmp.mergepred.bed | bedmap --echo --count --echo-map $exprGene - | 
 echo $[($SENSnum*100)/$SENSden]
 
 ####################################################################
+## Fraction in promoters, intronic, intergenic.
+reftss100=refTss100.bed ## Within 25bp of annotated tss.
+zcat $refgene | awk 'BEGIN{OFS="\t"} {if($6 == "+") print $1,$2-1,$2+1,$4,$5,$6; else print $1,$3-1,$3+1,$4,$5,$6}' | sort-bed - > $reftss100
+
+echo "Fraction of GRO-cap sites @RefSeq TSS, @Intron, @Intergenic"
+cat $grocap | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $grocap | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of GRO-cap pairs @RefSeq TSS, @Intron, @Intergenic"
+cat $grocap_pair_p | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $grocap_pair_p | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of DHS-GRO-cap @RefSeq TSS, @Intron, @Intergenic"
+cat $dnaseTxn | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $dnaseTxn | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of GRO-cap GeneBodies @RefSeq TSS, @Intron, @Intergenic"
+cat $grocapBodies | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $grocapBodies | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of GRO-cap enhancers @RefSeq TSS, @Intron, @Intergenic"
+cat $grocapEnhancers | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $grocapEnhancers | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of GRO-cap promoters @RefSeq TSS, @Intron, @Intergenic"
+cat $grocapPromoter | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $grocapPromoter | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of Ac-DHS @RefSeq TSS, @Intron, @Intergenic"
+cat $actEnh | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $actEnh | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of CAGE-DHS @RefSeq TSS, @Intron, @Intergenic"
+cat $cageDHS | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $cageDHS | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+echo "Fraction of EXPR TSS @RefSeq TSS, @Intron, @Intergenic"
+cat $exprGene | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" | sed "s/|0|//g" > tmp.notss
+atTSS=`cat $exprGene | bedmap --echo --count --echo-map - $reftss100 | grep "|0|" -v -c`  ## Count those at the TSS.
+inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -v -c` ## Count those that are in a gene (of those not at TSS).
+noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
+echo $atTSS $inGENE $noGENE
+
+
+####################################################################
 ## Sensitivity for Ernst tracks.
 
 for class in `less $chromhmm | awk '{print $4}' | sort | uniq` 
