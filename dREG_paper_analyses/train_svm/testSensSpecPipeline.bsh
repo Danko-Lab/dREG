@@ -222,6 +222,24 @@ inGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss 
 noGENE=`zcat $refgene | sort-bed - | bedmap --echo-map --count --echo tmp.notss - | grep "|0|" -c`    ## Count those that are NOT in a gene (of those not at TSS).
 echo $atTSS $inGENE $noGENE
 
+
+#############################################
+## Compute SENS/ SPEC. specifically for DNase-1 HS sites (reviewer illustration).
+
+## Add insulator b/c many DHS mark insulators.
+chromhmm=chromhmm.bed
+zcat /bscb/bscb07/cgd24/data/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - > $chromhmm
+
+## Combined file.
+cat $grocap $chromhmm $cage $trn | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | sort-bed - > all
+
+## Report specificity.
+echo "Specificity for DNase-1"
+SPECnum=`zcat ../assayOverlap/k562.dnase.UW.DUKE.inters.bed.gz | sort-bed - | bedmap --echo --count --echo-map - all | grep "|0|" -c -v` ## Specificity
+SPECden=`zcat ../assayOverlap/k562.dnase.UW.DUKE.inters.bed.gz | sort-bed - | bedmap --echo --count --echo-map - all | grep "" -c` ## Specificity
+echo $[($SPECnum*100)/$SPECden]
+
+
 ####################################################################
 ## Fraction in promtoers, enhancers.
 
