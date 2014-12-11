@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-cd /home/cgd24/work/tss_detector/assayOverlap
+cd /home/cgd24/storage/home/work/tss_detector/assayOverlap
 rm *.bed.gz *.bed
 
 ##
@@ -15,26 +15,26 @@ dreg=k562.bed
 zcat ../k562.predictions.bed.gz > $dreg
 
 ## Add Insulators to Ernst tracks!!
-chromhmm=/home/cgd24/work/tss_detector/assayOverlap/k562.chromhmm.bed
-zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - | bedops --merge - > $chromhmm
+chromhmm=/home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.chromhmm.bed
+zcat /home/cgd24/storage/data/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - | bedops --merge - > $chromhmm
 
 insulator=k562.insulator.bed
-zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > $insulator
+zcat /home/cgd24/storage/data/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > $insulator
 enh=enh.bed
-zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $enh
+zcat /home/cgd24/storage/data/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $enh
 pro=pro.bed
-zcat /usr/data/GROseq.parser/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > $pro
+zcat /home/cgd24/storage/data/hg19/k562/chromhmm/wgEncodeBroadHmmK562HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > $pro
 
 
 ## Take hte intersection of DNAse-1 peaks
-dnase=/home/cgd24/work/tss_detector/assayOverlap/k562.dnase.UW.DUKE.inters.bed
-#zcat /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | sort-bed - | bedops --merge - > $dnase ## TRY THE UNION
-zcat /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz | sort-bed - > d1
-zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz  | sort-bed - > d2
+dnase=/home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.dnase.UW.DUKE.inters.bed
+#zcat /home/cgd24/storage/data/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz /home/cgd24/storage/data/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | sort-bed - | bedops --merge - > $dnase ## TRY THE UNION
+zcat /home/cgd24/storage/data/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz | sort-bed - > d1
+zcat /home/cgd24/storage/data/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz  | sort-bed - > d2
 bedops --element-of -1 d1 d2 > tmp1
 bedops --element-of -1 d2 d1 > tmp2
 bedops --merge tmp1 tmp2 > $dnase.tmp
-zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
+zcat /home/cgd24/storage/data/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
 rm d1 d2 tmp1 tmp2 $dnase.tmp
 
 bedops --merge $chromhmm $dnase $dreg > superset.bed
@@ -48,41 +48,41 @@ bedmap --indicator superset.bed $insulator > insulator.sup
 paste superset.bed dreg.sup dnase.sup chromhmm.sup insulator.sup > superset.nums.bed #h3k27ac.sup
 
 ## Get BED of subsets.
-bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/work/tss_detector/assayOverlap/k562.chromHMM.only.bed
-bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/k562.plus.DNAse.bed
-bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/k562.plus.dREG.bed
-bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/work/tss_detector/assayOverlap/k562.plus.dREG.PROONLY.bed
-bedops --element-of -1 $dreg $dnase $chromhmm $enh | bedops --not-element-of -1 - $pro > /home/cgd24/work/tss_detector/assayOverlap/k562.plus.dREG.ENHONLY.bed
+bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.chromHMM.only.bed
+bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.plus.DNAse.bed
+bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.plus.dREG.bed
+bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.plus.dREG.PROONLY.bed
+bedops --element-of -1 $dreg $dnase $chromhmm $enh | bedops --not-element-of -1 - $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.plus.dREG.ENHONLY.bed
 
 ## Get numbers of DNAse-1 UW and Duke regions which are not in the intersection.
-zcat /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz | sort-bed - | bedops --not-element-of -1 - $dnase | grep "" -c
-zcat /usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz  | sort-bed - | bedops --not-element-of -1 - $dnase | grep "" -c
-cat /usr/data/GROseq.parser/hg19/k562/dnase/peaks/uw.broadpeak.bed | bedops --not-element-of -1 - $dnase | grep "" -c
+zcat /home/cgd24/storage/data/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Pk.narrowPeak.txt.gz | sort-bed - | bedops --not-element-of -1 - $dnase | grep "" -c
+zcat /home/cgd24/storage/data/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz  | sort-bed - | bedops --not-element-of -1 - $dnase | grep "" -c
+cat /home/cgd24/storage/data/hg19/k562/dnase/peaks/uw.broadpeak.bed | bedops --not-element-of -1 - $dnase | grep "" -c
 
 ###############################################
 ## Also write out a file for gm12878.
 dreg=gm12878.bed
 zcat ../gm12878.predictions.bed.gz > $dreg
 
-chromhmm=/home/cgd24/work/tss_detector/assayOverlap/gm12878.chromhmm.bed
-zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - | bedops --merge - > $chromhmm
-zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $chromhmm.enh
+chromhmm=/home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.chromhmm.bed
+zcat /home/cgd24/storage/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer\|Insulator" | sort-bed - | bedops --merge - > $chromhmm
+zcat /home/cgd24/storage/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $chromhmm.enh
 
 insulator=gm12878.insulator.bed
-zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > $insulator
+zcat /home/cgd24/storage/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Insulator" | sort-bed - | bedops --merge - > $insulator
 enh=enh.bed
-zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $enh
+zcat /home/cgd24/storage/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Enhancer" | sort-bed - | bedops --merge - > $enh
 pro=pro.bed
-zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > $pro
+zcat /home/cgd24/storage/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter" | sort-bed - | bedops --merge - > $pro
 
 ## Take hte union of DNAse-1 peaks
-dnase=/home/cgd24/work/tss_detector/assayOverlap/gm12878.dnase.UW.DUKE.inters.bed
-cat /usr/data/GROseq.parser/hg19/gm12878/dnase/uw.merge.narrowPeak.bed | sort-bed - > d1
-zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz  | sort-bed - > d2
+dnase=/home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.dnase.UW.DUKE.inters.bed
+cat /home/cgd24/storage/data/hg19/gm12878/dnase/uw.merge.narrowPeak.bed | sort-bed - > d1
+zcat /home/cgd24/storage/data/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz  | sort-bed - > d2
 bedops --element-of -1 d1 d2 > tmp1
 bedops --element-of -1 d2 d1 > tmp2
 bedops --merge tmp1 tmp2 > $dnase.tmp
-zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
+zcat /home/cgd24/storage/data/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
 rm d1 d2 tmp1 tmp2 $dnase.tmp
 
 bedops --merge $chromhmm $dnase $dreg > superset.bed
@@ -95,31 +95,31 @@ bedmap --indicator superset.bed $insulator > insulator.sup
 paste superset.bed dreg.sup dnase.sup chromhmm.sup insulator.sup > gm12878.superset.nums.bed
 
 ## Get BED of subsets
-bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/work/tss_detector/assayOverlap/gm12878.chromHMM.only.bed
-bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/gm12878.plus.DNAse.bed
-bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/gm12878.plus.dREG.bed
-bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/work/tss_detector/assayOverlap/gm12878.plus.dREG.PROONLY.bed
-bedops --element-of -1 $dreg $dnase $chromhmm $enh | bedops --not-element-of -1 - $pro > /home/cgd24/work/tss_detector/assayOverlap/gm12878.plus.dREG.ENHONLY.bed
+bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.chromHMM.only.bed
+bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.plus.DNAse.bed
+bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.plus.dREG.bed
+bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.plus.dREG.PROONLY.bed
+bedops --element-of -1 $dreg $dnase $chromhmm $enh | bedops --not-element-of -1 - $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.plus.dREG.ENHONLY.bed
 
 ###############################################
 ## And in CD4+ T-cells.
 dreg=cd4.bed
 zcat ../H-U.TSS.bed.gz > $dreg
 
-chromhmm=/usr/data/GROseq.parser/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.Prom.Enh.bed
-pro=/usr/data/GROseq.parser/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.Prom.bed
+chromhmm=/home/cgd24/storage/data/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.Prom.Enh.bed
+pro=/home/cgd24/storage/data/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.Prom.bed
 insulator=cd4.insulator.bed
-cat /usr/data/GROseq.parser/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.Insulator.bed > $insulator 
-#dnase=/usr/data/GROseq.parser/hg19/cd4/dnase1fp/dnase1.peaks_peaks.narrowPeak
+cat /home/cgd24/storage/data/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.Insulator.bed > $insulator 
+#dnase=/home/cgd24/storage/data/hg19/cd4/dnase1fp/dnase1.peaks_peaks.narrowPeak
 
 ## Take hte union of DNAse-1 peaks
-dnase=/home/cgd24/work/tss_detector/assayOverlap/cd4.dnase.UW.DUKE.inters.bed
-cat /usr/data/GROseq.parser/hg19/cd4/dnase/duke.cd4.merge.bed | sort-bed - > d1
-cat /usr/data/GROseq.parser/hg19/cd4/dnase1fp/dnase1.peaks_peaks.narrowPeak | sort-bed - > d2
+dnase=/home/cgd24/storage/home/work/tss_detector/assayOverlap/cd4.dnase.UW.DUKE.inters.bed
+cat /home/cgd24/storage/data/hg19/cd4/dnase/duke.cd4.merge.bed | sort-bed - > d1
+cat /home/cgd24/storage/data/hg19/cd4/dnase1fp/dnase1.peaks_peaks.narrowPeak | sort-bed - > d2
 bedops --element-of -1 d1 d2 > tmp1
 bedops --element-of -1 d2 d1 > tmp2
 bedops --merge tmp1 tmp2 > $dnase.tmp
-zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
+zcat /home/cgd24/storage/data/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
 rm d1 d2 tmp1 tmp2 $dnase.tmp
 
 bedops --merge $chromhmm $dnase $dreg > superset.bed
@@ -133,21 +133,21 @@ bedmap --indicator superset.bed $insulator > insulator.sup
 paste superset.bed dreg.sup dnase.sup chromhmm.sup insulator.sup > cd4.superset.nums.bed
 
 ## Get BED of subsets.
-bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/work/tss_detector/assayOverlap/cd4.chromHMM.only.bed
-bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/cd4.plus.DNAse.bed
-bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/cd4.plus.dREG.bed
-bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/work/tss_detector/assayOverlap/cd4.plus.dREG.PROONLY.bed
-bedops --element-of -1 $dreg $dnase $chromhmm | bedops --not-element-of -1 - $pro > /home/cgd24/work/tss_detector/assayOverlap/cd4.plus.dREG.ENHONLY.bed
+bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/storage/home/work/tss_detector/assayOverlap/cd4.chromHMM.only.bed
+bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/cd4.plus.DNAse.bed
+bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/cd4.plus.dREG.bed
+bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/cd4.plus.dREG.PROONLY.bed
+bedops --element-of -1 $dreg $dnase $chromhmm | bedops --not-element-of -1 - $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/cd4.plus.dREG.ENHONLY.bed
 
 ## DNAse-1-ONLY is a major class in T-cells.
-bedops --not-element-of -1 $dnase $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/cd4.DNAse1.only.bed ## Major class in T-cells.  What's here?
-cat /usr/data/GROseq.parser/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.bed | sort-bed - | bedops --element-of -1 - cd4.DNAse1.only.bed | awk '{print $4}' | sort | uniq -c
-cat /usr/data/GROseq.parser/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.bed | awk '($4==35||$4==36||$4==37) {print $0}' | sort-bed - | bedops --element-of -1 cd4.DNAse1.only.bed - | grep "" -c ## Other open elements...
-zcat /usr/data/GROseq.parser/hg19/all/mappability/25mers.unmap.bed.gz | bedops --element-of -1 cd4.DNAse1.only.bed - | grep "" -c ## Mappability...
+bedops --not-element-of -1 $dnase $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/cd4.DNAse1.only.bed ## Major class in T-cells.  What's here?
+cat /home/cgd24/storage/data/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.bed | sort-bed - | bedops --element-of -1 - cd4.DNAse1.only.bed | awk '{print $4}' | sort | uniq -c
+cat /home/cgd24/storage/data/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.bed | awk '($4==35||$4==36||$4==37) {print $0}' | sort-bed - | bedops --element-of -1 cd4.DNAse1.only.bed - | grep "" -c ## Other open elements...
+zcat /home/cgd24/storage/data/hg19/all/mappability/25mers.unmap.bed.gz | bedops --element-of -1 cd4.DNAse1.only.bed - | grep "" -c ## Mappability...
 
 ## ~1/3 ...
-zcat /usr/data/GROseq.parser/hg19/all/mappability/25mers.unmap.bed.gz > unmap.tmp
-cat /usr/data/GROseq.parser/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.bed | awk '($4==35||$4==36||$4==37) {print $0}' | sort-bed - | bedops --element-of -1 cd4.DNAse1.only.bed - unmap.tmp | grep "" -c ## Other open elements...
+zcat /home/cgd24/storage/data/hg19/all/mappability/25mers.unmap.bed.gz > unmap.tmp
+cat /home/cgd24/storage/data/hg19/cd4/chromhmm/CD4.chromHMM.Ernst2010.hg19.bed | awk '($4==35||$4==36||$4==37) {print $0}' | sort-bed - | bedops --element-of -1 cd4.DNAse1.only.bed - unmap.tmp | grep "" -c ## Other open elements...
 rm unmap.tmp
 
 
@@ -156,26 +156,26 @@ rm unmap.tmp
 dreg=hela.bed
 zcat ../hela.predictions.bed.gz > $dreg
 
-chromhmm=/home/cgd24/work/tss_detector/assayOverlap/hela.chromhmm.bed
+chromhmm=/home/cgd24/storage/home/work/tss_detector/assayOverlap/hela.chromhmm.bed
 
-zcat /usr/data/GROseq.parser/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Enh\|Prom\|Tss\|Ctcf" | sort-bed - | bedops --merge - > $chromhmm
-zcat /usr/data/GROseq.parser/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Enh" | sort-bed - | bedops --merge - > $chromhmm.enh
+zcat /home/cgd24/storage/data/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Enh\|Prom\|Tss\|Ctcf" | sort-bed - | bedops --merge - > $chromhmm
+zcat /home/cgd24/storage/data/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Enh" | sort-bed - | bedops --merge - > $chromhmm.enh
 
 insulator=hela.insulator.bed
-zcat /usr/data/GROseq.parser/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Ctcf" | sort-bed - | bedops --merge - > $insulator
+zcat /home/cgd24/storage/data/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Ctcf" | sort-bed - | bedops --merge - > $insulator
 enh=enh.bed
-zcat /usr/data/GROseq.parser/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Enh" | sort-bed - | bedops --merge - > $enh
+zcat /home/cgd24/storage/data/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Enh" | sort-bed - | bedops --merge - > $enh
 pro=pro.bed
-zcat /usr/data/GROseq.parser/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Prom\|Tss" | sort-bed - | bedops --merge - > $pro
+zcat /home/cgd24/storage/data/hg19/hela/chromhmm/helas3.ChromHMM.bed.gz | grep "Prom\|Tss" | sort-bed - | bedops --merge - > $pro
 
 ## Take hte union of DNAse-1 peaks
-dnase=/home/cgd24/work/tss_detector/assayOverlap/hela.dnase.UW.DUKE.inters.bed
-cat /usr/data/GROseq.parser/hg19/hela/dnase/uw.merge.narrowPeak.bed | sort-bed - > d1
-zcat /usr/data/GROseq.parser/hg19/hela/dnase/wgEncodeOpenChromDnaseHelas3Pk.narrowPeak.gz  | sort-bed - > d2
+dnase=/home/cgd24/storage/home/work/tss_detector/assayOverlap/hela.dnase.UW.DUKE.inters.bed
+cat /home/cgd24/storage/data/hg19/hela/dnase/uw.merge.narrowPeak.bed | sort-bed - > d1
+zcat /home/cgd24/storage/data/hg19/hela/dnase/wgEncodeOpenChromDnaseHelas3Pk.narrowPeak.gz  | sort-bed - > d2
 bedops --element-of -1 d1 d2 > tmp1
 bedops --element-of -1 d2 d1 > tmp2
 bedops --merge tmp1 tmp2 > $dnase.tmp
-zcat /usr/data/GROseq.parser/hg19/hela/dnase/wgEncodeOpenChromDnaseHelas3Pk.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
+zcat /home/cgd24/storage/data/hg19/hela/dnase/wgEncodeOpenChromDnaseHelas3Pk.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
 rm d1 d2 tmp1 tmp2 $dnase.tmp
 
 bedops --merge $chromhmm $dnase $dreg > superset.bed
@@ -188,11 +188,11 @@ bedmap --indicator superset.bed $insulator > insulator.sup
 paste superset.bed dreg.sup dnase.sup chromhmm.sup insulator.sup > hela.superset.nums.bed
 
 ## Get BED of subsets
-bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/work/tss_detector/assayOverlap/hela.chromHMM.only.bed
-bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/hela.plus.DNAse.bed
-bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/work/tss_detector/assayOverlap/hela.plus.dREG.bed
-bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/work/tss_detector/assayOverlap/hela.plus.dREG.PROONLY.bed
-bedops --element-of -1 $dreg $dnase $chromhmm $enh | bedops --not-element-of -1 - $pro > /home/cgd24/work/tss_detector/assayOverlap/hela.plus.dREG.ENHONLY.bed
+bedops --not-element-of -1 $chromhmm $dnase $insulator > /home/cgd24/storage/home/work/tss_detector/assayOverlap/hela.chromHMM.only.bed
+bedops --not-element-of -1 $dnase $dreg $insulator | bedops --element-of -1 - $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/hela.plus.DNAse.bed
+bedops --element-of -1 $dreg $dnase $chromhmm > /home/cgd24/storage/home/work/tss_detector/assayOverlap/hela.plus.dREG.bed
+bedops --element-of -1 $dreg $dnase $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/hela.plus.dREG.PROONLY.bed
+bedops --element-of -1 $dreg $dnase $chromhmm $enh | bedops --not-element-of -1 - $pro > /home/cgd24/storage/home/work/tss_detector/assayOverlap/hela.plus.dREG.ENHONLY.bed
 
 
 ## Now write a venn diagriam, and some stacked barplots.

@@ -1,33 +1,33 @@
 
 ##
-ss <- read.table("superset.nums.bed")
+ss <- read.table("superset.nums.bed.gz")
 
 ## Using these values to construct a Venn diagriam by hand.
-NROW(ss) # 160500
+NROW(ss) # 160755
 
 ## dREG is ss[,4]
-sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1) # 22828
-sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 0) # 3899
-sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 0) # 326
-sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1) # 4029
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1) # 23594
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 0) # 4230
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 0) # 394
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1) # 4148
 
 ## DNASE-1 is ss[,5]
 #sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1) ## REPEAT 
-sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 0) # 9404
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 0) # 9304
 #sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 0) ## REPEAT.
-sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1) # 32894
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1) # 32129
 
 ## chromHMM is ss[,6]
 #sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1) ## REPEAT.
-sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1) # 87120
+sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1) # 86956
 #sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1) ## REPEAT.
 #sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1) ## REPEAT.
 
 ## Insulator is ss[,7]
-sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 1) # 1720
-sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 1) # 22499
-sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 1) # 16405
-sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 1) # 204
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 1) # 1838
+sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 1) # 22481
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 1) # 16291
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 1) # 216
 
 ###############################################
 ## H3K27ac is ss[,8]
@@ -45,17 +45,41 @@ sum(ss[,4] == 1 & ss[,8] == 0 & ss[,5] == 1) # 5769
 ## Express as a fraction.
 
 ## dREG is ss[,4]
-sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1)/ NROW(ss) # 14%
-sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 0)/ NROW(ss) # 2%
-sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 0)/ NROW(ss) # 0.2%
-sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1)/ NROW(ss) # 2.5%
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1)/NROW(ss) # 0.1467699
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 0)/NROW(ss) # 0.02631333
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 0)/NROW(ss) # 0.002450935
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1)/NROW(ss) # 0.02580324
 
 ## DNASE-1 is ss[,5]
-sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 0)/ NROW(ss) # 6%
-sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1)/ NROW(ss) # 20%
+#sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1)/NROW(ss) ## REPEAT 
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 0)/NROW(ss) # 0.05787689
+#sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 0)/NROW(ss) ## REPEAT.
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1)/NROW(ss) # 0.1998631
 
 ## chromHMM is ss[,6]
-sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1)/ NROW(ss) # 54%
+#sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1)/NROW(ss) ## REPEAT.
+sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1)/NROW(ss) # 0.5409225
+#sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1)/NROW(ss) ## REPEAT.
+#sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1)/NROW(ss) ## REPEAT.
+
+## Insulator is ss[,7]
+sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 1)/NROW(ss) # 0.1398464
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 1)/NROW(ss) # 0.1013405
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 1)/NROW(ss) # 0.00134366
+
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 0 & ss[,7] == 0)/NROW(ss) # 0.002450935
+
+#For Fig. 1 Venn diagriam
+sum(ss[,4] == 0 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 0)/NROW(ss) # 0.4010762
+sum(ss[,4] == 0 & ss[,6] == 1 & ss[,7] == 1)/NROW(ss) # 0.2411869
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 0)/NROW(ss) # 0.0985226
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 0)/NROW(ss) # 0.1353364
+
+sum(ss[,4] == 0 & ss[,5] == 1 & ss[,6] == 0 & ss[,7] == 0)/NROW(ss) # 0.05787689
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 0 & ss[,7] == 0)/NROW(ss) # 0.02631333
+sum(ss[,4] == 1 & ss[,5] == 0 & ss[,6] == 1 & ss[,7] == 0)/NROW(ss) # 0.02445958
+sum(ss[,4] == 1 & ss[,5] == 1 & ss[,6] == 1 & ss[,7] == 1)/NROW(ss) # 0.01143355
+
 
 #################################################################
 ## ADD GM12878 AND:

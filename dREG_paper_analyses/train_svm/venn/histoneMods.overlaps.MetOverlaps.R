@@ -1,23 +1,23 @@
-setwd("/home/cgd24/work/tss_detector/assayOverlap")
-
-chrom <- read.table("k562.chromHMM.only.bed")
-hs    <- read.table("k562.plus.DNAse.bed")
-erna  <- read.table("k562.plus.dREG.bed")
-erna_enh  <- read.table("k562.plus.dREG.ENHONLY.bed")
-ins   <- read.table("k562.insulator.bed")
+setwd("/home/cgd24/storage/home/work/tss_detector/assayOverlap")
 
 require(bigWig)
 
-doit <- function(file_name, halfWindow=5000, step=25, path= "/usr/data/GROseq.parser/hg19/k562/histones/", ...) {
+chrom <- read.table("k562.chromHMM.only.bed")[,1:3]
+hs    <- read.table("k562.plus.DNAse.bed")[,1:3]
+erna  <- read.table("k562.plus.dREG.bed")[,1:3]
+erna_enh  <- read.table("k562.plus.dREG.ENHONLY.bed")[,1:3]
+ins   <- read.table("k562.insulator.bed")[,1:3]
+
+doit <- function(file_name, stp=25, halfWindow= 5000, path= "/home/cgd24/storage/data/hg19/k562/histones/", ...) {
 	bw <- load.bigWig(paste(path,file_name,sep=""))
-	erna_meta <- meta.subsample(erna, bw, bw, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
-	erna_enh_meta <- meta.subsample(erna_enh, bw, bw, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
-	hs_meta <- meta.subsample(hs, bw, bw, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
-	chrom_meta <- meta.subsample(chrom, bw, bw, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
-	ins_meta <- meta.subsample(ins, bw, bw, halfWindow=halfWindow, step=step, do.sum=TRUE)[[4]]/step
+	erna_meta <- metaprofile.bigWig(center.bed(erna, halfWindow, halfWindow), bw, step=stp)[[5]]/stp
+	erna_enh_meta <- metaprofile.bigWig(center.bed(erna_enh, halfWindow, halfWindow), bw, step=stp)[[5]]/stp
+	hs_meta <- metaprofile.bigWig(center.bed(hs, halfWindow, halfWindow), bw, step=stp)[[5]]/stp
+	chrom_meta <- metaprofile.bigWig(center.bed(chrom, halfWindow, halfWindow), bw, step=stp)[[5]]/stp
+	ins_meta <- metaprofile.bigWig(center.bed(ins, halfWindow, halfWindow), bw, step=stp)[[5]]/stp
 	
     N = length(erna_meta)
-    x = ((1:N) - N/2)* step
+    x = ((1:N) - N/2)* stp
 	ylim=c(min(c(erna_meta, hs_meta, chrom_meta, ins_meta, erna_enh_meta)), max(c(erna_meta, hs_meta, chrom_meta, ins_meta, erna_enh_meta)))
 	
 	plot(x, erna_meta, type="l", ylim=ylim, col="#e30000", ...)
@@ -39,7 +39,7 @@ pdf("histoneMetaPlots.overlap.pdf")
  
  doit(file_name= "wgEncodeBroadHistoneK562H2azStdSig.bigWig", main="H2az")
  
- doit(file_name= "wgEncodeSydhNsomeK562Sig.bigWig", path="/usr/data/GROseq.parser/hg19/k562/sydh_mnase/", main="MNase")
- doit(file_name= "wgEncodeSydhNsomeK562Sig.bigWig", halfWindow= 2000, path="/usr/data/GROseq.parser/hg19/k562/sydh_mnase/", main="MNase")
+ doit(file_name= "wgEncodeSydhNsomeK562Sig.bigWig", path="/home/cgd24/storage/data/hg19/k562/sydh_mnase/", main="MNase")
+ doit(file_name= "wgEncodeSydhNsomeK562Sig.bigWig", halfWindow= 2000, path="/home/cgd24/storage/data/hg19/k562/sydh_mnase/", main="MNase")
 dev.off()
 
