@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-chromInfo=../hg19.chromInfo
+chromInfo=~/storage/data/hg19/hg19.chromInfo.txt
 
 j=`echo $1 | cut -d \. -f 1,2`
 zcat $1 | awk '{printf("%s\t%s\t%s\t%.2f\n", $1,$2,$3,$4)}' > $j.tmp.bedGraph
