@@ -82,32 +82,32 @@ dp=..
 dnase=/home/cgd24/storage/home/work/tss_detector/assayOverlap/k562.dnase.UW.DUKE.inters.bed.gz
 dpre=k562
 query="K562[[:space:]]None" 
-#writeOverlaps
+writeOverlaps
 HP=/home/cgd24/storage/data/hg19/k562/histones
 ##AddHistones $HP/wgEncodeBroadHistoneK562H3k4me3StdAln.bb
 #AddMe1Me3Ratios $HP/wgEncodeBroadHistoneK562H3k4me3StdSig.bigWig $HP/wgEncodeBroadHistoneK562H3k4me1StdSig.bigWig
-#R --no-save --args $dpre < erna_regression.R > $dpre.log &
+R --no-save --args $dpre < erna_regression.R > $dpre.log &
 ####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
 
 #GM12878
 dnase=/home/cgd24/storage/home/work/tss_detector/assayOverlap/gm12878.dnase.UW.DUKE.inters.bed.gz
 dpre=gm12878
 query="GM12878[[:space:]]None"
-#writeOverlaps
+writeOverlaps
 HP=/home/cgd24/storage/data/hg19/gm12878/histones
 ##AddHistones $HP/wgEncodeBroadHistoneGm12878H3k4me3StdAln.bb
 #AddMe1Me3Ratios $HP/wgEncodeBroadHistoneGm12878H3k4me3StdSig.bigWig $HP/wgEncodeBroadHistoneGm12878H3k4me1StdSig.bigWig
-#R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+R --no-save --args $dpre < erna_regression.R > $dpre.log & 
 ####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
 
 #MCF7
 dnase=/home/cgd24/storage/data/hg19/mcf7/dnase/wgEncodeAwgDnaseUwdukeMcf7UniPk.narrowPeak.gz # mcf7.peaks.bed.gz
 dpre=mcf7
 query="MCF-7[[:space:]]\(None\|vehicle\)" 
-#writeOverlaps
-#KittlerExtra
+writeOverlaps
+KittlerExtra
 #AddHistones
-#R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+R --no-save --args $dpre < erna_regression.R > $dpre.log & 
 ####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
 
 #HeLa
