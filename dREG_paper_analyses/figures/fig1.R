@@ -15,7 +15,7 @@ gdm <- genomic_data_model(window_sizes= c(10, 25, 50, 500, 5000), half_nWindows=
 
 ps_plus_path <- "/home/cgd24/storage/data/hg19/k562/proseq/K562_unt.sort.bed.gz_plus.bw"
 ps_minus_path <- "/home/cgd24/storage/data/hg19/k562/proseq/K562_unt.sort.bed.gz_minus.bw" 
-allSites_bed <- read.table("/usr/projects/GROseq.parser/tss_detecter/k562.allSites.bed")
+allSites_bed <- read.table("../validation/all")
 
 n_eval <- 30000
 inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE)
