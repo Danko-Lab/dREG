@@ -1,87 +1,87 @@
-cd /home/cgd24/work/tss_detector/assayOverlap
+cd /home/cgd24/storage/home/work/tss_detector/assayOverlap
 
 ## H3K27ac
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k27acStdAln.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/histones/wgEncodeBroadHistoneK562H3k27acStdAln.bb tmp.bed
 cat tmp.bed | grep "" -c # 26601
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 20372
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 8772
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 3559
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 140
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 1201
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 1329
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 20728
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 8763
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 3233
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 124
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 1182
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 1334
 
 ## H3K4me1
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k4me1StdAln.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/histones/wgEncodeBroadHistoneK562H3k4me1StdAln.bb tmp.bed
 cat tmp.bed | grep "" -c # 50467
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 24271
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 11325
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 10694
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 1867
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 9717
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 3918
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 25116
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 11393
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 10131
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 1805
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 9634
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 3781
 
 ## H3K9ac
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k9acStdAln.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/histones/wgEncodeBroadHistoneK562H3k9acStdAln.bb tmp.bed
 cat tmp.bed | grep "" -c # 19645
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 17577
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 6071
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 1339
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 81
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 419
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 229
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 17779
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 5903
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 1149
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 68
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 424
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 225
 
 
 ## p300
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/tf_peaks/peakSeq.optimal.wgEncodeSydhTfbsK562P300f4IggrabAlnRep0_vs_wgEncodeSydhTfbsK562InputIggrabAlnRep1.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/tf_peaks/peakSeq.optimal.wgEncodeSydhTfbsK562P300f4IggrabAlnRep0_vs_wgEncodeSydhTfbsK562InputIggrabAlnRep1.bb tmp.bed
 cat tmp.bed | grep "" -c # 1733
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 1444
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1006
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 246
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 1472
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1025
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 215
 cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 0
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 7
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 36
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 6
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 40
 
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/tf_peaks/spp.optimal.wgEncodeSydhTfbsK562P300f4IggrabAlnRep0_VS_wgEncodeSydhTfbsK562InputIggrabAln.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/tf_peaks/spp.optimal.wgEncodeSydhTfbsK562P300f4IggrabAlnRep0_VS_wgEncodeSydhTfbsK562InputIggrabAln.bb tmp.bed
 cat tmp.bed | grep "" -c # 2739
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 2074
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1466
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 513
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 2098
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1475
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 468
 cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 3
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 25
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 124
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 26
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 144
 
 ## CTCF
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/tf_peaks/peakSeq.optimal.wgEncodeUwTfbsK562CtcfStdAlnRep0_vs_wgEncodeUwTfbsK562InputStdAlnRep1.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/tf_peaks/peakSeq.optimal.wgEncodeUwTfbsK562CtcfStdAlnRep0_vs_wgEncodeUwTfbsK562InputStdAlnRep1.bb tmp.bed
 cat tmp.bed | grep "" -c # 37219
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 6658
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1460
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 2752
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 22641
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 239
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 4929
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 7021
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1581
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 2566
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 22537
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 245
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 4850
 
 featureBits hg19 -enrichment k562.plus.dREG.bed tmp.bed
 featureBits hg19 -enrichment k562.plus.DNAse.bed tmp.bed # ~40% of +hs explained by ctcf (by area).
 
 
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/tf_peaks/spp.optimal.wgEncodeBroadHistoneK562CtcfStdAlnRep0_VS_wgEncodeBroadHistoneK562ControlStdAlnRep1.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/tf_peaks/spp.optimal.wgEncodeBroadHistoneK562CtcfStdAlnRep0_VS_wgEncodeBroadHistoneK562ControlStdAlnRep1.bb tmp.bed
 cat tmp.bed | grep "" -c # 45094
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 7761
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1775
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 3381
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 26723
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 415
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 6814
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 8175
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 1920
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 3186
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 26637
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 420
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 6676
 
 ## H3K79me2 ## THIS IS CONSISTENT WITH MANY OF THESE PEAKS BEING IN TRANSCRIBED REGIONS.
-bigBedToBed /usr/data/GROseq.parser/hg19/k562/histones/wgEncodeBroadHistoneK562H3k79me2StdAln.bb tmp.bed
+bigBedToBed /home/cgd24/storage/data/hg19/k562/histones/wgEncodeBroadHistoneK562H3k79me2StdAln.bb tmp.bed
 cat tmp.bed | grep "" -c # 22497
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 10915
-cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 2218
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 1324
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 339
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 2922
-cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 6997
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.bed | grep "1" -c # 11091
+cat tmp.bed | sort-bed - | bedmap --indicator - k562.plus.dREG.ENHONLY.bed | grep "1" -c # 2201
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.insulator.bed | bedmap --indicator - k562.plus.DNAse.bed | grep "1" -c # 1206
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed | bedmap --indicator - k562.insulator.bed | grep "1" -c # 333
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.insulator.bed | bedmap --indicator - k562.chromHMM.only.bed | grep "1" -c # 2907
+cat tmp.bed | sort-bed - |  bedops --not-element-of -1 - k562.plus.dREG.bed k562.plus.DNAse.bed k562.chromHMM.only.bed k562.insulator.bed | grep "" -c # 6960
 
 
 
