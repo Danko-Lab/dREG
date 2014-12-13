@@ -76,11 +76,11 @@ data.two_bigwig.OR <- function(x, chr, bw1, bw2, depth, window) {
 get_informative_positions <- function(bw_path, bw_minus_path=NULL, depth= 0, window= 400, step=50, use_OR=TRUE, use_ANDOR=TRUE, debug= TRUE) {
   ## Load bigWigs
   bw  <- load.bigWig(bw_path)
-  q_chroms <- bw$chroms[bw$chromSizes > (window+2*step)]
+  q_chroms <- bw$chroms[bw$chromSizes > 2*(window+step)]
   
   if(!is.null(bw_minus_path)) {
     bw_minus <- load.bigWig(bw_minus_path)
-    q_chroms.minus <- bw_minus$chroms[bw_minus$chromSizes+step > (window+2*step)]
+    q_chroms.minus <- bw_minus$chroms[bw_minus$chromSizes+step > 2*(window+step)]
     q_chroms <- unique(q_chroms, bw_minus$chroms) #chroms[chroms %in% bw_minus$chroms]
   }
   else {
