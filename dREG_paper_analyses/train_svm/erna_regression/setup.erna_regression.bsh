@@ -8,7 +8,7 @@ function writeOverlaps {
 #	zcat $dp/$dpre.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | bedmap --echo --max dp/$dpre.bed - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' > $dpre.scores.bed
 
 	## USE ALL
-	zcat $dnase | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5}' > dnase1.$dpre.narrowpeak.bed
+	zcat $dnase | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5}' | sort-bed - > dnase1.$dpre.narrowpeak.bed
 	zcat $dp/$dpre.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4}' | bedmap --echo --max dnase1.$dpre.narrowpeak.bed - | sed "s/|/\t/g" | sed "s/NAN/NA/g" > data.tmp
 	rm dnase1.$dpre.narrowpeak.bed
 
@@ -86,7 +86,7 @@ writeOverlaps
 HP=/home/cgd24/storage/data/hg19/k562/histones
 ##AddHistones $HP/wgEncodeBroadHistoneK562H3k4me3StdAln.bb
 #AddMe1Me3Ratios $HP/wgEncodeBroadHistoneK562H3k4me3StdSig.bigWig $HP/wgEncodeBroadHistoneK562H3k4me1StdSig.bigWig
-R --no-save --args $dpre < erna_regression.R > $dpre.log &
+#R --no-save --args $dpre < erna_regression.R > $dpre.log 
 ####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
 
 #GM12878
@@ -97,7 +97,7 @@ writeOverlaps
 HP=/home/cgd24/storage/data/hg19/gm12878/histones
 ##AddHistones $HP/wgEncodeBroadHistoneGm12878H3k4me3StdAln.bb
 #AddMe1Me3Ratios $HP/wgEncodeBroadHistoneGm12878H3k4me3StdSig.bigWig $HP/wgEncodeBroadHistoneGm12878H3k4me1StdSig.bigWig
-R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+#R --no-save --args $dpre < erna_regression.R > $dpre.log 
 ####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
 
 #MCF7
@@ -107,7 +107,7 @@ query="MCF-7[[:space:]]\(None\|vehicle\)"
 writeOverlaps
 KittlerExtra
 #AddHistones
-R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+#R --no-save --args $dpre < erna_regression.R > $dpre.log 
 ####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
 
 #HeLa
@@ -116,7 +116,7 @@ dpre=hela
 query="HeLa-S3[[:space:]]None" #HeLa-S3
 writeOverlaps
 ##AddHistones
-R --no-save --args $dpre < erna_regression.R > $dpre.log & 
+#R --no-save --args $dpre < erna_regression.R > $dpre.log & 
 ####R --no-save --args $dpre < erna_randomForest.R >> $dpre.log &
 
 ## LEGACY.
