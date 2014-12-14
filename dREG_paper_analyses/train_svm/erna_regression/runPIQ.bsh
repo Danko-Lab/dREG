@@ -4,11 +4,24 @@ cd /home/cgd24/bin/thashim-piq-single-b73d9ff9853d
 ## Convert BAM to binary...
 Rscript bam2rdata.r common.r matches/d0.RData /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Aln.bam
 
-## For just 1st motif...
+## For motifs 1:5...
 for i in {1..5}
 do
  Rscript pwmmatch.exact.r common.r /home/cgd24/src/featureDetector/test_functions/train_svm/erna_regression/jaspar.format.txt $i matches/
  Rscript pertf.r common.r matches/ ~/no-backup/tmp/ output/ matches/d0.RData $i
  rm -Rf /home/cgd24/no-backup/tmp/*
+done
+
+## Run PIQ on subsampled data.
+j=2 ## ELF1
+for i in {1..9}
+do
+  mkdir matches$i
+  Rscript bam2rdata.r common.r matches$i/d0.$i.RData /home/shyland/dREG_analysis/subsample/GSM646567_hg19_wgEncodeUwDgfK562Aln_$i\0pc.bam
+  
+ Rscript pwmmatch.exact.r common.r /home/cdanko/src/featureDetector/test_functions/train_svm/erna_regression/jaspar.format.txt $j matches$i/
+ Rscript pertf.r common.r matches$i/ ~/no-backup/tmp/ output/ matches$i/d0.$i.RData $j
+ rm -Rf /home/cdanko/no-backup/tmp/*
+
 done
 

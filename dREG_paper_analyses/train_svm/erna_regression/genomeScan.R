@@ -49,7 +49,7 @@ system("bash genomeScan.bsh")
 
 analyzeData <- function(filename) {
   ## Read data.
-  test_tf <- read.table(filename); test_tf$V12[is.na(test_tf$V12)] <- 0
+  test_tf <- read.table(filename); test_tf$V12[is.na(test_tf$V12)] <- 0; test_tf <- test_tf[grep("_|chrM|chrY|chrX", test_tf$V1, invert=TRUE)]
   left <- test_tf[,2]-surroundSize; left[left < 0] <- 0 ## Should fix bigWig error trying to cout coordinates <0
 
   ## Get DNAse-1/ GRO-seq counts in the same region.
