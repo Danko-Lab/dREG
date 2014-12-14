@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 #Makes STARCH file for PIQ
 
-piq_path=/home/cgd24/bin/thashim-piq-single-b73d9ff9853d/output
+piq_path=/home/cgd24/storage/home/bin/thashim-piq-single-b73d9ff9853d/output
 
 function makestarch {
   ## Get score file ready.

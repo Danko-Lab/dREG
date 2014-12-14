@@ -5,8 +5,8 @@ surroundSize <- 200
 
 ## Feed rtfbsdb the entire genome.
 offset_dist <- 250
-system("twoBitInfo /gbdb/hg19/hg19.2bit hg19.chromInfo")
-chromInfo <- read.table("hg19.chromInfo")
+#system("twoBitInfo /gbdb/hg19/hg19.2bit hg19.chromInfo")
+chromInfo <- read.table("~/storage/data/hg19/hg19.chromInfo")
 chromInfo <- chromInfo[grep("_|chrM|chrY|chrX", chromInfo[,1], invert=TRUE),] ## Remove random, M, x, and y
 chromInfo <- data.frame(chrom=chromInfo[,1], chromStart=rep(0)+offset_dist, chromEnd=(chromInfo[,2]-1-offset_dist))
 
@@ -54,9 +54,9 @@ analyzeData <- function(filename) {
 
   ## Get DNAse-1/ GRO-seq counts in the same region.
   require(bigWig)
-  dnase <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/dnase/wgEncodeUwDgfK562Sig.bigWig")
-  gsPlus <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/proseq/K562_unt.sort.bed.gz_plus.bw")
-  gsMinus <- load.bigWig("/usr/data/GROseq.parser/hg19/k562/proseq/K562_unt.sort.bed.gz_minus.bw")
+  dnase <- load.bigWig("/home/cgd24/storage/data/hg19/k562/dnase/wgEncodeUwDgfK562Sig.bigWig")
+  gsPlus <- load.bigWig("/home/cgd24/storage/data/hg19/k562/proseq/K562_unt.sort.bed.gz_plus.bw")
+  gsMinus <- load.bigWig("/home/cgd24/storage/data/hg19/k562/proseq/K562_unt.sort.bed.gz_minus.bw")
   test_tf <- cbind(test_tf, 
 					DNAse= bed.region.bpQuery.bigWig(dnase, data.frame(test_tf[,1], left, test_tf[,3]+surroundSize)), 
 					GROseq_fwd= bed.region.bpQuery.bigWig(gsPlus, data.frame(test_tf[,1], left, test_tf[,3]+surroundSize)),
@@ -102,18 +102,18 @@ analyzeData <- function(filename) {
 }
 
 pdf("TFROCS.pdf")
- seqLogo(exp(t(read.motif("/usr/data/GROseq.parser/pwm_data/jolma/teal/NRF1.YGCGCATGCGCN.pwm", header=TRUE))), newpage=TRUE)
+ seqLogo(exp(t(read.motif("/home/cgd24/storage/data/pwm_data/jolma/teal/NRF1.YGCGCATGCGCN.pwm", header=TRUE))), newpage=TRUE)
  nrf1_ <- analyzeData("NRF1.scores.bed")
  
- seqLogo(exp(t(read.motif("/usr/data/GROseq.parser/pwm_data/jolma/teal/ELF1.AACCCGGAAGTR.pwm", header=TRUE))), newpage=TRUE)
+ seqLogo(exp(t(read.motif("/home/cgd24/storage/data/pwm_data/jolma/teal/ELF1.AACCCGGAAGTR.pwm", header=TRUE))), newpage=TRUE)
  elf1_ <- analyzeData("ELF1.scores.bed")
 
- seqLogo(exp(t(read.motif("/usr/data/GROseq.parser/pwm_data/jolma/teal/SP1.GCCMCGCCCMC.pwm", header=TRUE))), newpage=TRUE)
+ seqLogo(exp(t(read.motif("/home/cgd24/storage/data/pwm_data/jolma/teal/SP1.GCCMCGCCCMC.pwm", header=TRUE))), newpage=TRUE)
  sp1_ <- analyzeData("SP1.scores.bed")
 
- seqLogo(exp(t(read.motif("/usr/data/GROseq.parser/pwm_data/jolma/teal/MAX.NNCACGTGNN.pwm", header=TRUE))), newpage=TRUE)
+ seqLogo(exp(t(read.motif("/home/cgd24/storage/data/pwm_data/jolma/teal/MAX.NNCACGTGNN.pwm", header=TRUE))), newpage=TRUE)
  max_ <- analyzeData("MAX.scores.bed")
 
- seqLogo(exp(t(read.motif("/usr/data/GROseq.parser/pwm_data/jolma/teal/SP1.GCCMCGCCCMC.pwm", header=TRUE))), newpage=TRUE)
+ seqLogo(exp(t(read.motif("/home/cgd24/storage/data/pwm_data/jolma/teal/SP1.GCCMCGCCCMC.pwm", header=TRUE))), newpage=TRUE)
  sp1jolma_ <- analyzeData("SP1JASPAR.scores.bed")
 dev.off()
