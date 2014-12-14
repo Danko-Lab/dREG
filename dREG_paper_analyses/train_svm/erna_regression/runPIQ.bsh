@@ -17,11 +17,11 @@ j=2 ## ELF1
 for i in {1..9}
 do
   mkdir matches$i
-  Rscript bam2rdata.r common.r matches$i/d0.$i.RData /home/shyland/dREG_analysis/subsample/GSM646567_hg19_wgEncodeUwDgfK562Aln_$i\0pc.bam
+  Rscript bam2rdata.r common.r matches$i/d0.$i.RData /home/cgd24/storage/data/hg19/k562/dnase/subsampled/GSM646567_hg19_wgEncodeUwDgfK562Aln_$i\0pc.bam
   
- Rscript pwmmatch.exact.r common.r /home/cdanko/src/featureDetector/test_functions/train_svm/erna_regression/jaspar.format.txt $j matches$i/
+ Rscript pwmmatch.exact.r common.r /home/cgd24/src/featureDetector/test_functions/train_svm/erna_regression/jaspar.format.txt $j matches$i/
  Rscript pertf.r common.r matches$i/ ~/no-backup/tmp/ output/ matches$i/d0.$i.RData $j
- rm -Rf /home/cdanko/no-backup/tmp/*
+ rm -Rf /home/cgd24/no-backup/tmp/*
 
 done
 
