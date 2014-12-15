@@ -27,7 +27,7 @@ R
 require(bigWig)
 
 ## Now get ... data!
-irna_nok27ac <- read.table("iRNA.noH3K27ac.bed")[,1:3]
+irna_nok27ac <- read.table("iRNA.noH3K27ac.bed")[,1:3] 
 k27ac_noirna <- read.table("H3K27ac.noiRNA.bed")[,1:3]
 
 pdf("OneActiveEnhancerClass.pdf")
