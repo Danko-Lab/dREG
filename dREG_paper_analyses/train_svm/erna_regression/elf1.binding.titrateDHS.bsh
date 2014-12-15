@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+## Get peaks.
+cat /home/cgd24/storage/data/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Elf1sc631V0416102PkRep1.broadPeak /home/cgd24/storage/data/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Elf1sc631V0416102PkRep2.broadPeak | sort-bed - | bedops --merge - >  Elf1.binding.bed
+
+zcat ../k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200,"n",$4}' | sort-bed - |  
+	bedmap --echo --max piq/NRF1.starch - | bedmap --echo --indicator - Nrf1.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" > NRF1.tit.scores.bed
