@@ -2,11 +2,11 @@ setwd("/home/cgd24/storage/home/work/tss_detector/assayOverlap")
 
 require(bigWig)
 
-chrom <- read.table("k562.chromHMM.only.bed")[,1:3]
-hs    <- read.table("k562.plus.DNAse.bed")[,1:3]
-erna  <- read.table("k562.plus.dREG.bed")[,1:3]
-erna_enh  <- read.table("k562.plus.dREG.ENHONLY.bed")[,1:3]
-ins   <- read.table("k562.insulator.bed")[,1:3]  
+chrom <- read.table("k562.chromHMM.only.bed.gz")[,1:3]
+hs    <- read.table("k562.plus.DNAse.bed.gz")[,1:3]
+erna  <- read.table("k562.plus.dREG.bed.gz")[,1:3]
+erna_enh  <- read.table("k562.plus.dREG.ENHONLY.bed.gz")[,1:3]
+ins   <- read.table("k562.insulator.bed.gz")[,1:3]  
 
 doit <- function(file_name, stp=25, halfWindow= 5000, path= "/home/cgd24/storage/data/hg19/k562/histones/", ...) {
 	bw <- load.bigWig(paste(path,file_name,sep=""))
