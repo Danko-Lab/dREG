@@ -1,49 +1,51 @@
 #!/usr/bin/bash
 
 ## ENRICHMENT
-featureBits hg19 -enrichment gm12878.plus.dREG.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 10.15x 
-featureBits hg19 -enrichment gm12878.plus.dREG.ENHONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 5.67x    
-featureBits hg19 -enrichment gm12878.plus.dREG.PROONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 10.56x 
+featureBits hg19 -enrichment gm12878.plus.dREG.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 9.77x 
+featureBits hg19 -enrichment gm12878.plus.dREG.ENHONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 5.36x    
+featureBits hg19 -enrichment gm12878.plus.dREG.PROONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 10.23x 
 
-featureBits hg19 -enrichment gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 3.94x
-featureBits hg19 -enrichment gm12878.chromHMM.only.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed	            # 1.68x
+featureBits hg19 -enrichment gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 4.78x
+featureBits hg19 -enrichment gm12878.chromHMM.only.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed	            # 1.81x
 
 ## NUMBERS
-featureBits hg19 gm12878.plus.dREG.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 523      ## 33456  ## 0.01563247
-featureBits hg19 gm12878.plus.dREG.ENHONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 93       ## 17103  ## 0.005437643
-featureBits hg19 gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 78       ## 34531  ## 0.00225884
-featureBits hg19 gm12878.chromHMM.only.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed	            # 115      ## 73461  ## 0.001565457
+featureBits hg19 gm12878.plus.dREG.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 571      ## 32820  ## 0.01739793
+featureBits hg19 gm12878.plus.dREG.ENHONLY.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed         # 107      ## 16583  ## 0.006452391
+featureBits hg19 gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # MASKED ... Same as below.
+featureBits hg19 gm12878.chromHMM.only.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed	            # 103      ## 53900  ## 0.001910946
 
 ## DNAse-1 after removing insulators ... Still ~2-fold lower 
-featureBits hg19 gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 65       ## 22236  ## 0.002923188
+featureBits hg19 gm12878.plus.DNAse.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                # 59       ## 21780  ## 0.002708907
 featureBits hg19 gm12878.insulator.bed.gz /usr/projects/GROseq.parser/tss_detecter/eqtl.bed                 # 22       ## 33265  ## 0.0006613558
 
-## TOTAL: 523+93+65+22+115= 818
+## TOTAL: 571+103+59+22= 755
 
 R                                                                                                            # 432      ## 16411  ## 0.02632381
 ## GET A P-VALUE BY FISHER'S EXACT.
-fisher.test(data.frame(c(523, 33456), c(78, 34531))) ## dREG:DNAse      # p= 1.735257e-84
-fisher.test(data.frame(c(523, 33456), c(65, 22236))) ## dREG:DNAse      # p= 1.735257e-84
-fisher.test(data.frame(c(523, 33456), c(115, 73461))) ## dREG:chromHMM  # p= 5.311698e-153
+fisher.test(data.frame(c(571, 32820), c(59, 21780))) ## dREG:DNAse      # p= 7.350868e-66
+fisher.test(data.frame(c(571, 32820), c(103, 53900))) ## dREG:chromHMM  # p= 4.755362e-138
 
 ## dreg ENHANCERS
-fisher.test(data.frame(c(93, 17045), c(78, 34531))) ## dREG:DNAse       # p= 3.969e-08
-fisher.test(data.frame(c(93, 17045), c(65, 22236))) ## dREG:DNAse       # p= 1.045-4
-fisher.test(data.frame(c(93, 17045), c(115, 73461))) ## dREG:chromHMM   # p= 9.541892e-17
+fisher.test(data.frame(c(93, 16583), c(59, 21780))) ## dREG:DNAse       # p= 1.135e-05
+fisher.test(data.frame(c(93, 16583), c(103, 53900))) ## dREG:chromHMM   # p= 3.149757e-13
 
-## And surmise promoters --> 523-91; 33456-17045
-fisher.test(data.frame(c(523-91, 33456-17045), c(78, 34531))) ## dREG:DNAse       # p= 1.488419e-131
-fisher.test(data.frame(c(523-91, 33456-17045), c(115, 73461))) ## dREG:chromHMM   # p= 3.093346e-207
+## And surmise promoters --> 571-107; 32820-16583
+fisher.test(data.frame(c(571-107, 32820-16583), c(59, 21780))) ## dREG:DNAse       # p= 3.583958e-106
+fisher.test(data.frame(c(571-107, 32820-16583), c(103, 53900))) ## dREG:chromHMM   # p= 4.425709e-190
 
-fisher.test(data.frame(c(78, 34531), c(115, 73461))) ## DNAse:chromHMM   # p= 0.01341
+fisher.test(data.frame(c(59, 21780), c(103, 53900))) ## DNAse:chromHMM   # p= 0.03682
 
 ## PLOT RESULTS.
 df <- data.frame(Assay= c("dREG", "dREG", "dREG", "dnase-1", "chromHMM", "Insulator"), 
                  Type=  c("All", "Promoter", "Enhancer", "Enhancer", "Enhancer", "Insulator"), 
-				 Score= c(0.01563247, 0.02632381,  0.005437643, 0.002923188, 0.001565457, 0.0006613558))
+				 Score= c(0.01739793, 0.02857671,  0.006452391, 0.002708907, 0.001910946, 0.0006613558))
 df
 df$Assay <- factor(df$Assay, levels= levels(df$Assay)[c(3,2,1,4)])
 
+## RESULTS... max/ min enrichments.
+ 0.02857671/0.0006613558# [1] 43.20928
+ 0.006452391/0.002708907# [1] 2.381917
+ 571/755 ## [1] 0.7562914 % of eQTLs in dREG sites.
 
 require(lattice)
 

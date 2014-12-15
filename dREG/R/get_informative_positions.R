@@ -74,13 +74,16 @@ data.two_bigwig.OR <- function(x, chr, bw1, bw2, depth, window) {
 #' @param half_window Distance between to search for #depth reads [bp].
 #' @return Returns a data.frame representing a bed file.
 get_informative_positions <- function(bw_path, bw_minus_path=NULL, depth= 0, window= 400, step=50, use_OR=TRUE, use_ANDOR=TRUE, debug= TRUE) {
+  minChromSize <- 2500 # window+step ## FAILS IF use_ANDOR
+
   ## Load bigWigs
   bw  <- load.bigWig(bw_path)
-  q_chroms <- bw$chroms
+  q_chroms <- bw$chroms[bw$chromSizes > minChromSize]
   
   if(!is.null(bw_minus_path)) {
     bw_minus <- load.bigWig(bw_minus_path)
-	q_chroms <- unique(q_chroms, bw_minus$chroms) #chroms[chroms %in% bw_minus$chroms]
+    q_chroms.minus <- bw_minus$chroms[bw_minus$chromSizes+step > minChromSize]
+    q_chroms <- unique(q_chroms, bw_minus$chroms) #chroms[chroms %in% bw_minus$chroms]
   }
   else {
     bw_minus <- NULL

@@ -1,28 +1,29 @@
 library(lattice)
 library(boot)
 library(featureDetector)
+library(dREG)
 
 x_cex=y_cex=1.5
 x_lab_cex=y_lab_cex=1.55
 col=c("dark green", "dark blue")
 
-setwd("/usr/projects/GROseq.parser/tss_detecter/")
+setwd("/home/cgd24/storage/home/work/tss_detector/train_holdout_svm")
 
 ##########################################
 ## Get data from dREG data.
-load("asvm.RData")
+load("asvm.intersDNase.getTrainSet.RData")
 gdm <- genomic_data_model(window_sizes= c(10, 25, 50, 500, 5000), half_nWindows= c(10, 10, 30, 20, 20))
 
-ps_plus_path <- "/usr/data/GROseq.parser/hg19/k562/proseq/K562_unt.sort.bed.gz_plus.bw"
-ps_minus_path <- "/usr/data/GROseq.parser/hg19/k562/proseq/K562_unt.sort.bed.gz_minus.bw" 
-allSites_bed <- read.table("/usr/projects/GROseq.parser/tss_detecter/k562.allSites.bed")
+ps_plus_path <- "/home/cgd24/storage/data/hg19/k562/proseq/K562_unt.sort.bed.gz_plus.bw"
+ps_minus_path <- "/home/cgd24/storage/data/hg19/k562/proseq/K562_unt.sort.bed.gz_minus.bw" 
+allSites_bed <- read.table("../validation/k562.allSites.bed")
 
 n_eval <- 30000
 inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE)
 tset <- get_test_set(inf_positions, GROcap_tss_bed, n_eval, allow= allSites_bed, enrich_negative_near_pos= 0, extra_enrich_frac= 0, avoid_dist= 100)
 remove(inf_positions)
 
-pdf("fig1.pdf")
+pdf("fig1_afterRev.pdf")
 
 ##########################################
 ## Fig. 1A (Extra panel for brwoser shot?!)
@@ -47,7 +48,7 @@ roc.plot(dREG, main=paste("AUC=", AUC))
 
 ##########################################
 ## Fig. 1D (Accuracy on data types)
-pdf("fig1_afterRev.pdf")
+#pdf("fig1_afterRev.pdf")
 ## 10% fdr		 
 acc <- read.csv(text="Cell type, Comparison, Sensitivity
 K562, DHS TSS, 91

@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-cd /home/cgd24/work/tss_detector/assayOverlap
+cd /home/cgd24/storage/home/work/tss_detector/assayOverlap
 gzip *.*.bed ## Assumes *.bed.gz extensions.
 
 function writeOverlaps {
@@ -20,7 +20,7 @@ function writeOverlaps {
 	
 	###
 	## Get overlap with TF peaks.
-	path=/usr/data/GROseq.parser/hg19/all/ENCODE_tf_peak_calls
+	path=/home/cgd24/storage/data/hg19/all/ENCODE_tf_peak_calls
 
 	###
 	## Get IDx for files.

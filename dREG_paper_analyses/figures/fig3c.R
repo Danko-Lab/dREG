@@ -1,5 +1,5 @@
 library(lattice)
-setwd("/home/cgd24/work/tss_detector/assayOverlap")
+setwd("/home/cgd24/storage/home/work/tss_detector/assayOverlap")
 
 ## Fig. 3C.  Compare chromHMM, DNAse1, gm12878 with regards to TF binding.
 
