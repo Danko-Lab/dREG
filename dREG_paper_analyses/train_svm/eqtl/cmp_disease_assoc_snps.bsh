@@ -4,7 +4,7 @@
 ##
 
 schaub=Schaub/all.bed
-types=`cat $schaub | awk '{print $5}' | uniq` # | grep Breast
+types=`cat $schaub | awk '{print $5}' | grep "Celiac\|Rheumatoid\|Type_1_diabetes\|lupus\|asthma" | uniq` #`cat $schaub | awk '{print $5}' | uniq` # | grep Breast
 min_n=5
 min_m=2
 enrichment_file=data.enr.tsv
