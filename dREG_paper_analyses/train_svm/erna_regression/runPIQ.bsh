@@ -1,8 +1,8 @@
 #!/usr/bin/bash
-cd /home/cgd24/bin/thashim-piq-single-b73d9ff9853d
+cd /home/cgd24/storage/home/bin/thashim-piq-single-b73d9ff9853d
 
 ## Convert BAM to binary...
-Rscript bam2rdata.r common.r matches/d0.RData /usr/data/GROseq.parser/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Aln.bam
+Rscript bam2rdata.r common.r matches/d0.RData /home/cgd24/storage/data/hg19/k562/dnase/GSM646567_hg19_wgEncodeUwDgfK562Aln.bam
 
 ## For motifs 1:5...
 for i in {1..5}
@@ -13,15 +13,18 @@ do
 done
 
 ## Run PIQ on subsampled data.
-j=2 ## ELF1
+for j in {1..2} ## ELF1
+do
 for i in {1..9}
 do
   mkdir matches$i
+  mkdir output$i
+
   Rscript bam2rdata.r common.r matches$i/d0.$i.RData /home/cgd24/storage/data/hg19/k562/dnase/subsampled/GSM646567_hg19_wgEncodeUwDgfK562Aln_$i\0pc.bam
   
  Rscript pwmmatch.exact.r common.r /home/cgd24/src/featureDetector/test_functions/train_svm/erna_regression/jaspar.format.txt $j matches$i/
- Rscript pertf.r common.r matches$i/ ~/no-backup/tmp/ output/ matches$i/d0.$i.RData $j
+ Rscript pertf.r common.r matches$i/ ~/no-backup/tmp/ output$i/ matches$i/d0.$i.RData $j
  rm -Rf /home/cgd24/no-backup/tmp/*
 
 done
-
+done

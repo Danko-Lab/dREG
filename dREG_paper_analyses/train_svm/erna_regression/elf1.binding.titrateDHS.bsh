@@ -1,7 +1,68 @@
 #!/usr/bin/bash
+cd /home/cgd24/storage/home/work/tss_detector/erna_regression/piq/tit
+
+## Make STARCH.
+piq_path=/home/cgd24/storage/home/bin/thashim-piq-single-b73d9ff9853d/output
+
+function makestarch {
+ for i in {1..9}
+ do
+  ## Get score file ready.
+  cat $piq_path$i/$1-$2-calls.all.csv $piq_path$i/$1-$2.RC-calls.all.csv | grep '^""' -v | awk -F "," 'BEGIN{OFS="\t"} {print $3,$4,$5,$6,$7}' > tmp
+  cat $piq_path$i/$1-$2-calls.all.bed $piq_path$i/$1-$2.RC-calls.all.bed | grep '^tr' -v > tmp2
+  paste tmp2 tmp | sort-bed - > tmp.bed
+  rm tmp tmp2
+
+  cat $piq_path$i/$1-$2-calls.all.bed $piq_path$i/$1-$2.RC-calls.all.bed | grep '^tr' -v | sort-bed - | awk 'BEGIN{OFS="\t"} {print $1,$2,$3}' | uniq > uniqueSites.bed
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap --exact --max uniqueSites.bed - > tmp2 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$8,$6}' | bedmap --exact --max uniqueSites.bed - > tmp3 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$9,$6}' | bedmap --exact --max uniqueSites.bed - > tmp4 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$10,$6}' | bedmap --exact --max uniqueSites.bed - > tmp5 ## 
+  cat tmp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$11,$6}' | bedmap --exact --max uniqueSites.bed - > tmp6 ## 
+
+  cat uniqueSites.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"'$2'","0","."}' > tmp0
+  paste tmp0 tmp2 tmp3 tmp4 tmp5 tmp6 | starch - > $2$i.starch
+
+  rm tmp*
+ done
+}
+
+makestarch 2 ELF1
 
 ## Get peaks.
 cat /home/cgd24/storage/data/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Elf1sc631V0416102PkRep1.broadPeak /home/cgd24/storage/data/hg19/k562/haib_tfs/wgEncodeHaibTfbsK562Elf1sc631V0416102PkRep2.broadPeak | sort-bed - | bedops --merge - >  Elf1.binding.bed
 
-zcat ../k562.predictions.bedGraph.gz | awk 'BEGIN{OFS="\t"} {print $1,$2-200,$3+200,"n",$4}' | sort-bed - |  
-	bedmap --echo --max piq/NRF1.starch - | bedmap --echo --indicator - Nrf1.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" > NRF1.tit.scores.bed
+for i in {1..9}
+do
+  bedmap --echo ELF1$i.starch | awk '{print $11}' > ppv.$i.tmp
+done
+bedmap --echo ../ELF1.starch | awk '{print $11}' > ppv.10.tmp
+bedmap --echo ../ELF1.starch | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6}' > ELF1.binding.bed.tmp
+paste ELF1.binding.bed.tmp ppv.1.tmp ppv.2.tmp ppv.3.tmp ppv.4.tmp ppv.5.tmp ppv.6.tmp ppv.7.tmp ppv.8.tmp ppv.9.tmp ppv.10.tmp > ELF1.allScores.bed
+rm *.tmp
+
+bedmap --echo --indicator ELF1.allScores.bed Elf1.binding.bed | sed "s/|/\t/g" | sed "s/NAN/NA/g" | gzip > Elf1.alldata.matrix.gz
+
+R
+require(rtfbsdb)
+require(featureDetector)
+AUC <- double(0)
+
+tf <- read.table("Elf1.alldata.matrix.gz")
+AUC[1] <- roc.auc(logreg.roc.calc(tf$V17, tf$V7))
+AUC[2] <- roc.auc(logreg.roc.calc(tf$V17, tf$V8))
+AUC[3] <- roc.auc(logreg.roc.calc(tf$V17, tf$V9))
+AUC[4] <- roc.auc(logreg.roc.calc(tf$V17, tf$V10))
+AUC[5] <- roc.auc(logreg.roc.calc(tf$V17, tf$V11))
+AUC[6] <- roc.auc(logreg.roc.calc(tf$V17, tf$V12))
+AUC[7] <- roc.auc(logreg.roc.calc(tf$V17, tf$V13))
+AUC[8] <- roc.auc(logreg.roc.calc(tf$V17, tf$V14))
+AUC[9] <- roc.auc(logreg.roc.calc(tf$V17, tf$V15))
+AUC[10] <- roc.auc(logreg.roc.calc(tf$V17, tf$V16))
+
+AUC
+
+pdf("rocplot.pdf")
+ roc.plot(logreg.roc.calc(tf$V16, tf$V7), col="red", xlim=c(0,1), ylim=c(0,1))
+ par(new=TRUE); roc.plot(logreg.roc.calc(tf$V16, tf$V15), col="gray", xlim=c(0,1), ylim=c(0,1))
+dev.off()
