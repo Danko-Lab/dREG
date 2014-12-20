@@ -3,13 +3,14 @@ require(dREG)
 ## Process command arguments
 args <- commandArgs(trailingOnly=TRUE)
 
+## Load the model.  Do this before loading ps_plus_path, just in case those are saved in the model file.
+dreg_model <- args[4]
 load(dreg_model) ## Should have (by default) gdm and asvm.
 
 ## Read PRO-seq data.
 ps_plus_path  <- args[1]
 ps_minus_path <- args[2]
 outfile <- args[3]
-dreg_model <- args[4]
 ncores <- as.integer(args[5])
 
 ## Now scan all positions in the genome ...

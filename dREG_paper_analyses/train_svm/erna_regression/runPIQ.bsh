@@ -13,7 +13,7 @@ do
 done
 
 ## Run PIQ on subsampled data.
-for j in {1..2} ## ELF1
+for j in {1..4}
 do
 for i in {1..9}
 do
