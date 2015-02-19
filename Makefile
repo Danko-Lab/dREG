@@ -4,6 +4,8 @@
 #R_LIBS := ~/bin/dREG
 #export R_LIBS
 
+.PHONY: dreg
+
 R_dependencies:
 	@echo "Installing R dependencies" # to:" ${R_LIBS}
 	#mkdir -p ${R_LIBS}
