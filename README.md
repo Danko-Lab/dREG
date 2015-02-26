@@ -49,6 +49,10 @@ Users should change to the directory containing this README.md file, and can the
 
     make dreg
 
+Get the dREG models
+-------------------
+Pre-trained models that can be used to predict dREG scores across the genome are availiable in mammals and drosophila.  Get the appropriate model for your system here: https://github.com/Danko-Lab/dREG-Model
+
 Usage instructions:
 ===================
 dREG takes three files as input, and outputs one file.  Input files include the PRO-seq read distributions on the plus and minus strand (which are separate files), and parameters of the pre-trained support vector regression (SVR) model.  
