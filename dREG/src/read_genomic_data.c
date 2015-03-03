@@ -1,5 +1,5 @@
 /*
- * Pulls genomic data from a bigwig file(s).  
+ * Pulls genomic data from a bigwig file(s).
  */
 #include <R.h>
 #include <Rdefines.h>
@@ -9,6 +9,7 @@
 #include <R_ext/Applic.h>
 #include <assert.h>
 #include "read_genomic_data.h"
+
 //#include "bigwiglib.h"
 
 /*
@@ -18,15 +19,15 @@ zoom_params_t set_zoom_params(int n_sizes, int* window_sizes, int* half_n_window
   zoom_params_t zoom;
   zoom.window_sizes = window_sizes;
   zoom.half_n_windows = half_n_windows;
-  
+
   // This is JUST for translating understandable object into a nice vector.
   zoom.n_prev_bins = (int*)R_alloc(n_sizes+1, sizeof(int));
   zoom.n_prev_bins[0]= 0;
   for(int i=1;i<n_sizes;i++) {
-    zoom.n_prev_bins[i] = zoom.n_prev_bins[i-1]+2*half_n_windows[i-1]; 
+    zoom.n_prev_bins[i] = zoom.n_prev_bins[i-1]+2*half_n_windows[i-1];
   }
   zoom.n_prev_bins[n_sizes] = zoom.n_prev_bins[n_sizes-1]+2*half_n_windows[n_sizes-1];
-  
+
   return(zoom);
 }
 
@@ -49,12 +50,12 @@ genomic_data_point_t alloc_genomic_data_point(zoom_params_t zoom) {
   genomic_data_point_t dp;
   dp.forward = (double**)Calloc(zoom.n_sizes,double*);
   dp.reverse = (double**)Calloc(zoom.n_sizes,double*);
-  
+
   for(int i=0;i<zoom.n_sizes;i++) {
     dp.forward[i] = (double*)Calloc((2*zoom.half_n_windows[i]),double);
     dp.reverse[i] = (double*)Calloc((2*zoom.half_n_windows[i]),double);
   }
-  
+
   return(dp);
 }
 
@@ -98,38 +99,44 @@ int get_bin_number(int center, int position, int window_size, int half_n_windows
   return((int)floor(((double)dist_from_start)/((double)window_size)));
 }
 
-/*
+/* Changed by Zhong Wang,3/3/2015
+ *
  * Returns vector of counts for each windows in genomic data.
  *
- * To do this efficently, loop through the region once.  
+ * To do this efficently, loop through the region once.
  *   Assume ... (1) user dosen't pass in something beyond the bounds of chrom_counts.
  *
- * Arguments: 
- *  center  --> Center is relative to the read_from_bigWig_r window, rather than the chromosome.
- *  n_sizes --> Number of 
+ * Arguments:
+ *  left_pos  --> the left position of each range request, absolute value, not relative to the read_from_bigWig_r window
+ *  right_pos --> the right position of each range request, absolute value
+ *  zoom      --> zoom_params_t
+ *  chrom_counts --> raw_data_t, the results from read_from_bigWig_r
+ *  dp        --> (return) genomic_data_point_t, output object.
  */
-void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp) {
+void get_genomic_data(int left_pos, int right_pos, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp) {
   init_genomic_data_point(dp, zoom);
 
-  // Get the max boundary of our window.
-  int max_bounds = max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
-  int left_edge= center - max_bounds + chrom_counts.offset;
-  int right_edge= center + max_bounds+1;
-  
+  int left_idx  = left_pos - (chrom_counts.start + chrom_counts.offset);
+  int right_idx = right_pos - (chrom_counts.start + chrom_counts.offset);
+
   // Sets up a bit of a  strange boundary condition, where 0's are included on all out-of-bounds windows.
   // After last night's experiment, I see this as preferable to throwing an error, however.
-  if(right_edge >= chrom_counts.size) right_edge = chrom_counts.size;
+  if( right_idx >= chrom_counts.size) right_idx = chrom_counts.size;
+
+  int center = floor((left_pos + right_pos)/2) - (chrom_counts.start + chrom_counts.offset);
 
   // Loop through incrementing each vector.
-  for(int bp= left_edge;bp<right_edge;bp++) {
+  for(int bp=left_idx; bp<=right_idx; bp++) {
     for(int i=0;i<zoom.n_sizes;i++) {
-      int which_bin= get_bin_number(center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
+      int which_bin= get_bin_number( center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
       if(which_bin>=0) {
-        dp.forward[i][which_bin]+= (double)chrom_counts.forward[bp-chrom_counts.offset];
-        dp.reverse[i][which_bin]+= (double)chrom_counts.reverse[bp-chrom_counts.offset];
+        dp.forward[i][which_bin]+= (double)chrom_counts.forward[ bp ];
+        dp.reverse[i][which_bin]+= (double)chrom_counts.reverse[ bp ];
       }
     }
   }
+
+//Rprintf("==>get_genomic_data RD:(%d, %d), RANGE: (%d, %d), IDX (%d,%d),%d\n", chrom_counts.start, chrom_counts.offset, left_pos, right_pos, left_idx, right_idx, center);
 
 }
 
@@ -181,9 +188,9 @@ void scale_genomic_data_strand_sep(zoom_params_t zoom, genomic_data_point_t dp) 
  *
  * Scales using logistic function --> F(t)= 1/(1+e^(-\alpha(t-\beta)))
  *      Right now, \beta= MAX/2 (defines position of 0.5).
- *                 \alpha= log(1/0.01 - 1)/MAX  (Signal at 0 reads set to 0.01). 
+ *                 \alpha= log(1/0.01 - 1)/MAX  (Signal at 0 reads set to 0.01).
  *
- * 7/28/2013 -- Scaling best at 1*alpha and max set to 0.01 (AUC=0.9385945).  
+ * 7/28/2013 -- Scaling best at 1*alpha and max set to 0.01 (AUC=0.9385945).
  * 		See 7/28/2013 notebook entry for all parameter settings tested.
  */
 void scale_genomic_data_opt(zoom_params_t zoom, genomic_data_point_t dp) {
@@ -204,14 +211,14 @@ void scale_genomic_data_opt(zoom_params_t zoom, genomic_data_point_t dp) {
 }
 
 /*
-  Note: Comparing SVM optimized and true logistic.  The following R shows off the difference between the two 
+  Note: Comparing SVM optimized and true logistic.  The following R shows off the difference between the two
   approaches:
-  
+
 	scaled_logistic_function <- function(x) {
 	  MAX <- max(x)
 	  beta_ <- MAX*0.5
 	  alpha_ <- log(1/0.01 - 1)/beta_
-	  1/(1+ exp(-1*alpha_*(x-beta_))) ## 2 is an arbitrarily chosen value... 
+	  1/(1+ exp(-1*alpha_*(x-beta_))) ## 2 is an arbitrarily chosen value...
 	}
 	scaled_logistic_function(c(1:10))
 
@@ -219,7 +226,7 @@ void scale_genomic_data_opt(zoom_params_t zoom, genomic_data_point_t dp) {
 	  MAX <- max(x)
 	  beta_ <- MAX*0.5
 	  alpha_ <- log(1/0.01 - 1)/beta_
-	  1/(1+ exp(-1*alpha_*(x-beta_/2))) ## 2 is an arbitrarily chosen value... 
+	  1/(1+ exp(-1*alpha_*(x-beta_/2))) ## 2 is an arbitrarily chosen value...
 	}
 	scaled_logistic_function_(c(1:10))-scaled_logistic_function(c(1:10))
 	plot(scaled_logistic_function(c(1:10)), type="b")
@@ -246,7 +253,7 @@ void scale_genomic_data_simple_max(zoom_params_t zoom, genomic_data_point_t dp) 
 SEXP data_point_to_r_list(zoom_params_t zoom, genomic_data_point_t dp) {
   SEXP data_point;
   protect(data_point = allocVector(VECSXP, 2*zoom.n_sizes));
-  
+
   for(int i=0;i<zoom.n_sizes;i++) {
     // Creat R object.
     SEXP size_t_for, size_t_rev;
@@ -274,15 +281,15 @@ SEXP data_point_to_r_list(zoom_params_t zoom, genomic_data_point_t dp) {
  */
 SEXP data_point_to_r_vect(zoom_params_t zoom, genomic_data_point_t dp) {
   SEXP data_point;
-  
-  // Count  number of windows to allocate R vector... 
+
+  // Count  number of windows to allocate R vector...
   int n_windows=0;
   for(int i=0;i<zoom.n_sizes;i++)
     n_windows+= zoom.half_n_windows[i]*2; // *2 for full set of windows.
-  
+
   protect(data_point = allocVector(REALSXP, 2*n_windows)); // *2 for both strands.
   double *data_point_c = REAL(data_point);
-  
+
   int k=0;
   for(int i=0;i<zoom.n_sizes;i++) {
     for(int j=0;j<2*zoom.half_n_windows[i];j++) {
@@ -299,7 +306,8 @@ SEXP data_point_to_r_vect(zoom_params_t zoom, genomic_data_point_t dp) {
 raw_data_t read_from_bigWig_r(const char *chrom, int start, int end, bigWig_t *bw_fwd, bigWig_t *bw_rev) {
   raw_data_t rd;
   int out_length, out_is_blank;
-  
+
+  rd.start = start;
   if(start < 0) {
     rd.offset= -1*(start);
 	start=0;
@@ -321,7 +329,61 @@ void free_raw_data(raw_data_t rd) {
   free(rd.reverse);
 }
 
-/*
+/* Added by Zhong Wang 3/3/2015
+
+	Merge multiple ranges into one big range to improve the efficiency of bigWig reading
+
+	SEXP chrom_r      --> the chromose part of allranges transfered by R
+	SEXP centers_r    --> the center position part of allranges transfered by R
+	int max_dist      --> range width
+	const char* pszChr--> current chromosome no.
+	int nrange_center --> current range center
+	int nrange_max    --> the biggest width for one time bigWig reading
+	int nLocal_id     --> current group ID to identify group number of each requested range and indicate how many times have been called to this function.
+	int* pLocal_start --> (return)suggested new start position of  merged big range
+	int* pLocal_stop  --> (return)suggested new stop position of  merged big range
+	int* pLocal_range_table--> (return)the group table for each range, 0 means no group associated with this range.
+*/
+int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int max_dist, const char* pszChr, int nrange_center, int nrange_max, int nLocal_id, int* pLocal_start, int* pLocal_stop, int* pLocal_range_table )
+{
+    int n_centers = Rf_nrows(centers_r);
+    int *centers = INTEGER(centers_r);
+
+	int start_pos = nrange_center;
+	int stop_pos = nrange_center;
+	int nRange = 0;
+	for(int i=0; i<n_centers; i++)
+	{
+		// The range has been retrived, skip it.
+		if( pLocal_range_table[i] !=0 ) continue;
+
+    	const char* pszChr_i = CHAR(STRING_ELT(chrom_r,i));
+		// not at same chromosom, skip it.
+		if( strcmp(pszChr_i, pszChr) != 0) continue;
+
+		// if within the max range at one time reading
+		if( nrange_center - nrange_max <= centers[i] - max_dist  && centers[i] + max_dist <= nrange_center + nrange_max)
+		{
+			pLocal_range_table[i] = nLocal_id;
+
+			if( centers[i] - max_dist < start_pos ) start_pos = centers[i] - max_dist;
+			if( centers[i] + max_dist > stop_pos )  stop_pos  = centers[i] + max_dist;
+			nRange++;
+		}
+
+		if(nRange>500) break;
+	}
+
+	*pLocal_start = start_pos;
+	*pLocal_stop = stop_pos;
+
+Rprintf("==>LAST %d =(%d,%d)\n", nLocal_id, *pLocal_start, *pLocal_stop);
+
+	return(nRange);
+}
+
+/* Changed by Zhong Wang 3/3/2015
+ *
  * R entry point ... for getting a particular center (or vector of centers).
  *
  * Switch to R vector using:
@@ -330,7 +392,7 @@ void free_raw_data(raw_data_t rd) {
 SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, SEXP bigwig_minus_file_r, SEXP model_r) {
   int n_centers = Rf_nrows(centers_r);
   int *centers = INTEGER(centers_r);
-  
+
   // Set up model variable.
   zoom_params_t zoom;
   zoom.n_sizes= Rf_nrows(VECTOR_ELT(model_r, 0));
@@ -338,33 +400,74 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
   zoom.half_n_windows= INTEGER(VECTOR_ELT(model_r, 1));
 
   // Open bigWig files.
+  //
   assert(is_bigwig(CHAR(STRING_ELT(bigwig_plus_file_r, 0)))==1 && is_bigwig(CHAR(STRING_ELT(bigwig_minus_file_r, 0)))==1);
+
   bigWig_t *bw_fwd = bigwig_load(CHAR(STRING_ELT(bigwig_plus_file_r,  0)), ".");
   bigWig_t *bw_rev = bigwig_load(CHAR(STRING_ELT(bigwig_minus_file_r, 0)), ".");
-  
+
   // Set up return variable.
   genomic_data_point_t dp= alloc_genomic_data_point(zoom);
   SEXP processed_data;
   PROTECT(processed_data = allocVector(VECSXP, n_centers));
 
-  for(int i=0;i<n_centers;i++) {
-    // Read raw data, do windowing specified in model_r, and scale.
-    int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
-    raw_data_t rd= read_from_bigWig_r(CHAR(STRING_ELT(chrom_r,i)), centers[i]-max_dist, centers[i]+max_dist, bw_fwd, bw_rev);
-    get_genomic_data(max_dist, zoom, rd, dp); // Data center should be @ max_dist.  Total window should be 2*max_dist.  Center relative to read_from_bigWig_r, rather than chromosome.
-    free_raw_data(rd);
-    scale_genomic_data_strand_sep(zoom, dp); //scale_genomic_data_opt
+  int* pLocal_range_table = Calloc(n_centers, int);
 
-    // Record ...
-    SEXP data_point= data_point_to_r_vect(zoom, dp);//data_point_to_list(zoom, dp);
-    SET_VECTOR_ELT(processed_data, i, data_point);
-    UNPROTECT(1);
+  int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
+
+  int nLocal_id=1;
+  for(int k=0; k<n_centers; k++)
+  {
+	// group_id>0, this range has been merged.
+	if( pLocal_range_table[k]>0 ) continue;
+
+    const char* pszChr = CHAR(STRING_ELT(chrom_r,k));
+    int nLocal_start =0;
+    int nLocal_stop =0;
+    // The biggest range allowed by programmer; 512K, maybe too small?
+	int nMerge_max = 1024*512;
+	if( nMerge_max < max_dist*16 ) nMerge_max = max_dist*16;
+
+	int nRangeCnt = merge_adjacent_range( chrom_r, centers_r, max_dist, pszChr, centers[k], nMerge_max, nLocal_id, &nLocal_start, &nLocal_stop, pLocal_range_table);
+    if( nRangeCnt<=0)
+    {
+		// Although impossible, but we need to watch out.
+		Rprintf("\nAn error occurs in the function of get_genomic_data_R, please contact the author!\n");
+		Free(pLocal_range_table);
+		return(R_NilValue);
+	}
+
+	// Read bigwig using a big merged range
+    raw_data_t rd_local= read_from_bigWig_r( pszChr, nLocal_start, nLocal_stop, bw_fwd, bw_rev);
+
+    for(int i=0;i<n_centers;i++)
+    {
+	  // if not the cuurent id, done or no group, skip the range
+	  if(pLocal_range_table[i] != nLocal_id) continue;
+
+	  // Read raw data, do windowing specified in model_r, and scale.
+	  get_genomic_data( centers[i] - max_dist, centers[i] + max_dist, zoom, rd_local, dp ); // Data center should be @ max_dist.  Total window should be 2*max_dist.  Center relative to read_from_bigWig_r, rather than chromosome.
+	  scale_genomic_data_strand_sep( zoom, dp ); //scale_genomic_data_opt
+
+	  // Record ...
+	  SEXP data_point= data_point_to_r_vect( zoom, dp );//data_point_to_list(zoom, dp);
+	  SET_VECTOR_ELT(processed_data, i, data_point);
+	  UNPROTECT(1);
+    }
+
+    free_raw_data(rd_local);
+
+    nLocal_id++;
   }
+
+  //Calloc and Free are paired functions
+  Free(pLocal_range_table);
+
   free_genomic_data_point(dp, zoom);
   bigwig_free(bw_fwd);
   bigwig_free(bw_rev);
   UNPROTECT(1);
-  
+
   return(processed_data);
 }
 
@@ -372,7 +475,7 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
  * We need a simple vector to pass into the more general (??) functions.
  */
 /*int *genomic_data_point_to_vector() {
-  
+
   int *c_list = (int*)calloc((2*zoom.n_prev_bins[zoom.n_sizes]), sizeof(int)); // Because I'm going to destroy it ...
 
 }*/
