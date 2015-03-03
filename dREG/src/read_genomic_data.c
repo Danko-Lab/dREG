@@ -377,7 +377,7 @@ int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int max_dist, const char
 	*pLocal_start = start_pos;
 	*pLocal_stop = stop_pos;
 
-Rprintf("==>LAST %d =(%d,%d)\n", nLocal_id, *pLocal_start, *pLocal_stop);
+// Rprintf("==>LAST %d =(%d,%d)\n", nLocal_id, *pLocal_start, *pLocal_stop);
 
 	return(nRange);
 }
