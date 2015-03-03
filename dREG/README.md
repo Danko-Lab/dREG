@@ -10,5 +10,5 @@ Perfermance without prediction at Stampede (1 core)
 
 Original version: xxx minutes 
 
-Optimization Version: xxx minutes
+Optimized version: xxx minutes
 
