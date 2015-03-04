@@ -8,7 +8,7 @@ dREG detects regulatory regions using the unique signiture of transcriptional ac
 
 Perfermance without prediction at Stampede (1 core)
 
-Original version: xxx minutes 
+Original version: 56 minutes 
 
 Optimized version: 19 minutes
 
