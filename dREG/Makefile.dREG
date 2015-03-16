@@ -1,12 +1,12 @@
-BWPATH:=$(shell Rscript bigWigpath.R)
+BWPATH:=$(shell ${R_HOME}/bin/Rscript bigWigpath.R)
 
-CC:=$(shell R CMD config CC)
+CC:=$(shell ${R_HOME}/bin/R CMD config CC)
 
-LDFLAGS:=$(shell R CMD config LDFLAGS)
+LDFLAGS:=$(shell ${R_HOME}/bin/R CMD config LDFLAGS)
 LIBS:=${shell pkg-config openssl --libs} ${LDFLAGS}
 
 CFLAGS:=-c -g -Wall ${LIBS}
-SOURCES= read_genomic_data.c RegisterRRoutines.c
+SOURCES= read_genomic_data.c
 OBJECTS=$(SOURCES:.c=.o)
 
 MFLGS := "CFLAGS=-I${BWPATH}/include ${CFLAGS}"
@@ -19,7 +19,8 @@ MFLGSESC := $(subst $(space),\$(space),$(MFLGS))
 #	$(CC) $(CFLAGS) $< -o $@
 
 dREG.so:
-	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${BWPATH}/lib/bigwiglib.a ${LIBS}
+	MAKEFLAGS=${MFLGSESC} ${R_HOME}/bin/R CMD SHLIB -o $@ ${SOURCES} ${BWPATH}/lib/bigwiglib.a ${LIBS}
 
 clean:
 	rm -f *.o *.so
+
