@@ -2,8 +2,8 @@
 
 #####################
 ## Get eQTLs.
-EQTLeb="/usr/data/GROseq.parser/hg19/gm12878/eqtl/EUR373.gene.cis.FDR5.best.rs137.txt.gz"
-EQTLyb="/usr/data/GROseq.parser/hg19/gm12878/eqtl/YRI89.gene.cis.FDR5.best.rs137.txt.gz" ## YRI89, EUR373 
+EQTLeb="/home/cgd24/storage/data/hg19/gm12878/eqtl/EUR373.gene.cis.FDR5.best.rs137.txt.gz"
+EQTLyb="/home/cgd24/storage/data/hg19/gm12878/eqtl/YRI89.gene.cis.FDR5.best.rs137.txt.gz" ## YRI89, EUR373 
 zcat $EQTLyb $EQTLeb | awk 'BEGIN{OFS="\t"} {print "chr"$5,int($7),int($7)+1}' | sort-bed - > eqtl.bed
 
 ## eQTL bigWig.
@@ -68,8 +68,56 @@ cat tmp.mergepred.merge.bed.out > gm12878.tss60.bed
 
 #####################
 ## Get DNAse-1.
-zcat /usr/data/GROseq.parser/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz > dnase.narrowpeak.bed
+zcat /home/cgd24/storage/data/hg19/gm12878/dnase/wgEncodeOpenChromDnaseGm12878Pk.narrowPeak.gz > dnase.narrowpeak.bed
 
 #####################
 ## Get chromHMM.
-zcat /usr/data/GROseq.parser/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer" > chromHMM.bed
+zcat /home/cgd24/storage/data/hg19/gm12878/chromhmm/wgEncodeBroadHmmGm12878HMM.bed.gz | grep "Promoter\|Enhancer" > chromHMM.bed
+
+#####################
+## Get changes w.r.t. titration of AMTs ... 
+cat dnase.narrowpeak.bed | awk '($7>0.1) {print $0}' | sort-bed -  > dnase.high.bed; grep "" -c dnase.high.bed
+zcat ../gm12878.predictions.bed.gz | awk '($5>1.02) {print $0}' | sort-bed - > dreg.high.bed; grep "" -c dreg.high.bed
+
+bedmap --indicator eqtl.bed dnase.high.bed | grep "1" -c
+bedmap --indicator eqtl.bed dreg.high.bed | grep "1" -c
+
+cat dnase.narrowpeak.bed | awk '($7>0.075) {print $0}' | sort-bed -  > dnase.high.bed; grep "" -c dnase.high.bed
+zcat ../gm12878.predictions.bed.gz | awk '($5>0.9) {print $0}' | sort-bed - > dreg.high.bed; grep "" -c dreg.high.bed
+
+bedmap --indicator eqtl.bed dnase.high.bed | grep "1" -c
+bedmap --indicator eqtl.bed dreg.high.bed | grep "1" -c
+
+cat dnase.narrowpeak.bed | awk '($7>0.05) {print $0}' | sort-bed -  > dnase.high.bed; grep "" -c dnase.high.bed
+zcat ../gm12878.predictions.bed.gz | awk '($5>0) {print $0}' | sort-bed - > dreg.high.bed; grep "" -c dreg.high.bed
+
+bedmap --indicator eqtl.bed dnase.high.bed | grep "1" -c
+bedmap --indicator eqtl.bed dreg.high.bed | grep "1" -c
+
+
+cat dnase.narrowpeak.bed | awk '($7>0.05) {print $0}' | sort-bed -  > dnase.high.bed; grep "" -c dnase.high.bed
+zcat ../gm12878.predictions.bed.gz | awk '($5>0) {print $0}' | sort-bed - > dreg.high.bed; grep "" -c dreg.high.bed
+
+bedmap --indicator eqtl.bed dnase.high.bed | grep "1" -c
+bedmap --indicator eqtl.bed dreg.high.bed | grep "1" -c
+
+
+## Now also extend DNase-1 to make up for differences in genomic area covered.
+
+cat dnase.narrowpeak.bed | awk 'BEGIN{OFS="\t"} ($7>0.1) {print $1,$2-400<0?0:$2-400,$3+400}' | sort-bed -  > dnase.high.bed; featureBits hg19 dnase.high.bed
+zcat ../gm12878.predictions.bed.gz | awk '($5>1.02) {print $0}' | sort-bed - > dreg.high.bed; featureBits hg19 dreg.high.bed
+
+bedmap --indicator eqtl.bed dnase.high.bed | grep "1" -c
+bedmap --indicator eqtl.bed dreg.high.bed | grep "1" -c
+
+cat dnase.narrowpeak.bed | awk 'BEGIN{OFS="\t"} ($7>0.075) {print $1,$2-400<0?0:$2-400,$3+400}' | sort-bed -  > dnase.high.bed; featureBits hg19 dnase.high.bed
+zcat ../gm12878.predictions.bed.gz | awk '($5>0.9) {print $0}' | sort-bed - > dreg.high.bed; featureBits hg19 dreg.high.bed
+
+bedmap --indicator eqtl.bed dnase.high.bed | grep "1" -c
+bedmap --indicator eqtl.bed dreg.high.bed | grep "1" -c
+
+cat dnase.narrowpeak.bed | awk 'BEGIN{OFS="\t"} ($7>0.05) {print $1,$2-400<0?0:$2-400,$3+400}' | sort-bed -  > dnase.high.bed; featureBits hg19 dnase.high.bed
+zcat ../gm12878.predictions.bed.gz | awk '($5>0) {print $0}' | sort-bed - > dreg.high.bed; featureBits hg19 dreg.high.bed
+
+bedmap --indicator eqtl.bed dnase.high.bed | grep "1" -c
+bedmap --indicator eqtl.bed dreg.high.bed | grep "1" -c

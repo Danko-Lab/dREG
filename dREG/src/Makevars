@@ -1,0 +1,4 @@
+BWPATH:=$(shell ${R_HOME}/bin/Rscript bigWigpath.R)
+PKG_CPPFLAGS = -I${BWPATH}/include ${CFLAGS} -Wall 
+PKG_LIBS =${BWPATH}/lib/bigwiglib.a ${shell pkg-config openssl --libs} ${LDFLAGS} -lz
+

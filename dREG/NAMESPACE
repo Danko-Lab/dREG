@@ -1,4 +1,5 @@
-useDynLib(dREG)
+useDynLib(dREG, .registration = TRUE)
+
 exportClasses("genomic_data_model")
 export(read_genomic_data)
 export(genomic_data_model)

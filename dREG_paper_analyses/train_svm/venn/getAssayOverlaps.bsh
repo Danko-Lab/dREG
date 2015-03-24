@@ -37,6 +37,10 @@ bedops --merge tmp1 tmp2 > $dnase.tmp
 zcat /home/cgd24/storage/data/hg19/k562/dnase/wgEncodeOpenChromDnaseK562PkV2.narrowPeak.gz | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$7,$6}' | bedmap  --echo --max $dnase.tmp - | sed "s/|/\t/g" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,"n",$4,"."}' > $dnase ## Add back scores.
 rm d1 d2 tmp1 tmp2 $dnase.tmp
 
+##
+## Note that this superset is going to differ from the individual BEDs of sites (outlined below) for several reasons:
+## (1) Merging all data types together first will create fewer sites in each class.
+## (2) The Venn diagram includes rare classes of sites that disagree w/ the hierarchical structure reported in the paper.
 bedops --merge $chromhmm $dnase $dreg > superset.bed
 
 grep "" -c superset.bed ## 169882

@@ -1,10 +1,10 @@
 Package: dREG
-Version: 0.0.5
+Version: 1.0.0
 Date: 2013-02-05
 Title: Detection of Regulatory DNA using GRO-seq Data (dREG).
 Author: Charles G. Danko <dankoc@gmail.com>
 Maintainer: Charles G. Danko <dankoc@gmail.com>
-Depends: R (>= 2.14), bigWig, e1071, rphast, parallel
+Depends: R (>= 2.14), bigWig (>= 0.2-9), e1071, rphast, parallel
 LinkingTo:
 Suggests:
 Description: This package is an analysis pipeline for the analysis of GRO-seq data.
