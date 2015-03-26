@@ -126,7 +126,7 @@ void get_genomic_data(int left_pos, int right_pos, zoom_params_t zoom, raw_data_
   int center = floor((left_pos + right_pos)/2) - (chrom_counts.start + chrom_counts.offset);
 
   // Loop through incrementing each vector.
-  for(int bp=left_idx; bp<=right_idx; bp++) {
+  for(int bp=left_idx; bp<right_idx; bp++) {
     for(int i=0;i<zoom.n_sizes;i++) {
       int which_bin= get_bin_number( center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
       if(which_bin>=0) {
