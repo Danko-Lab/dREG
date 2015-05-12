@@ -129,7 +129,7 @@ void get_genomic_data(int left_pos, int right_pos, zoom_params_t zoom, raw_data_
   for(int bp=left_idx; bp<right_idx; bp++) {
     for(int i=0;i<zoom.n_sizes;i++) {
       int which_bin= get_bin_number( center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
-      if(which_bin>=0) {
+      if(which_bin>=0 && bp>=0) {
         dp.forward[i][which_bin]+= (double)chrom_counts.forward[ bp ];
         dp.reverse[i][which_bin]+= (double)chrom_counts.reverse[ bp ];
       }
