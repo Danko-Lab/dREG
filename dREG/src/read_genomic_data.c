@@ -9,6 +9,9 @@
 #include <R_ext/Applic.h>
 #include <assert.h>
 #include "read_genomic_data.h"
+#include <stdbool.h>
+
+#define BOOLEAN_ELT(x,__i__)	LOGICAL(x)[__i__]
 
 //#include "bigwiglib.h"
 
@@ -85,7 +88,7 @@ int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
 }
 
 /*
- * get_bin_number --> Returns the bin that a particular posotion falls into.
+ * get_bin_number --> Returns the bin that a particular position falls into.
  *
  * Note than since the center base is not included, it needs to be subtracted
  * from the position of interest, if that position falls past the center.
@@ -126,10 +129,10 @@ void get_genomic_data(int left_pos, int right_pos, zoom_params_t zoom, raw_data_
   int center = floor((left_pos + right_pos)/2) - (chrom_counts.start + chrom_counts.offset);
 
   // Loop through incrementing each vector.
-  for(int bp=left_idx; bp<=right_idx; bp++) {
+  for(int bp=left_idx; bp<right_idx; bp++) {
     for(int i=0;i<zoom.n_sizes;i++) {
       int which_bin= get_bin_number( center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
-      if(which_bin>=0) {
+      if(which_bin>=0 && bp>=0) {
         dp.forward[i][which_bin]+= (double)chrom_counts.forward[ bp ];
         dp.reverse[i][which_bin]+= (double)chrom_counts.reverse[ bp ];
       }
@@ -210,6 +213,7 @@ void scale_genomic_data_opt(zoom_params_t zoom, genomic_data_point_t dp) {
   }
 }
 
+
 /*
   Note: Comparing SVM optimized and true logistic.  The following R shows off the difference between the two
   approaches:
@@ -232,7 +236,7 @@ void scale_genomic_data_opt(zoom_params_t zoom, genomic_data_point_t dp) {
 	plot(scaled_logistic_function(c(1:10)), type="b")
 	points(scaled_logistic_function_(c(1:10)), type="b", col="dark red")
 
-  It's a complete left shift, but a bit straing in that the bottom value is no loger 0.  Try shifting further left using MAX*0.2?!
+  It's a complete left shift, but a bit straing in that the bottom value is no longer 0.  Try shifting further left using MAX*0.2?!
  */
 
 void scale_genomic_data_simple_max(zoom_params_t zoom, genomic_data_point_t dp) {
@@ -255,7 +259,7 @@ SEXP data_point_to_r_list(zoom_params_t zoom, genomic_data_point_t dp) {
   protect(data_point = allocVector(VECSXP, 2*zoom.n_sizes));
 
   for(int i=0;i<zoom.n_sizes;i++) {
-    // Creat R object.
+    // Create R object.
     SEXP size_t_for, size_t_rev;
     protect(size_t_for = allocVector(REALSXP, zoom.half_n_windows[i]*2));
     protect(size_t_rev = allocVector(REALSXP, zoom.half_n_windows[i]*2));
@@ -333,7 +337,7 @@ void free_raw_data(raw_data_t rd) {
 
 	Merge multiple ranges into one big range to improve the efficiency of bigWig reading
 
-	SEXP chrom_r      --> the chromose part of allranges transfered by R
+	SEXP chrom_r      --> the chromosome part of allranges transfered by R
 	SEXP centers_r    --> the center position part of allranges transfered by R
 	int max_dist      --> range width
 	const char* pszChr--> current chromosome no.
@@ -389,7 +393,8 @@ int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int max_dist, const char
  * Switch to R vector using:
  * t(matrix(unlist(list(c(1:10), c(11:20), c(0:9))), ncol=3))
  */
-SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, SEXP bigwig_minus_file_r, SEXP model_r) {
+SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, SEXP bigwig_minus_file_r, SEXP model_r, SEXP scale_r) {
+  bool bscale= BOOLEAN_ELT(scale_r, 0);
   int n_centers = Rf_nrows(centers_r);
   int *centers = INTEGER(centers_r);
 
@@ -442,12 +447,16 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
 
     for(int i=0;i<n_centers;i++)
     {
-	  // if not the cuurent id, done or no group, skip the range
+	  // if not the curent id, done or no group, skip the range
 	  if(pLocal_range_table[i] != nLocal_id) continue;
 
 	  // Read raw data, do windowing specified in model_r, and scale.
 	  get_genomic_data( centers[i] - max_dist, centers[i] + max_dist, zoom, rd_local, dp ); // Data center should be @ max_dist.  Total window should be 2*max_dist.  Center relative to read_from_bigWig_r, rather than chromosome.
-	  scale_genomic_data_strand_sep( zoom, dp ); //scale_genomic_data_opt
+
+
+//if(bscale) Rprintf("It is true");
+        //if (!bscale) Rprintf("It is false");
+      if(bscale) scale_genomic_data_strand_sep( zoom, dp); //scale_genomic_data_opt
 
 	  // Record ...
 	  SEXP data_point= data_point_to_r_vect( zoom, dp );//data_point_to_list(zoom, dp);
