@@ -14,11 +14,13 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
   if(batch_size>NROW(positions)) batch_size= NROW(positions)
   n_elem <- NROW(positions)
   n_batches <- floor(n_elem/batch_size)
-  
-  ## Do most elements.
-  scores<- unlist(mclapply(c(1:n_batches), function(x) {
+  interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
+
+  ## Do elements of each intervals
+  scores<- unlist(mclapply(c(1:(length(interval)-1)), function(x) {
+
     print(paste(x, "of", n_batches))
-    batch_indx<- c((batch_size*(x-1)+1):((batch_size*x)))
+    batch_indx<- c( interval[x]:(interval[i+1]-1) )
     x_predict <- read_genomic_data(gdm, positions[batch_indx,], bw_plus_path, bw_minus_path)
     if(asvm$type == 0) { ## Probabilistic SVM
       batch_pred <- predict(asvm, x_predict, probability=TRUE)
@@ -29,18 +31,5 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
     return(batch_pred)
   }, mc.cores= ncores))
 
-  ## Remaining elements.  
-  if((n_batches*batch_size)<n_elem) {
-    batch_indx<- c((n_batches*batch_size+1):n_elem)
-    x_predict <- read_genomic_data(gdm, positions[batch_indx,], bw_plus_path, bw_minus_path)
-    if(asvm$type == 0) { ## Probabilistic SVM
-      batch_pred <- predict(asvm, x_predict, probability=TRUE)
-    }
-    else { ## epsilon-regression (SVR)
-      batch_pred <- predict(asvm, x_predict)
-    }
-    scores <- c(scores, batch_pred)
-  }
- 
   return(as.double(scores))
 }
