@@ -35,5 +35,21 @@ Identification of active transcriptional regulatory elements from GRO-seq data. 
 \code{\link{get_informative_positions}}, \code{\link{get_test_set}}, \code{\link{read_genomic_data}}, \code{\link{regulatory_svm}}
 }
 \examples{
+
+
+## The following codes cannot run without the bigWig files
+
+# ps_plus_path  <- "bigwig.plus.bw"
+# ps_minus_path <- "bigwig.minus.bw"
+
+## Now scan all positions in the genome ...
+# positions <- get_informative_positions(ps_plus_path, ps_minus_path, 
+#		depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE);
+
+# pred_val<- eval_reg_svm( gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000)
+# write.table( data.frame(inf_positions, pred_val), file="eval.tab", 
+#	row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+
+
 }
 \keyword{ function }
