@@ -21,7 +21,7 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
     print(paste(x, "of", n_batches))
     batch_indx<- c( interval[x]:(interval[i+1]-1) )
-    x_predict <- read_genomic_data(gdm, positions[batch_indx,], bw_plus_path, bw_minus_path)
+    x_predict <- read_genomic_data(gdm, positions[batch_indx,,drop=F], bw_plus_path, bw_minus_path)
     if(asvm$type == 0) { ## Probabilistic SVM
       batch_pred <- predict(asvm, x_predict, probability=TRUE)
     }

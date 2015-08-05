@@ -40,7 +40,7 @@ regulatory_svm(gdm,
  
 }
 \value{
-A svm model trained by \code{\svm} function in e1071 package.
+A svm model trained by \code{svm} function in e1071 package.
 }
 \references{
 Danko, C. G., Hyland, S. L., Core, L. J., Martins, A. L., Waters, C. T., Lee, H. W., ... & Siepel, A. (2015). 

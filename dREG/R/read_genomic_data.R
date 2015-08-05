@@ -20,21 +20,39 @@ genomic_data_model <- function(window_sizes, half_nWindows) {
 #' @param bigwig_plus Path to bigwig file representing GRO-seq/ PRO-seq reads on the plus strand.
 #' @param bigwig_minus Path to bigwig file representing GRO-seq/ PRO-seq reads on the minus strand.
 #' @param as_matrix If true, returns a matrix object.
+#' @param ncores The number of cores.
+#' @param scale.method Default is logistic, but if set to linear it will return read counts normalized by total read count
 #' @return Returns a list() object, where each element in the list is the zoom data
 #' centered on a 
-read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_matrix= TRUE, scale.method=c("logistic", "linear")) {
+read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_matrix= TRUE, scale.method=c("logistic", "linear"), ncores=1) {
     if(missing(scale.method)){scale.method<-"logistic"};
   stopifnot(NROW(gdm@window_sizes) == NROW(gdm@half_nWindows))
   zoom<- list(as.integer(gdm@window_sizes), as.integer(gdm@half_nWindows))
-  if(scale.method=="logistic"){
-  dat <- .Call("get_genomic_data_R", as.character(bed[,1]), as.integer(floor((bed[,3]+bed[,2])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(TRUE), PACKAGE= "dREG")
-  }
-  else{
-      dat <- .Call("get_genomic_data_R", as.character(bed[,1]), as.integer(floor((bed[,3]+bed[,2])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(FALSE), PACKAGE= "dREG")
-      total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
-      dat<-lapply(dat, "/", total.read.count);
-  }
+  batch_size=5000;
+  n_elem=NROW(bed)
+  n_batches=floor(n_elem/batch_size)
+  interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
+
+  datList<- mclapply(c(1:(length(interval)-1)), function(x) {
+      batch_indx<- c( interval[x]:(interval[x+1]-1) )
+
+      if(scale.method=="logistic"){
+          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1, drop=F]), as.integer(floor((bed[batch_indx,3,drop=F]+bed[batch_indx,2,drop=F])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(TRUE), PACKAGE= "dREG")
+      }
+      else{
+          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1,drop=F]), as.integer(floor((bed[batch_indx,3,drop=F]+bed[batch_indx,2,drop=F])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(FALSE), PACKAGE= "dREG")
+          total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
+          dat<-lapply(dat, "/", total.read.count);
+      }
+      return(dat)
+      
+  }, mc.cores=ncores)
   
+  dat<-c()
+  for(i in 1:(length(interval)-1)){
+  dat<-c(dat, datList[[i]])
+  }
+
   if(as_matrix) 
     dat <- t(matrix(unlist(dat), ncol=NROW(bed)))
     
