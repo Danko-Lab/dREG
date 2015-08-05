@@ -37,10 +37,10 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
       batch_indx<- c( interval[x]:(interval[x+1]-1) )
 
       if(scale.method=="logistic"){
-          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1, drop=F]), as.integer(floor((bed[batch_indx,3,drop=F]+bed[batch_indx,2,drop=F])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(TRUE), PACKAGE= "dREG")
+          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1]), as.integer(floor((bed[batch_indx,3]+bed[batch_indx,2])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(TRUE), PACKAGE= "dREG")
       }
       else{
-          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1,drop=F]), as.integer(floor((bed[batch_indx,3,drop=F]+bed[batch_indx,2,drop=F])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(FALSE), PACKAGE= "dREG")
+          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1]), as.integer(floor((bed[batch_indx,3]+bed[batch_indx,2])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(FALSE), PACKAGE= "dREG")
           total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
           dat<-lapply(dat, "/", total.read.count);
       }
