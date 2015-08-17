@@ -411,6 +411,8 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
   bigWig_t *bw_fwd = bigwig_load(CHAR(STRING_ELT(bigwig_plus_file_r,  0)), ".");
   bigWig_t *bw_rev = bigwig_load(CHAR(STRING_ELT(bigwig_minus_file_r, 0)), ".");
 
+  if (bw_fwd==NULL || bw_rev==NULL) return( R_NilValue );
+
   // Set up return variable.
   genomic_data_point_t dp= alloc_genomic_data_point(zoom);
   SEXP processed_data;

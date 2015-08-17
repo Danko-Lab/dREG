@@ -25,7 +25,7 @@ genomic_data_model <- function(window_sizes, half_nWindows) {
 #' @return Returns a list() object, where each element in the list is the zoom data
 #' centered on a 
 read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_matrix= TRUE, scale.method=c("logistic", "linear"), ncores=1) {
-    if(missing(scale.method)){scale.method<-"logistic"};
+
   stopifnot(NROW(gdm@window_sizes) == NROW(gdm@half_nWindows))
   zoom<- list(as.integer(gdm@window_sizes), as.integer(gdm@half_nWindows))
   batch_size=5000;
@@ -33,32 +33,48 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
   n_batches=floor(n_elem/batch_size)
   interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
 
+  if(missing(scale.method)){scale.method<-"logistic"};
+
+  total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
+
   datList<- mclapply(c(1:(length(interval)-1)), function(x) {
       batch_indx<- c( interval[x]:(interval[x+1]-1) )
 
       if(scale.method=="logistic"){
-          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1]), as.integer(floor((bed[batch_indx,3]+bed[batch_indx,2])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(TRUE), PACKAGE= "dREG")
+          dat <- .Call("get_genomic_data_R", 
+                        as.character( bed[batch_indx,1] ), 
+                        as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ), 
+                        as.character( file_bigwig_plus ), 
+                        as.character( file_bigwig_minus ), 
+                        zoom, 
+                        as.logical(TRUE), 
+                        PACKAGE= "dREG")
       }
       else{
-          dat <- .Call("get_genomic_data_R", as.character(bed[batch_indx,1]), as.integer(floor((bed[batch_indx,3]+bed[batch_indx,2])/2)), as.character(file_bigwig_plus), as.character(file_bigwig_minus), zoom, as.logical(FALSE), PACKAGE= "dREG")
-          total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
-          dat<-lapply(dat, "/", total.read.count);
+          dat <- .Call("get_genomic_data_R", 
+                       as.character( bed[batch_indx,1] ), 
+                       as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ), 
+                       as.character( file_bigwig_plus ), 
+                       as.character( file_bigwig_minus ), 
+                       zoom, 
+                       as.logical(FALSE), 
+                       PACKAGE= "dREG")
+
+          if( !is.null(dat) ) 
+			  dat<-lapply(dat, "/", total.read.count);
       }
-      return(dat)
-      
-  }, mc.cores=ncores)
+
+      return(dat);
+  }, mc.cores=ncores);
   
   dat<-c()
-  for(i in 1:(length(interval)-1)){
-  dat<-c(dat, datList[[i]])
-  }
+  for(i in 1:(length(interval)-1))
+     dat<-c(dat, datList[[i]])
 
   if(as_matrix) 
     dat <- t(matrix(unlist(dat), ncol=NROW(bed)))
     
-    #dat <- t(matrix(unlist(lapply(c(1:NROW(dat)), function(x) {unlist(dat[[x]])})), ncol=NROW(bed)))
-
-	return(dat)
+  return(dat)
 }
 
 # query read counts of all chromosomes from bigWig file.
