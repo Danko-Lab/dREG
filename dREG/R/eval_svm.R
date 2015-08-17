@@ -19,8 +19,8 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
   ## Do elements of each intervals
   scores<- unlist(mclapply(c(1:(length(interval)-1)), function(x) {
 
-    print(paste(x, "of", n_batches))
-    batch_indx<- c( interval[x]:(interval[i+1]-1) )
+    print(paste(x, "of", length(interval)-1) );
+    batch_indx<- c( interval[x]:(interval[x+1]-1) )
     x_predict <- read_genomic_data(gdm, positions[batch_indx,,drop=F], bw_plus_path, bw_minus_path)
     if(asvm$type == 0) { ## Probabilistic SVM
       batch_pred <- predict(asvm, x_predict, probability=TRUE)
