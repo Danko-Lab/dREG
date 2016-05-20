@@ -1,7 +1,7 @@
 ## read_genomic_data -- reads genomic data in the specified zoom parameters...
 ##
 
-setClass("genomic_data_model",#"restricted_boltzman_machine", 
+setClass("genomic_data_model",#"restricted_boltzman_machine",
   representation(
     n_zooms="integer",
     window_sizes="integer",
@@ -23,7 +23,7 @@ genomic_data_model <- function(window_sizes, half_nWindows) {
 #' @param ncores The number of cores.
 #' @param scale.method Default is logistic, but if set to linear it will return read counts normalized by total read count
 #' @return Returns a list() object, where each element in the list is the zoom data
-#' centered on a 
+#' centered on a
 read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_matrix= TRUE, scale.method=c("logistic", "linear"), ncores=1) {
 
   stopifnot(NROW(gdm@window_sizes) == NROW(gdm@half_nWindows))
@@ -41,39 +41,39 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
       batch_indx<- c( interval[x]:(interval[x+1]-1) )
 
       if(scale.method=="logistic"){
-          dat <- .Call("get_genomic_data_R", 
-                        as.character( bed[batch_indx,1] ), 
-                        as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ), 
-                        as.character( file_bigwig_plus ), 
-                        as.character( file_bigwig_minus ), 
-                        zoom, 
-                        as.logical(TRUE), 
+          dat <- .Call("get_genomic_data_R",
+                        as.character( bed[batch_indx,1] ),
+                        as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ),
+                        as.character( file_bigwig_plus ),
+                        as.character( file_bigwig_minus ),
+                        zoom,
+                        as.logical(TRUE),
                         PACKAGE= "dREG")
       }
       else{
-          dat <- .Call("get_genomic_data_R", 
-                       as.character( bed[batch_indx,1] ), 
-                       as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ), 
-                       as.character( file_bigwig_plus ), 
-                       as.character( file_bigwig_minus ), 
-                       zoom, 
-                       as.logical(FALSE), 
+          dat <- .Call("get_genomic_data_R",
+                       as.character( bed[batch_indx,1] ),
+                       as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ),
+                       as.character( file_bigwig_plus ),
+                       as.character( file_bigwig_minus ),
+                       zoom,
+                       as.logical(FALSE),
                        PACKAGE= "dREG")
 
-          if( !is.null(dat) ) 
+          if( !is.null(dat) )
 			  dat<-lapply(dat, "/", total.read.count);
       }
 
       return(dat);
   }, mc.cores=ncores);
-  
+
   dat<-c()
   for(i in 1:(length(interval)-1))
      dat<-c(dat, datList[[i]])
 
-  if(as_matrix) 
+  if(as_matrix)
     dat <- t(matrix(unlist(dat), ncol=NROW(bed)))
-    
+
   return(dat)
 }
 
@@ -89,12 +89,18 @@ get_reads_from_bigwig <- function(file_bigwig_plus, file_bigwig_minus)
     bw.plus  <- load.bigWig(file_bigwig_plus)
     bw.minus <- load.bigWig(file_bigwig_minus)
 
-    offset_dist <- 250;
-    df.bed.plus<-data.frame(bw.plus$chroms, offset_dist, bw.plus$chromSizes, names=".", scores=".",strands="+")
-    df.bed.minus<-data.frame(bw.minus$chroms, offset_dist, bw.minus$chromSizes, names=".", scores=".", strands="-")
-    r.plus <- sum(abs(bed6.region.bpQuery.bigWig( bw.plus, bw.minus, df.bed.plus)));
-    r.minus <- sum(abs(bed6.region.bpQuery.bigWig( bw.plus, bw.minus, df.bed.minus)));
- 
+	## 1) It takes long time
+	## 2) The offset is too big for some unmapped section, it will cause errors in library bigWig
+
+    #offset_dist <- 250;
+    #df.bed.plus<-data.frame(bw.plus$chroms, offset_dist, bw.plus$chromSizes, names=".", scores=".",strands="+")
+    #df.bed.minus<-data.frame(bw.minus$chroms, offset_dist, bw.minus$chromSizes, names=".", scores=".", strands="-")
+    #r.plus <- sum(abs(bed6.region.bpQuery.bigWig( bw.plus, bw.minus, df.bed.plus)));
+    #r.minus <- sum(abs(bed6.region.bpQuery.bigWig( bw.plus, bw.minus, df.bed.minus)));
+
+ 	r.plus  <- round(bw.plus$mean * bw.plus$basesCovered );
+ 	r.minus <- round(bw.minus$mean * bw.minus$basesCovered );
+
     try( unload.bigWig( bw.plus ) );
     try( unload.bigWig( bw.minus ) );
 
