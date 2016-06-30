@@ -10,6 +10,11 @@
 #include <assert.h>
 #include "read_genomic_data.h"
 #include <stdbool.h>
+#include <string.h>
+
+
+#define MERGE_RANGE 1024*1024*20
+
 
 #define BOOLEAN_ELT(x,__i__)	LOGICAL(x)[__i__]
 
@@ -116,7 +121,7 @@ int get_bin_number(int center, int position, int window_size, int half_n_windows
  *  chrom_counts --> raw_data_t, the results from read_from_bigWig_r
  *  dp        --> (return) genomic_data_point_t, output object.
  */
-void get_genomic_data(int left_pos, int right_pos, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp) {
+void get_genomic_data_2015(int left_pos, int right_pos, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp) {
   init_genomic_data_point(dp, zoom);
 
   int left_idx  = left_pos - (chrom_counts.start + chrom_counts.offset);
@@ -130,6 +135,13 @@ void get_genomic_data(int left_pos, int right_pos, zoom_params_t zoom, raw_data_
 
   // Loop through incrementing each vector.
   for(int bp=left_idx; bp<right_idx; bp++) {
+
+	// skip 0 reads. The performance is greatly improved.
+	// Zhong Wang 6/20/2015
+	// 1820 seconds  ==>170 seconds for 242078 * 441 (one CPU)
+	if( (chrom_counts.forward[ bp ]==0 )  && (chrom_counts.reverse[ bp ]==0 ) )
+		continue;
+
     for(int i=0;i<zoom.n_sizes;i++) {
       int which_bin= get_bin_number( center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
       if(which_bin>=0 && bp>=0) {
@@ -141,6 +153,85 @@ void get_genomic_data(int left_pos, int right_pos, zoom_params_t zoom, raw_data_
 
 //Rprintf("==>get_genomic_data RD:(%d, %d), RANGE: (%d, %d), IDX (%d,%d),%d\n", chrom_counts.start, chrom_counts.offset, left_pos, right_pos, left_idx, right_idx, center);
 
+}
+
+// Improvement: Calculate range for each bin at each window scale.
+// Zhong Wang 6/20/2015
+// 1820 seconds  ==> 305  seconds for 242078 * 441 (one CPU)
+
+void get_genomic_data_gpulike(int left_pos, int right_pos, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp)
+{
+  init_genomic_data_point(dp, zoom);
+
+  int center = floor((left_pos + right_pos)/2) - (chrom_counts.start + chrom_counts.offset);
+  int right_idx = right_pos - (chrom_counts.start + chrom_counts.offset);
+  if( right_idx >= chrom_counts.size) right_idx = chrom_counts.size;
+
+  for(int i=0;i < zoom.n_sizes;i++) {
+  for(int j=0;j < 2* zoom.half_n_windows[i];j++) {
+
+	  int offset = 0;
+	  if ( j>= zoom.half_n_windows[i] ) offset = 1;
+	  int bin_start = center + zoom.window_sizes[i] * (-1*zoom.half_n_windows[i] + j) + offset;
+	  int bin_stop  = center + zoom.window_sizes[i] * (-1*zoom.half_n_windows[i] + j + 1) + offset;
+
+	  if( bin_start < 0)  bin_start = 0;
+	  if( bin_stop >= right_idx )  bin_stop = right_idx;
+	  if( bin_stop > bin_start)
+  	  for(int k=bin_start; k<bin_stop; k++)
+  	  {
+        dp.forward[i][j] += (double)chrom_counts.forward[ k ];
+        dp.reverse[i][j] += (double)chrom_counts.reverse[ k ];
+      }
+    }
+  }
+}
+
+int** get_pre_bin( int max_dist, zoom_params_t zoom )
+{
+  int** pre_bin = (int**)Calloc(zoom.n_sizes, int* );
+
+  for(int i=0;i<zoom.n_sizes;i++)
+  {
+	pre_bin[i] = (int*)Calloc( max_dist*2 + 1, int);
+	memset( (void*)(pre_bin[i]), (int)-1, (size_t)(max_dist*2 + 1) );
+  	for(int bp=0; bp<max_dist*2+1; bp++)
+  	{
+      pre_bin[i][bp] = get_bin_number( max_dist, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
+  	}
+  }
+
+  return(pre_bin);
+}
+
+// Improvement: lookup the bin table pre-calculated for each position.
+// Zhong Wang 6/20/2015
+// 1820 seconds  ==>90 seconds for 242078 * 441 (one CPU)
+
+void get_genomic_data_fast( int left_pos, int right_pos, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp, int** pre_bin)
+{
+  init_genomic_data_point(dp, zoom);
+
+  int left_idx  = left_pos - (chrom_counts.start + chrom_counts.offset);
+  int right_idx = right_pos - (chrom_counts.start + chrom_counts.offset);
+
+  // Sets up a bit of a  strange boundary condition, where 0's are included on all out-of-bounds windows.
+  // After last night's experiment, I see this as preferable to throwing an error, however.
+  if( right_idx >= chrom_counts.size) right_idx = chrom_counts.size;
+
+  // Loop through incrementing each vector.
+  for(int bp=left_idx; bp<right_idx; bp++) {
+	if( (chrom_counts.forward[ bp ]==0 )  && (chrom_counts.reverse[ bp ]==0 ) )
+		continue;
+
+    for(int i=0;i<zoom.n_sizes;i++) {
+	  int which_bin = pre_bin[i][bp-left_idx];
+      if(which_bin>=0 && bp>=0) {
+        dp.forward[i][which_bin]+= (double)chrom_counts.forward[ bp ];
+        dp.reverse[i][which_bin]+= (double)chrom_counts.reverse[ bp ];
+      }
+    }
+  }
 }
 
 /*
@@ -348,7 +439,7 @@ void free_raw_data(raw_data_t rd) {
 	int* pLocal_stop  --> (return)suggested new stop position of  merged big range
 	int* pLocal_range_table--> (return)the group table for each range, 0 means no group associated with this range.
 */
-int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int max_dist, const char* pszChr, int nrange_center, int nrange_max, int nLocal_id, int* pLocal_start, int* pLocal_stop, int* pLocal_range_table )
+int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int* pStart_idx, int max_dist, const char* pszChr, int nrange_center, int nrange_max, int nLocal_id, int* pLocal_start, int* pLocal_stop, int* pLocal_range_table )
 {
     int n_centers = Rf_nrows(centers_r);
     int *centers = INTEGER(centers_r);
@@ -356,7 +447,7 @@ int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int max_dist, const char
 	int start_pos = nrange_center;
 	int stop_pos = nrange_center;
 	int nRange = 0;
-	for(int i=0; i<n_centers; i++)
+	for(int i = *pStart_idx; i<n_centers; i++ )
 	{
 		// The range has been retrived, skip it.
 		if( pLocal_range_table[i] !=0 ) continue;
@@ -373,9 +464,12 @@ int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int max_dist, const char
 			if( centers[i] - max_dist < start_pos ) start_pos = centers[i] - max_dist;
 			if( centers[i] + max_dist > stop_pos )  stop_pos  = centers[i] + max_dist;
 			nRange++;
-		}
+			*pStart_idx = i;
 
-		if(nRange>500) break;
+			if(nRange>5000) break;
+		}
+		else
+			break;
 	}
 
 	*pLocal_start = start_pos;
@@ -413,17 +507,24 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
 
   if (bw_fwd==NULL || bw_rev==NULL) return( R_NilValue );
 
+  int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
+  int** pre_bin = get_pre_bin( max_dist, zoom );
+
   // Set up return variable.
   genomic_data_point_t dp= alloc_genomic_data_point(zoom);
-  SEXP processed_data;
-  PROTECT(processed_data = allocVector(VECSXP, n_centers));
+
+  //SEXP processed_data = PROTECT(allocVector(VECSXP, n_centers));
+  int n_windows=0;
+  for(int i=0;i<zoom.n_sizes;i++)
+    n_windows+= zoom.half_n_windows[i]*2; // *2 (half*2) * 2(minus, plus)
+  SEXP processed_data = PROTECT(allocMatrix(REALSXP, n_windows*2, n_centers ));
+  double *pRMat = REAL(processed_data);
 
   int* pLocal_range_table = Calloc(n_centers, int);
 
-  int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
-
   int nLocal_id=1;
-  for(int k=0; k<n_centers; k++)
+  int k=0;
+  while( k < n_centers )
   {
 	// group_id>0, this range has been merged.
 	if( pLocal_range_table[k]>0 ) continue;
@@ -431,11 +532,12 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
     const char* pszChr = CHAR(STRING_ELT(chrom_r,k));
     int nLocal_start =0;
     int nLocal_stop =0;
-    // The biggest range allowed by programmer; 512K, maybe too small?
-	int nMerge_max = 1024*512;
-	if( nMerge_max < max_dist*16 ) nMerge_max = max_dist*16;
+    // The biggest range allowed by programmer; 1M, maybe too small?
+	int nMerge_max = MERGE_RANGE;
+	if( nMerge_max < max_dist*8 ) nMerge_max = max_dist*8;
 
-	int nRangeCnt = merge_adjacent_range( chrom_r, centers_r, max_dist, pszChr, centers[k], nMerge_max, nLocal_id, &nLocal_start, &nLocal_stop, pLocal_range_table);
+	int start_idx = k;
+	int nRangeCnt = merge_adjacent_range( chrom_r, centers_r, &start_idx, max_dist, pszChr, centers[k], nMerge_max, nLocal_id, &nLocal_start, &nLocal_stop, pLocal_range_table);
     if( nRangeCnt<=0)
     {
 		// Although impossible, but we need to watch out.
@@ -447,32 +549,43 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
 	// Read bigwig using a big merged range
     raw_data_t rd_local= read_from_bigWig_r( pszChr, nLocal_start, nLocal_stop, bw_fwd, bw_rev);
 
-    for(int i=0;i<n_centers;i++)
+    for(int i=k;i<=start_idx;i++)
     {
 	  // if not the curent id, done or no group, skip the range
 	  if(pLocal_range_table[i] != nLocal_id) continue;
 
 	  // Read raw data, do windowing specified in model_r, and scale.
-	  get_genomic_data( centers[i] - max_dist, centers[i] + max_dist, zoom, rd_local, dp ); // Data center should be @ max_dist.  Total window should be 2*max_dist.  Center relative to read_from_bigWig_r, rather than chromosome.
 
+	  //get_genomic_data_2015( centers[i] - max_dist, centers[i] + max_dist, zoom, rd_local, dp ); // Data center should be @ max_dist.  Total window should be 2*max_dist.  Center relative to read_from_bigWig_r, rather than chromosome.
+	  //get_genomic_data_gpulike( centers[i] - max_dist, centers[i] + max_dist, zoom, rd_local, dp ); // Data center should be @ max_dist.  Total window should be 2*max_dist.  Center relative to read_from_bigWig_r, rather than chromosome.
+      get_genomic_data_fast( centers[i] - max_dist, centers[i] + max_dist, zoom, rd_local, dp, pre_bin );
 
-//if(bscale) Rprintf("It is true");
-        //if (!bscale) Rprintf("It is false");
       if(bscale) scale_genomic_data_strand_sep( zoom, dp); //scale_genomic_data_opt
 
 	  // Record ...
-	  SEXP data_point= data_point_to_r_vect( zoom, dp );//data_point_to_list(zoom, dp);
-	  SET_VECTOR_ELT(processed_data, i, data_point);
-	  UNPROTECT(1);
+	  //SEXP data_point= data_point_to_r_vect( zoom, dp );
+	  //SET_VECTOR_ELT(processed_data, i, data_point);
+	  //UNPROTECT(1);
+      int zk=0;
+      int base = i*n_windows*2;
+      for(int zi=0; zi<zoom.n_sizes; zi++)
+      for(int zj=0; zj<2*zoom.half_n_windows[zi]; zj++) {
+        pRMat[base + zk] = dp.forward[zi][zj];
+        pRMat[base + n_windows + zk++] = dp.reverse[zi][zj];
+      }
     }
 
     free_raw_data(rd_local);
 
     nLocal_id++;
+    k = start_idx + 1;
   }
 
   //Calloc and Free are paired functions
   Free(pLocal_range_table);
+
+  for(int i=0;i<zoom.n_sizes;i++) Free(pre_bin[i]);
+  Free(pre_bin);
 
   free_genomic_data_point(dp, zoom);
   bigwig_free(bw_fwd);

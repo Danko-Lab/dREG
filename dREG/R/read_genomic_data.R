@@ -24,57 +24,98 @@ genomic_data_model <- function(window_sizes, half_nWindows) {
 #' @param scale.method Default is logistic, but if set to linear it will return read counts normalized by total read count
 #' @return Returns a list() object, where each element in the list is the zoom data
 #' centered on a
-read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_matrix= TRUE, scale.method=c("logistic", "linear"), ncores=1) {
+read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_matrix= TRUE, scale.method=c("logistic", "linear"), batch_size=50000, ncores=1) {
 
   stopifnot(NROW(gdm@window_sizes) == NROW(gdm@half_nWindows))
+
   zoom<- list(as.integer(gdm@window_sizes), as.integer(gdm@half_nWindows))
-  batch_size=5000;
-  n_elem=NROW(bed)
-  n_batches=floor(n_elem/batch_size)
+  #batch_size = 50000;
+  n_elem = NROW(bed)
+  n_batches = floor( n_elem/batch_size )
+  if(n_batches < ncores)
+  {
+	  batch_size = ceiling( n_elem/ncores );
+	  n_batches = floor( n_elem/batch_size);
+  }
+
   interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
 
-  if(missing(scale.method)){scale.method<-"logistic"};
+  if(missing(scale.method)){ scale.method <- "logistic" };
 
   total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
 
-  datList<- mclapply(c(1:(length(interval)-1)), function(x) {
-      batch_indx<- c( interval[x]:(interval[x+1]-1) )
+  bed.ord <- order(bed[,1], bed[,2], bed[,3]);
+  if ( all( bed.ord == c(1:NROW(bed)) ) )
+     bed.sorted <- bed
+  else
+     bed.sorted <- bed[ bed.ord, ];
 
-      if(scale.method=="logistic"){
-          dat <- .Call("get_genomic_data_R",
-                        as.character( bed[batch_indx,1] ),
-                        as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ),
-                        as.character( file_bigwig_plus ),
-                        as.character( file_bigwig_minus ),
-                        zoom,
-                        as.logical(TRUE),
-                        PACKAGE= "dREG")
-      }
-      else{
-          dat <- .Call("get_genomic_data_R",
-                       as.character( bed[batch_indx,1] ),
-                       as.integer( floor((bed[batch_indx,3]+bed[batch_indx,2])/2) ),
-                       as.character( file_bigwig_plus ),
-                       as.character( file_bigwig_minus ),
-                       zoom,
-                       as.logical(FALSE),
-                       PACKAGE= "dREG")
+  datList <- list();
+  for(i in 1:ceiling( (length(interval)-1)/ncores ))
+  {
+	  start_batch <- (i-1)*ncores+1;
+	  stop_batch <- i*ncores;
+	  if(stop_batch>(length(interval)-1)) stop_batch <- length(interval)-1;
 
-          if( !is.null(dat) )
-			  dat<-lapply(dat, "/", total.read.count);
-      }
+	  datList[start_batch:stop_batch] <- mclapply(start_batch:stop_batch, function(x) {
+		  batch_indx<- c( interval[x]:(interval[x+1]-1) )
 
-      return(dat);
-  }, mc.cores=ncores);
+		  # The output from C/C++ is changed to matrix(n_windows, n_sample)) since 6/20/2016
+		  # The original result was a list, which needs to rbind() to matrix.
 
-  dat<-c()
-  for(i in 1:(length(interval)-1))
-     dat<-c(dat, datList[[i]])
+		  if(scale.method=="logistic"){
+			  dat <- .Call("get_genomic_data_R",
+							as.character( bed.sorted[ batch_indx,1 ] ),
+							as.integer( floor((bed.sorted[ batch_indx,3 ] + bed.sorted[ batch_indx,2 ])/2) ),
+							as.character( file_bigwig_plus ),
+							as.character( file_bigwig_minus ),
+							zoom,
+							as.logical(TRUE),
+							PACKAGE= "dREG")
+		  }
+		  else{
+			  dat <- .Call("get_genomic_data_R",
+						   as.character( bed.sorted[ batch_indx,1 ] ),
+						   as.integer( floor((bed.sorted[ batch_indx,3 ] + bed.sorted[ batch_indx,2 ])/2) ),
+						   as.character( file_bigwig_plus ),
+						   as.character( file_bigwig_minus ),
+						   zoom,
+						   as.logical(FALSE),
+						   PACKAGE= "dREG")
 
-  if(as_matrix)
-    dat <- t(matrix(unlist(dat), ncol=NROW(bed)))
+			  if( !is.null(dat) )
+				  ##dat<-lapply(dat, "/", total.read.count);
+				  dat <- dat/total.read.count;
+		  }
 
-  return(dat)
+		  if( is.null(dat))
+		  	error("Failed to Call C/C++ functions.\n");
+
+#	cat(x, NROW(dat), NCOL(dat), "\n");
+		  return( as.data.frame(t(dat) ) );
+	  }, mc.cores=ncores);
+  }
+
+  if( length(datList)==1)
+    dat <- datList[[1]]
+  else
+  {
+    if(require(data.table))
+	  dat <- as.matrix( rbindlist(datList) )
+    else
+  	  dat <- as.matrix( do.call(rbind, datList) );
+  }
+
+  rm(datList);
+
+  if ( !all( bed.ord == c(1:NROW(bed)) ) )
+     ## all(bed.sorted[order(bed.ord),] == bed)
+     dat <- dat [ order(bed.ord), ];
+
+  if( !as_matrix )
+	 dat <- c(t(dat));
+
+  return(dat);
 }
 
 # query read counts of all chromosomes from bigWig file.
