@@ -2,21 +2,28 @@
 
 if [ "$#" -lt 4 ]; then
 	echo ""
-	echo "USAGE: bash dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads]"
+	echo "USAGE: bash dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]"
 	echo ""
 	echo "plus_strand.bw	-- PRO-seq data (plus  strand) formatted as a bigWig file."
         echo "minus_strand.bw	-- PRO-seq data (minus strand) formatted as a bigWig file."
         echo "out_prefix	-- The prefix of the output file."
 	echo "asvm.RData	-- The path to the RData file containing the pre-trained SVM."
         echo "[nthreads]	-- [optional, default=1] The number of threads to use when evaluating dREG sites."
+        echo "[GPU]	        -- [optional, gpu or blank, default is blank] indicating whether GPU package can be used."
 	echo ""
 	exit 1
 fi
+
+pushd `dirname $0` > /dev/null
+bsh_path=`pwd`
+popd > /dev/null
 
 bwPL=$1
 bwMN=$2
 out=$3
 SVM=$4
+gpu=FALSE
+ncores=1
 
 if [ "$#" -gt 4 ]; then
 #	[[ $5 !~ ^?[0-9]+$ ]]
@@ -25,6 +32,9 @@ else
 	ncores=1
 fi
 
-echo "Using: R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $ncores < run_dREG.R"
-R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $ncores < run_dREG.R
+if [ "$#" -gt 5 ]; then
+	gpu=$6
+fi
 
+echo "Using: R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $ncores $gpu< $bsh_path/run_dREG.R"
+R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $ncores $gpu< $bsh_path/run_dREG.R

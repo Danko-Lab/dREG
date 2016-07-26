@@ -19,23 +19,51 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
   pos.ord <- order(positions[,1], positions[,2], positions[,3]);
   pos.sorted <- positions[pos.ord,];
 
-  ## Do elements of each intervals
-  scores<- unlist(mclapply(c(1:(length(interval)-1)), function(x) {
+  do.extract<-function(x)
+  {
+     batch_indx<- c( interval[x]:(interval[x+1]-1) );
+     return( read_genomic_data(gdm, pos.sorted[batch_indx,,drop=F], bw_plus_path, bw_minus_path) );
+  }
 
-    print(paste(x, "of", length(interval)-1) );
-    batch_indx<- c( interval[x]:(interval[x+1]-1) )
-    x_predict <- read_genomic_data(gdm, pos.sorted[batch_indx,,drop=F], bw_plus_path, bw_minus_path)
-    if(asvm$type == 0) { ## Probabilistic SVM
-      batch_pred <- svm_predict(asvm, x_predict, use_rgtsvm=use_rgtsvm, probability=TRUE)
-    }
-    else { ## epsilon-regression (SVR)
-      batch_pred <- svm_predict(asvm, x_predict, use_rgtsvm=use_rgtsvm, probability=FALSE)
-    }
-    return(batch_pred)
-  }, mc.cores= ncores))
+  do.predict <- function( mat_features ){
+     if(asvm$type == 0) { ## Probabilistic SVM
+       batch_pred <- svm_predict(asvm, mat_features, use_rgtsvm=use_rgtsvm, probability=TRUE)
+     }
+     else { ## epsilon-regression (SVR)
+       batch_pred <- svm_predict(asvm,mat_features, use_rgtsvm=use_rgtsvm, probability=FALSE)
+     }
+     return(batch_pred);
+  }
+ 
+  ## Do elements of each intervals
+  if(!use_rgtsvm)
+  {
+    scores<- unlist(mclapply(c(1:(length(interval)-1)), function(x) {
+      print(paste(x, "of", length(interval)-1) );
+      pred <- do.predict( do.extract(x) );
+      gc(); 
+      return( pred );
+    }, mc.cores= ncores))
+  }else
+  {
+    n.loop <- ceiling((length(interval)-1)/ncores);
+     scores <- unlist( lapply(1:n.loop, function(i) {
+       n.start = (i-1)*ncores+1;
+       n.stop = ifelse( length(interval)-1 <= i*ncores, length(interval)-1, i*ncores );
+       feature_list<- mclapply(n.start:n.stop, function(x) {
+          print(paste(x, "of", length(interval)-1) );
+          return( do.extract(x) );
+       }, mc.cores= ncores);
+      
+      pred <- do.predict( do.call("rbind", feature_list) );
+      feature_list <- NULL;
+      gc();
+      return( pred );
+     } ));
+  }
 
   ## Test code
-  all( pos.sorted[ order(pos.ord),  ] == positions );
+  ## all( pos.sorted[ order(pos.ord),  ] == positions );
 
   ## sort back the genome loci.
   scores <- scores[ order(pos.ord) ];
@@ -43,7 +71,7 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
   return(as.double(scores))
 }
 
-svmpredict<-function( asvm, x_predict, use_rgtsvm=FALSE, probability=FALSE )
+svm_predict<-function( asvm, mat_features, use_rgtsvm=FALSE, probability=FALSE )
 {
 	if (use_rgtsvm)
 		require(Rgtsvm);
@@ -53,11 +81,10 @@ svmpredict<-function( asvm, x_predict, use_rgtsvm=FALSE, probability=FALSE )
 
 	ret <- c();
 	if(use_rgtsvm)
-		ret <- Rgtsvm::predict(asvm, x_predict, probability=probability)
+		ret <- Rgtsvm::predict.gtsvm(asvm, mat_features, probability=probability)
 	else
-		ret <- e1071::predict(asvm, x_predict, probability=probability);
+		ret <- predict( asvm, mat_features, probability=probability );
 
 	return(ret);
 }
-
 
