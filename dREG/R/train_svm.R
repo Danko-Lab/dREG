@@ -29,7 +29,7 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
 
   if (use_rgtsvm)
   {
-    if(!requireNamespace(Rgtsvm))
+    if(!requireNamespace("Rgtsvm"))
       stop("Rgtsvm has not been installed fotr GPU computing.");
 
     predict = Rgtsvm::predict.gtsvm;

@@ -27,7 +27,7 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
   if (use_rgtsvm)
   {
-    if(!requireNamespace(Rgtsvm))
+    if(!requireNamespace("Rgtsvm"))
       stop("Rgtsvm has not been installed fotr GPU computing.");
 
     predict = Rgtsvm::predict.gtsvm;

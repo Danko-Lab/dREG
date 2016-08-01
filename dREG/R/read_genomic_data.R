@@ -100,7 +100,7 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
     dat <- datList[[1]]
   else
   {
-    if(requireNamespace(data.table))
+    if(requireNamespace("data.table"))
 	  dat <- as.matrix( data.table::rbindlist(datList) )
     else
   	  dat <- as.matrix( do.call(rbind, datList) );
