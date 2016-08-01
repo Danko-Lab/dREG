@@ -17,8 +17,7 @@ combine.roc(list.roc,
   \item{use.max}{Logical value indicating if maximum value of muliple ROCs at same point are used as TPF values.}
   \item{nvals}{Integer value indicating interval number for ROC plot.}
 }
-\details{
-}
+
 \value{
 A data frame with 2 columns is returned
 \item{FPR}{False Positive Rate}

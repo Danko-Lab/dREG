@@ -20,8 +20,7 @@ roc.calc(true,
   \item{filterPossible}{Vector indicating indexes which be removed.}
   \item{n_points}{Integer indicating how many points for the ROC plot.}
 }
-\details{
-}
+
 \value{
 A data frame with 3 columns is returned
 \item{FPR}{False Positive Rate}
@@ -35,7 +34,5 @@ Identification of active transcriptional regulatory elements from GRO-seq data. 
 }
 \seealso{
 \code{\link{logreg.roc.calc}}, \code{\link{combine.roc}}, \code{\link{roc.auc}}, \code{\link{roc.plot}}
-}
-\examples{
 }
 \keyword{ plot }

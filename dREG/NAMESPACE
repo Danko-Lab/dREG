@@ -1,5 +1,11 @@
 useDynLib(dREG, .registration = TRUE)
 
+import(parallel)
+import(e1071)
+import(bigWig)
+import(rphast)
+import(methods)
+
 exportClasses("genomic_data_model")
 export(read_genomic_data)
 export(genomic_data_model)

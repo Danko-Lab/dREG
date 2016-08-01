@@ -8,7 +8,9 @@ read_genomic_data( gdm,
       file_bigwig_plus, 
       file_bigwig_minus, 
       as_matrix = TRUE, 
-      scale.method = c("logistic", "linear"))
+      scale.method = c("logistic", "linear"),
+      batch_size = 50000, 
+      ncores = 1 )
 }
 \arguments{
   \item{gdm}{Genomic data model return by \code{\link{genomic_data_model}}.}
@@ -17,6 +19,8 @@ read_genomic_data( gdm,
   \item{file_bigwig_minus}{String value indicating file path to bigwig file representing GRO-seq/ PRO-seq reads on the minus strand.}
   \item{as_matrix}{Logical type,if true, returns a matrix object, otherwise returns a list() object, where each element in the list is the zoom data.}
   \item{scale.method}{String value indicating the normalize method of read counts. Two options are available, "logistic" or "linear", default value is logistic. See details}
+  \item{batch_size}{Number of genomic positions to evaluate at once (more might be faster, but takes more memory)}
+  \item{ncores}{Number of CPU cores in parallel computing}
 }
 \details{
 Data normalize method: \cr
@@ -37,7 +41,7 @@ Identification of active transcriptional regulatory elements from GRO-seq data. 
 
 file_bigwig_plus <- "";
 file_bigwig_minus <- "";
-gdm <- new genomic_data_model(20, 10);
+gdm <- genomic_data_model(20, 10);
 #mat <- read_genomic_data(gdm, bed, file_bigwig_plus, file_bigwig_minus);
 #summary(mat);
 

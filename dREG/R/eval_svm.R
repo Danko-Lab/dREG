@@ -25,23 +25,34 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
      return( read_genomic_data(gdm, pos.sorted[batch_indx,,drop=F], bw_plus_path, bw_minus_path) );
   }
 
+  if (use_rgtsvm)
+  {
+    if(!requireNamespace(Rgtsvm))
+      stop("Rgtsvm has not been installed fotr GPU computing.");
+
+    predict = Rgtsvm::predict.gtsvm;
+  }
+
+  if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
+  if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
+
   do.predict <- function( mat_features ){
      if(asvm$type == 0) { ## Probabilistic SVM
-       batch_pred <- svm_predict(asvm, mat_features, use_rgtsvm=use_rgtsvm, probability=TRUE)
+       batch_pred <- predict( asvm, mat_features, probability=TRUE );
      }
      else { ## epsilon-regression (SVR)
-       batch_pred <- svm_predict(asvm,mat_features, use_rgtsvm=use_rgtsvm, probability=FALSE)
+       batch_pred <- predict( asvm, mat_features, probability=FALSE)
      }
      return(batch_pred);
   }
- 
+
   ## Do elements of each intervals
   if(!use_rgtsvm)
   {
     scores<- unlist(mclapply(c(1:(length(interval)-1)), function(x) {
       print(paste(x, "of", length(interval)-1) );
       pred <- do.predict( do.extract(x) );
-      gc(); 
+      gc();
       return( pred );
     }, mc.cores= ncores))
   }else
@@ -54,7 +65,7 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
           print(paste(x, "of", length(interval)-1) );
           return( do.extract(x) );
        }, mc.cores= ncores);
-      
+
       pred <- do.predict( do.call("rbind", feature_list) );
       feature_list <- NULL;
       gc();
@@ -70,21 +81,3 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
   return(as.double(scores))
 }
-
-svm_predict<-function( asvm, mat_features, use_rgtsvm=FALSE, probability=FALSE )
-{
-	if (use_rgtsvm)
-		require(Rgtsvm);
-
-	if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
-	if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
-
-	ret <- c();
-	if(use_rgtsvm)
-		ret <- Rgtsvm::predict.gtsvm(asvm, mat_features, probability=probability)
-	else
-		ret <- predict( asvm, mat_features, probability=probability );
-
-	return(ret);
-}
-

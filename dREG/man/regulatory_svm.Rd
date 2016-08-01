@@ -15,6 +15,7 @@ regulatory_svm(gdm,
       extra_enrich_bed = NULL, 
       extra_enrich_frac = 0.1, 
       enrich_negative_near_pos = 0.15, 
+      use_rgtsvm = FALSE,
       svm_type = "SVR", ..., 
       debug = TRUE)
 }
@@ -32,13 +33,12 @@ regulatory_svm(gdm,
   \item{extra_enrich_bed}{Bed-style data frame indicating extra bed file to enrich near. Used by \code{\link{get_test_set}}.}
   \item{extra_enrich_frac}{Fraction of final positions sampled in the negative set which are in the bed file. Unused if extra_enrich_bed is NULL. Used by \code{\link{get_test_set}}.}
   \item{enrich_negative_near_pos}{Fraction of training examples chosen to be nearby (<=5kb) a positive example [0,1].}
+  \item{use_rgtsvm}{Indictating whether the predict will be performed on GPU through the Rgtsvm package.}
   \item{svm_type}{Two options, "SVR" for support vecctor regression (epsilon-regression). "P_SVM" for probabilistic SVM (C-classification).}
   \item{\dots}{The parameters for \code{plot} function}
   \item{debug}{Logical value indication the process detail is outputted.}
 }
-\details{
- 
-}
+
 \value{
 A svm model trained by \code{svm} function in e1071 package.
 }
@@ -48,7 +48,5 @@ Identification of active transcriptional regulatory elements from GRO-seq data. 
 }
 \seealso{
 \code{\link{get_informative_positions}}, \code{\link{get_test_set}}, \code{\link{read_genomic_data}}, \code{\link{eval_reg_svm}}
-}
-\examples{
 }
 \keyword{ function }

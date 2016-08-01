@@ -1,7 +1,7 @@
 ## train_svm -- trains an SVM to recognize a certain pattern of regulatory positions.
 ##
 
-# setClass("regulatory_svm",#"restricted_boltzman_machine", 
+# setClass("regulatory_svm",#"restricted_boltzman_machine",
   # contains="genomic_data_model",
   # representation(
     # asvm= "list"
@@ -23,9 +23,21 @@
 #' @param plot_raw_data If TRUE (default), and if a PDF file is specified, plots the raw data used to train the model.
 #' @param svm_type "SVR" for support vecctor regression (epsilon-regression).  "P_SVM" for probabilistic SVM (C-classification).
 #' @return Returns a trained SVM.
-regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive, allow= NULL, n_train=25000, n_eval=1000, pdf_path= "roc_plot.pdf", plot_raw_data=TRUE, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, enrich_negative_near_pos= 0.15, svm_type= "SVR", ..., debug= TRUE) {
+regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive, allow= NULL, n_train=25000, n_eval=1000, pdf_path= "roc_plot.pdf", plot_raw_data=TRUE, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, enrich_negative_near_pos= 0.15, use_rgtsvm=FALSE, svm_type= "SVR", ..., debug= TRUE) {
   ########################################
   ## Divide into positives and negatives.
+
+  if (use_rgtsvm)
+  {
+    if(!requireNamespace(Rgtsvm))
+      stop("Rgtsvm has not been installed fotr GPU computing.");
+
+    predict = Rgtsvm::predict.gtsvm;
+    svm = Rgtsvm::svm;
+  }
+
+  if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
+  if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
 
   inter_indx <- (n_train+n_eval)
   indx_train <- c(1:n_train, (inter_indx+1):(inter_indx+n_train))
@@ -41,13 +53,13 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     y_train <- tset[indx_train,4]
     x_predict_bed <- tset[indx_eval,c(1:3)]
     y_predict <- tset[indx_eval,4]
-	
+
 	## Write out a bed of training positions to avoid during test ...
     if(debug) {
       write.table(x_train_bed, "TrainingSet.bed", quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
 	  write.table(indx_train, "TrainIndx.Rflat")
     }
-	
+
     x_train <- read_genomic_data(gdm, x_train_bed, bw_plus_path, bw_minus_path)
   } else {
     x_train <- NULL
@@ -63,19 +75,19 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     }
   }
 
-  ########################################  
+  ########################################
   ## Train the model.
   if(debug) print("Fitting SVM.")
   if (svm_type == "SVR") {
     if(debug) print("Training a epsilon-regression SVR.")
-    asvm <- svm(x_train, y_train)
+    asvm <- svm( x_train, y_train )
   }
   if (svm_type == "P_SVM") {
     if(debug) print("Training a probabilistic SVM.")
-    asvm <- svm(x_train, as.factor(y_train), probability=TRUE)
+    asvm <- svm( x_train, as.factor(y_train), probability=TRUE)
   }
 
-  ########################################  
+  ########################################
   ## If a PDF file is specified, test performance, and write ROC plots to a PDF file.
   ## Currently *NOT* supported when training with >1 dataset.
  if(!is.null(pdf_path) && !is.na(pdf_path) && n_eval>0 && length(bw_plus_path) == 1) {
@@ -86,11 +98,13 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
       points(colSums(x_train[y_train == 0,]), col="gray", type="l", ...)
     }
     remove(x_train)
-  
+
     ## Predict on a randomly chosen set of sequences.
     if(debug) print("Collecting predicted data.")
+
     x_predict <- read_genomic_data(gdm, x_predict_bed, bw_plus_path, bw_minus_path)
-    pred <- predict(asvm, x_predict)
+
+    pred <- predict( asvm, x_predict )
 
     ## Plot raw prediction data, if desired.
     if(plot_raw_data) {
@@ -110,7 +124,7 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
  else {
    remove(x_train)
  }
-   
+
   return(asvm)
 }
 

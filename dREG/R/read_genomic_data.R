@@ -89,7 +89,7 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
 		  }
 
 		  if( is.null(dat))
-		  	error("Failed to Call C/C++ functions.\n");
+		  	stop("Failed to Call C/C++ functions.\n");
 
 #	cat(x, NROW(dat), NCOL(dat), "\n");
 		  return( as.data.frame(t(dat) ) );
@@ -100,8 +100,8 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
     dat <- datList[[1]]
   else
   {
-    if(require(data.table))
-	  dat <- as.matrix( rbindlist(datList) )
+    if(requireNamespace(data.table))
+	  dat <- as.matrix( data.table::rbindlist(datList) )
     else
   	  dat <- as.matrix( do.call(rbind, datList) );
   }

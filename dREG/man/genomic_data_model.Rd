@@ -10,11 +10,10 @@ Creates a genome data model.
 genomic_data_model(window_sizes, half_nWindows)
 }
 \arguments{
-  \item{window_sizes}{}
-  \item{half_nWindows}{}
+  \item{window_sizes}{Number indicating the width of genomic window.}
+  \item{half_nWindows}{Number indicating the count of genomic window at each side(left side or right side).}
 }
-\details{
-}
+
 \value{
 A s4 object is returned with 
 \item{n_zooms}{Number indicating zoom ratio.}

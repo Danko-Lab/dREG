@@ -10,6 +10,7 @@ eval_reg_svm(gdm,
       bw_minus_path, 
       batch_size = 50000, 
       ncores = 3, 
+      use_rgtsvm = FALSE, 
       debug = TRUE)
 }
 \arguments{
@@ -19,11 +20,11 @@ eval_reg_svm(gdm,
   \item{bw_plus_path}{String value indicating file path to bigWig file representing the plus strand.}
   \item{bw_minus_path}{String value indicating file path to bigWig file representing the minus strand}
   \item{batch_size}{Number of positions to evaluate at once (more might be faster, but takes more memory).}
-  \item{ncores}{The number of cpu cores in parallel computing}
+  \item{ncores}{Number of CPU cores in parallel computing}
+  \item{use_rgtsvm}{Indictating whether the predict will be performed on GPU through the Rgtsvm package.}
   \item{debug}{Logical value indicating the process detail is outputted.}
 }
-\details{
-}
+
 \value{
 Returns the value of the SVM for each genomic coordinate specified.
 }
@@ -46,7 +47,7 @@ Identification of active transcriptional regulatory elements from GRO-seq data. 
 # positions <- get_informative_positions(ps_plus_path, ps_minus_path, 
 #		depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE);
 
-# pred_val<- eval_reg_svm( gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000)
+# pred_val<- eval_reg_svm( gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size=50000)
 # write.table( data.frame(inf_positions, pred_val), file="eval.tab", 
 #	row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
 

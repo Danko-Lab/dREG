@@ -58,6 +58,4 @@ Identification of active transcriptional regulatory elements from GRO-seq data. 
 \seealso{
 \code{\link{get_test_set}}, \code{\link{read_genomic_data}}, \code{\link{regulatory_svm}}, \code{\link{eval_reg_svm}}
 }
-\examples{
-}
 \keyword{ function }
