@@ -62,20 +62,25 @@ dREG takes three files as input, and outputs one file.  Input files include the 
 
 To use dREG, type: 
 
-    bash dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads]
+    bash dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]
 
     plus_strand.bw	-- PRO-seq data (plus strand) formatted as a bigWig file.
     minus_strand.bw	-- PRO-seq data (plus strand) formatted as a bigWig file.
     out_prefix		-- The prefix of the output file.
     asvm.RData		-- The path to the RData file containing the pre-trained SVM.
     [nthreads]		-- [optional, default=1] The number of threads to use.
+    [GPU]		    -- [optional, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
 
 
 For example, to run dREG on the example data (PRO-seq from chr21 in K562 cells), use:
 
     bash run_dREG.bsh example/K562.chr21.plus.bw example/K562.chr21.minus.bw k562.test dREG_model/asvm.RData 2
 
-That command takes ~2-3 hours to execute on Ubuntu on a core i5 desktop computer.
+If GPU is available with 16 CPU cores, use:
+
+    bash run_dREG.bsh example/K562.chr21.plus.bw example/K562.chr21.minus.bw k562.test dREG_model/asvm.RData 15 GPU
+
+That command takes ~2-3 hours to execute on Ubuntu on a core i5 desktop computer (CPU version).
 
 dREG outputs a bedGraph file of scores.  If desired, users can convert this file into a merged file of dREG 'peaks', or regions which fit the profile of a transcribed regulatory element.   For convenience, users can use the included bash script (writeBed.bsh) to identify dREG peaks.  This script is used as follows:
 
