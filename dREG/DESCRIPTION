@@ -4,7 +4,7 @@ Date: 2015-07-29
 Title: Detection of Regulatory DNA using GRO-seq Data (dREG)
 Author: Charles G. Danko <dankoc@gmail.com>
 Maintainer: Charles G. Danko <dankoc@gmail.com>
-Depends: R (>= 2.14), bigWig (>= 0.2-9), e1071, parallel, methods,rphast
+Depends: R (>= 2.14), bigWig (>= 0.2-9), e1071, rphast
 LinkingTo:
 Suggests: data.table, Rgtsvm
 Description: This package is an analysis pipeline for the analysis of GRO-seq data.
