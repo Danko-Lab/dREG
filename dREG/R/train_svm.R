@@ -36,8 +36,8 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     svm = Rgtsvm::svm;
   }
 
-  if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
-  if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
+  #if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
+  #if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
 
   inter_indx <- (n_train+n_eval)
   indx_train <- c(1:n_train, (inter_indx+1):(inter_indx+n_train))
@@ -80,7 +80,7 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   if(debug) print("Fitting SVM.")
   if (svm_type == "SVR") {
     if(debug) print("Training a epsilon-regression SVR.")
-    asvm <- svm( x_train, y_train )
+    asvm <- svm( x_train, y_train, type="eps-regression" )
   }
   if (svm_type == "P_SVM") {
     if(debug) print("Training a probabilistic SVM.")
