@@ -212,8 +212,8 @@ void get_genomic_data_fast( int left_pos, int right_pos, zoom_params_t zoom, raw
 {
   init_genomic_data_point(dp, zoom);
 
-  int left_idx  = left_pos - (chrom_counts.start + chrom_counts.offset);
-  int right_idx = right_pos - (chrom_counts.start + chrom_counts.offset);
+  int left_idx  = left_pos - (chrom_counts.start ); // + chrom_counts.offset
+  int right_idx = right_pos - (chrom_counts.start); //+ chrom_counts.offset
 
   // Sets up a bit of a  strange boundary condition, where 0's are included on all out-of-bounds windows.
   // After last night's experiment, I see this as preferable to throwing an error, however.
@@ -221,12 +221,12 @@ void get_genomic_data_fast( int left_pos, int right_pos, zoom_params_t zoom, raw
 
   // Loop through incrementing each vector.
   for(int bp=left_idx; bp<right_idx; bp++) {
-	if( (chrom_counts.forward[ bp ]==0 )  && (chrom_counts.reverse[ bp ]==0 ) )
+	if( bp<0 || ((chrom_counts.forward[ bp ]==0 )  && (chrom_counts.reverse[ bp ]==0 ) ) )
 		continue;
 
     for(int i=0;i<zoom.n_sizes;i++) {
 	  int which_bin = pre_bin[i][bp-left_idx];
-      if(which_bin>=0 && bp>=0) {
+      if(which_bin>=0) {
         dp.forward[i][which_bin]+= (double)chrom_counts.forward[ bp ];
         dp.reverse[i][which_bin]+= (double)chrom_counts.reverse[ bp ];
       }
@@ -454,7 +454,7 @@ int merge_adjacent_range( SEXP chrom_r, SEXP centers_r, int* pStart_idx, int max
 
     	const char* pszChr_i = CHAR(STRING_ELT(chrom_r,i));
 		// not at same chromosom, skip it.
-		if( strcmp(pszChr_i, pszChr) != 0) continue;
+		if( strcmp(pszChr_i, pszChr) != 0) break;
 
 		// if within the max range at one time reading
 		if( nrange_center - nrange_max <= centers[i] - max_dist  && centers[i] + max_dist <= nrange_center + nrange_max)

@@ -9,7 +9,7 @@
 #' @param bw_minus_path Path to bigWig file representing the minus strand [char].
 #' @param batch_size Number of positions to evaluate at once (more might be faster, but takes more memory).
 #' @return Returns the value of the SVM for each genomic coordinate specified.
-eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batch_size=50000, ncores=3, use_rgtsvm=FALSE, debug= TRUE) {
+eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batch_size=50000, ncores=3, use_rgtsvm=FALSE, use_snowfall=FALSE, debug= TRUE) {
 
   if(batch_size>NROW(positions)) batch_size= NROW(positions)
   n_elem <- NROW(positions)
@@ -18,12 +18,6 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
   pos.ord <- order(positions[,1], positions[,2], positions[,3]);
   pos.sorted <- positions[pos.ord,];
-
-  do.extract<-function(x)
-  {
-     batch_indx<- c( interval[x]:(interval[x+1]-1) );
-     return( read_genomic_data(gdm, pos.sorted[batch_indx,,drop=F], bw_plus_path, bw_minus_path) );
-  }
 
   if (use_rgtsvm)
   {
@@ -55,20 +49,53 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
       gc();
       return( pred );
     }, mc.cores= ncores))
-  }else
+  }
+  else
   {
     n.loop <- ceiling((length(interval)-1)/ncores);
-     scores <- unlist( lapply(1:n.loop, function(i) {
-       n.start = (i-1)*ncores+1;
-       n.stop = ifelse( length(interval)-1 <= i*ncores, length(interval)-1, i*ncores );
-       feature_list<- mclapply(n.start:n.stop, function(x) {
-          print(paste(x, "of", length(interval)-1) );
-          return( do.extract(x) );
-       }, mc.cores= ncores);
+    scores <- unlist( lapply(1:n.loop, function(i) {
+      n.start = (i-1)*ncores+1;
+      n.stop = ifelse( length(interval)-1 <= i*ncores, length(interval)-1, i*ncores );
 
-      pred <- do.predict( do.call("rbind", feature_list) );
-      feature_list <- NULL;
-      gc();
+      feature_list <- list();
+      if(!use_snowfall)
+      {
+         feature_list<- mclapply(n.start:n.stop, function(x) {
+            print(paste(x, "of", length(interval)-1) );
+            batch_indx<- c( interval[x]:(interval[x+1]-1) );
+            return(read_genomic_data(gdm, pos.sorted[batch_indx,,drop=F], bw_plus_path, bw_minus_path));
+         }, mc.cores= ncores);
+      }
+      else
+      {
+        if(!requireNamespace("snowfall"))
+           stop("Snowfall has not been installed fotr big data.");
+
+		pos.list = list();
+		for(x in n.start:n.stop)
+        {   print(paste(x, "of", length(interval)-1) );
+            batch_indx<- c( interval[x]:(interval[x+1]-1) );
+            pos.list[[x-n.start+1]] <- pos.sorted[batch_indx,,drop=F];
+        }
+
+        cpu.fun <- function(pos.bed)
+        {
+			requireNamespace("dREG");
+
+  		    cat("PID=", Sys.getpid(), "\n");
+	  	  	return(read_genomic_data(gdm, pos.bed, bw_plus_path, bw_minus_path));
+		}
+
+        sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
+        sfExport("gdm", "bw_plus_path", "bw_minus_path");
+        feature_list <- sfLapply( pos.list, cpu.fun);
+		sfStop();
+      }
+
+      feature_list <- do.call("rbind", feature_list); gc();
+
+      pred <- do.predict( feature_list ); gc();
+
       return( pred );
      } ));
   }
@@ -81,3 +108,4 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
   return(as.double(scores))
 }
+

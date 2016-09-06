@@ -23,9 +23,11 @@
 #' @param plot_raw_data If TRUE (default), and if a PDF file is specified, plots the raw data used to train the model.
 #' @param svm_type "SVR" for support vecctor regression (epsilon-regression).  "P_SVM" for probabilistic SVM (C-classification).
 #' @return Returns a trained SVM.
-regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive, allow= NULL, n_train=25000, n_eval=1000, pdf_path= "roc_plot.pdf", plot_raw_data=TRUE, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, enrich_negative_near_pos= 0.15, use_rgtsvm=FALSE, svm_type= "SVR", ..., debug= TRUE) {
+regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive, allow= NULL, n_train=25000, n_eval=1000, pdf_path= "roc_plot.pdf", plot_raw_data=TRUE, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, enrich_negative_near_pos= 0.15, use_rgtsvm=FALSE, svm_type= "SVR", ncores=1, ..., debug= TRUE) {
   ########################################
   ## Divide into positives and negatives.
+
+  batch_size = 10000;
 
   if (use_rgtsvm)
   {
@@ -42,6 +44,18 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   inter_indx <- (n_train+n_eval)
   indx_train <- c(1:n_train, (inter_indx+1):(inter_indx+n_train))
   indx_eval  <- c((n_train+1):(inter_indx), (inter_indx+n_train+1):(2*inter_indx))
+
+  parallel_read_genomic_data <- function( x_train_bed, bw_plus_file, bw_minus_file )
+  {
+      interval <- unique(c( seq( 1, NROW(x_train_bed)+1, by=batch_size ), NROW(x_train_bed)+1))
+      feature_list<- mclapply(1:(length(interval)-1), function(x) {
+            print(paste(x, "of", length(interval)-1) );
+            batch_indx<- c( interval[x]:(interval[x+1]-1) );
+            return(read_genomic_data(gdm, x_train_bed[batch_indx,,drop=F], bw_plus_file, bw_minus_file));
+      }, mc.cores= ncores);
+
+	  return( do.call("rbind", feature_list) );
+  }
 
   ## Read genomic data.
   if(debug) print("Collecting training data.")
@@ -60,7 +74,8 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
 	  write.table(indx_train, "TrainIndx.Rflat")
     }
 
-    x_train <- read_genomic_data(gdm, x_train_bed, bw_plus_path, bw_minus_path)
+    x_train <- parallel_read_genomic_data( x_train_bed, bw_plus_path, bw_minus_path)
+
   } else {
     x_train <- NULL
     y_train <- NULL
@@ -71,9 +86,11 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
       x_train_bed <- tset_x[indx_train,c(1:3)]
       y_train <- c(y_train, tset_x[indx_train,4])
 
-      x_train <- rbind(x_train, read_genomic_data(gdm, x_train_bed, bw_plus_path[[x]], bw_minus_path[[x]]))
+      x_train <- rbind(x_train, parallel_read_genomic_data( x_train_bed, bw_plus_path[[x]], bw_minus_path[[x]]) );
     }
   }
+
+  gc();
 
   ########################################
   ## Train the model.
@@ -86,6 +103,8 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     if(debug) print("Training a probabilistic SVM.")
     asvm <- svm( x_train, as.factor(y_train), probability=TRUE)
   }
+
+  gc();
 
   ########################################
   ## If a PDF file is specified, test performance, and write ROC plots to a PDF file.
@@ -102,7 +121,7 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     ## Predict on a randomly chosen set of sequences.
     if(debug) print("Collecting predicted data.")
 
-    x_predict <- read_genomic_data(gdm, x_predict_bed, bw_plus_path, bw_minus_path)
+    x_predict <- parallel_read_genomic_data( x_predict_bed, bw_plus_path, bw_minus_path );
 
     pred <- predict( asvm, x_predict )
 
@@ -127,5 +146,3 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
 
   return(asvm)
 }
-
-
