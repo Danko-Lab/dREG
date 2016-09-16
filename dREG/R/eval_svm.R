@@ -45,7 +45,10 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
   {
     scores<- unlist(mclapply(c(1:(length(interval)-1)), function(x) {
       print(paste(x, "of", length(interval)-1) );
-      pred <- do.predict( do.extract(x) );
+      batch_idx <- c( interval[x]:(interval[x+1]-1) );
+      feature <- read_genomic_data(gdm, pos.sorted[batch_idx,,drop=F], bw_plus_path, bw_minus_path);
+
+      pred <- do.predict( feature );
       gc();
       return( pred );
     }, mc.cores= ncores))
