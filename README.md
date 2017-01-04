@@ -64,8 +64,8 @@ To use dREG, type:
 
     bash dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]
 
-    plus_strand.bw	-- PRO-seq data (plus strand) formatted as a bigWig file.
-    minus_strand.bw	-- PRO-seq data (plus strand) formatted as a bigWig file.
+    plus_strand.bw	-- PRO-seq data (plus strand).  Read counts (not normalized) formatted as a bigWig file.
+    minus_strand.bw	-- PRO-seq data (minus strand). Read counts (not normalized) formatted as a bigWig file.
     out_prefix		-- The prefix of the output file.
     asvm.RData		-- The path to the RData file containing the pre-trained SVM.
     [nthreads]		-- [optional, default=1] The number of threads to use.
