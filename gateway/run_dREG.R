@@ -31,7 +31,7 @@ cat("Genome Loci=", NROW(inf_positions), "\n");
 
 
 cat("2) -------- Prediction in dREG model\n");
-t <- system.time( pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000, ncores=ncores, use_rgtsvm=use_rgtsvm) )
+t <- system.time( pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000, ncores=ncores, use_rgtsvm=use_rgtsvm, use_snowfall=TRUE) )
 cat("Running time [User]:", t[1], "[System]:", t[2], "[Elapsed]:", t[3], "\n");
 
 
@@ -47,6 +47,7 @@ system( paste( "bash ", dirname(args[4]), "/writeBed.bsh", " 0.8 ", file.dreg.pr
 
 file.dreg.peak.gz <- paste(outfile, ".dREG.peak.gz", sep="");
 file.rename(paste(file.dreg.pred.gz, ".bed.gz", sep=""), file.dreg.peak.gz)
+unlink(file.dreg.pred.gz);
 
 cat("5) -------- Refining in dREG-HD model\n");
 require(dREG.HD);
@@ -58,6 +59,28 @@ cat("Running time [User]:", t[1], "[System]:", t[2], "[Elapsed]:", t[3], "\n");
 file.rename( paste(file.dreg.peak.gz, "_imputedDnase.bw", sep=""), paste(outfile, "dREG.HD.imputedDnase.bw", sep=".") )
 file.rename( paste(file.dreg.peak.gz, "_dREG_HD_relaxed.bed", sep=""), paste(outfile, "dREG.HD.relaxed.bed", sep=".") )
 file.rename( paste(file.dreg.peak.gz, "_dREG_HD_stringent.bed", sep=""), paste(outfile, "dREG.HD.stringent.bed", sep=".") )
+
+make_index_gz<-function(df_bed, outfile, file_id)
+{
+	write.table( df_bed, file=paste( outfile, ".", file_id, sep=""), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t");
+	system(paste( "bgzip ", outfile, ".", file_id, sep="") );
+	system(paste( "tabix -p bed ", outfile, ".", file_id, ".gz", sep="") );
+}
+make_index_gz(pred_data, outfile, "dREG.pred");
+
+tb <- read.table(file.dreg.peak.gz, header = FALSE);
+tb <- tb[,-4];
+
+unlink( file.dreg.peak.gz );
+make_index_gz( tb, outfile, "dREG.peak");
+
+tb <- read.table(paste(outfile, "dREG.HD.relaxed.bed", sep="."));
+tb <- data.frame(tb, 1);
+make_index_gz( tb, outfile, "dREG.HD.relaxed.bed");
+
+tb <- read.table(paste(outfile, "dREG.HD.stringent.bed", sep="."));
+tb <- data.frame(tb, 1);
+make_index_gz( tb, outfile, "dREG.HD.stringent.bed");
 
 system( paste("tar -cvzf ", outfile, ".dREG.tar.gz", " ", outfile, ".dREG.*", sep="") );
 cat("Result:", paste(outfile, ".dREG.tar.gz", sep=""), "\n");
