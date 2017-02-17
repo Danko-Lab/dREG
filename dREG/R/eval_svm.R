@@ -74,8 +74,8 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
         if(!requireNamespace("snowfall"))
            stop("Snowfall has not been installed fotr big data.");
 
-		pos.list = list();
-		for(x in n.start:n.stop)
+        pos.list = list();
+        for(x in n.start:n.stop)
         {   print(paste(x, "of", length(interval)-1) );
             batch_indx<- c( interval[x]:(interval[x+1]-1) );
             pos.list[[x-n.start+1]] <- pos.sorted[batch_indx,,drop=F];
@@ -83,21 +83,23 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
         cpu.fun <- function(pos.bed)
         {
-			requireNamespace("dREG");
+            requireNamespace("dREG");
 
-  		    cat("PID=", Sys.getpid(), "\n");
-	  	  	return(read_genomic_data(gdm, pos.bed, bw_plus_path, bw_minus_path));
-		}
+            cat("PID=", Sys.getpid(), "\n");
+            return(read_genomic_data(gdm, pos.bed, bw_plus_path, bw_minus_path));
+        }
 
         sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
         sfExport("gdm", "bw_plus_path", "bw_minus_path");
         feature_list <- sfLapply( pos.list, cpu.fun);
-		sfStop();
+        sfStop();
       }
 
-      feature_list <- do.call("rbind", feature_list); gc();
+      feature_list <- do.call("rbind", feature_list); gc(verbose=T, reset=T);
+      pred <- do.predict( feature_list );
 
-      pred <- do.predict( feature_list ); gc();
+      rm( feature_list );
+      gc(verbose=T, reset=T);
 
       return( pred );
      } ));
