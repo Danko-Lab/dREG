@@ -22,8 +22,11 @@ else
 	out="out"
 fi
 
+module load gcc
 module load bedops
 module load samtools
+module load bedtools
+
 
 pushd `dirname $0` > /dev/null
 bsh_path=`pwd`
