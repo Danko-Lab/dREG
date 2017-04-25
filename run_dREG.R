@@ -16,7 +16,7 @@ if (is.na(ncores)) ncores <- 1;
 
 use_rgtsvm <- FALSE;
 use_gpu <- toupper(as.character(args[6]))
-if (!is.na(use_gpu) && use_gpu=="GPU") use_rgtsvm <- TRUE;
+if (!is.na(use_gpu) && ( use_gpu=="GPU" || use_gpu=="TRUE")  ) use_rgtsvm <- TRUE;
 
 ## Now scan all positions in the genome ...
 inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
