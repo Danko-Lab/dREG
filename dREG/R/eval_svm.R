@@ -56,6 +56,7 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
   else
   {
     n.loop <- ceiling((length(interval)-1)/ncores);
+   
     scores <- unlist( lapply(1:n.loop, function(i) {
       n.start = (i-1)*ncores+1;
       n.stop = ifelse( length(interval)-1 <= i*ncores, length(interval)-1, i*ncores );
@@ -91,7 +92,10 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
         sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
         sfExport("gdm", "bw_plus_path", "bw_minus_path");
-        feature_list <- sfLapply( pos.list, cpu.fun);
+        if(length(pos.list)>1)
+           feature_list <- sfLapply( pos.list, cpu.fun)
+        else   
+           feature_list[[1]] <- cpu.fun(pos.list[[1]]);
         sfStop();
       }
 
