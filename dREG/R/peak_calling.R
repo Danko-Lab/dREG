@@ -74,7 +74,8 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
   unlink(tmp.rdata);
 
   dregP <- as.data.frame(do.call("rbind", lapply(dregP_list, function(x){if(!is.null(x)) return(x$ret) else return(NULL) })));
-  colnames(dregP) <- c("chr", "index","start", "end", "score", "prob_ml", "prob_mv", "smooth.mode", "original.mode", "centroid");
+  dregP <- dregP [,-2, drop=F];
+  colnames(dregP) <- c("chr", "start", "end", "score", "prob.ml", "prob.mn", "smooth.mode", "original.mode", "centroid");
 
   rp$peak_bed <- dregP[dregP$prob_ml<=0.05,, drop=F];
   rp$peak_sum <- rp$peak_sum[rp$peak_sum$max>=min_score,,drop=F];
