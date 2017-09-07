@@ -405,7 +405,7 @@ raw_data_t read_from_bigWig_r(const char *chrom, int start, int end, bigWig_t *b
   rd.start = start;
   if(start < 0) {
     rd.offset= -1*(start);
-	start=0;
+	rd.start=0;
   } else {
     rd.offset= 0;
   }

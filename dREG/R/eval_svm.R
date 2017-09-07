@@ -9,98 +9,117 @@
 #' @param bw_minus_path Path to bigWig file representing the minus strand [char].
 #' @param batch_size Number of positions to evaluate at once (more might be faster, but takes more memory).
 #' @return Returns the value of the SVM for each genomic coordinate specified.
-eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batch_size=50000, ncores=3, use_rgtsvm=FALSE, use_snowfall=FALSE, debug= TRUE) {
+eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batch_size=50000, ncores=3, use_rgtsvm=FALSE, debug= TRUE) {
 
-  if(batch_size>NROW(positions)) batch_size= NROW(positions)
+  if( batch_size>NROW(positions)) 
+  	 batch_size= NROW(positions)
+  
+  if(NROW(positions)/ncores < batch_size)
+  	batch_size <- ceiling(NROW(positions)/ncores);
+  
   n_elem <- NROW(positions)
-  n_batches <- floor(n_elem/batch_size)
   interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
 
   pos.ord <- order(positions[,1], positions[,2], positions[,3]);
   pos.sorted <- positions[pos.ord,];
 
-  if (use_rgtsvm)
-  {
-    if(!requireNamespace("Rgtsvm"))
-      stop("Rgtsvm has not been installed fotr GPU computing.");
+  do.predict <- function( mat_features){
 
-    predict = Rgtsvm::predict.gtsvm;
-  }
+    if (use_rgtsvm)
+    {
+      if(!requireNamespace("Rgtsvm"))
+        stop("Rgtsvm has not been installed fotr GPU computing.");
 
-  if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
-  if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
+      predict = Rgtsvm::predict.gtsvm;
+    }
 
-  do.predict <- function( mat_features ){
-     if(asvm$type == 0) { ## Probabilistic SVM
-       batch_pred <- predict( asvm, mat_features, probability=TRUE );
-     }
-     else { ## epsilon-regression (SVR)
-       batch_pred <- predict( asvm, mat_features, probability=FALSE)
-     }
-     return(batch_pred);
+    if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
+    if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
+
+    if(asvm$type == 0) { ## Probabilistic SVM
+      batch_pred <- predict( asvm, mat_features, probability=TRUE );
+    }
+    else { ## epsilon-regression (SVR)
+      batch_pred <- predict( asvm, mat_features, probability=FALSE)
+    }
+
+    return(batch_pred);
   }
 
   ## Do elements of each intervals
   if(!use_rgtsvm)
   {
-    scores<- unlist(mclapply(c(1:(length(interval)-1)), function(x) {
-      print(paste(x, "of", length(interval)-1) );
-      batch_idx <- c( interval[x]:(interval[x+1]-1) );
-      feature <- read_genomic_data(gdm, pos.sorted[batch_idx,,drop=F], bw_plus_path, bw_minus_path);
+     cpu.fun <- function(x)
+     {
+        require("dREG");
+      	batch_idx <- c( interval[x]:(interval[x+1]-1) );
+      	feature <- read_genomic_data(gdm, pos.sorted[batch_idx,,drop=F], bw_plus_path, bw_minus_path)
+      	pred <- do.predict( feature );
+      	gc();
+      	return( pred );
+     }
 
-      pred <- do.predict( feature );
-      gc();
-      return( pred );
-    }, mc.cores= ncores))
+    sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
+    sfExport("gdm", "pos.sorted", "bw_plus_path", "bw_minus_path", "interval", "asvm", "do.predict", "use_rgtsvm");
+
+    fun <- as.function(cpu.fun);
+    environment(fun)<-globalenv();
+
+    scores <- unlist( sfLapply( 1:(length(interval)-1), fun) );
+    sfStop();
+
   }
   else
   {
     n.loop <- ceiling((length(interval)-1)/ncores);
-   
+
     scores <- unlist( lapply(1:n.loop, function(i) {
       n.start = (i-1)*ncores+1;
       n.stop = ifelse( length(interval)-1 <= i*ncores, length(interval)-1, i*ncores );
 
+      #if(!use_snowfall)
+      #{
+      #   feature_list<- mclapply(n.start:n.stop, function(x) {
+      #      print(paste(x, "of", length(interval)-1) );
+      #      batch_indx<- c( interval[x]:(interval[x+1]-1) );
+      #      return(read_genomic_data(gdm, pos.sorted[batch_indx,,drop=F], bw_plus_path, bw_minus_path));
+      #   }, mc.cores= ncores);
+      #}
+      #else
+      #{
+      if(!requireNamespace("snowfall"))
+         stop("Snowfall has not been installed fotr big data.");
+
+      pos.list = list();
+      for(x in n.start:n.stop)
+      {   print(paste(x, "of", length(interval)-1) );
+        batch_indx<- c( interval[x]:(interval[x+1]-1) );
+        pos.list[[x-n.start+1]] <- pos.sorted[batch_indx,,drop=F];
+      }
+
+      cpu.fun <- function(pos.bed)
+      {
+        require("dREG");
+
+        cat("PID=", Sys.getpid(), "\n");
+        return(read_genomic_data(gdm, pos.bed, bw_plus_path, bw_minus_path));
+      }
+
+      sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
+      sfExport("gdm", "bw_plus_path", "bw_minus_path");
+
+      fun <- as.function(cpu.fun);
+      environment(fun)<-globalenv();
+
       feature_list <- list();
-      if(!use_snowfall)
-      {
-         feature_list<- mclapply(n.start:n.stop, function(x) {
-            print(paste(x, "of", length(interval)-1) );
-            batch_indx<- c( interval[x]:(interval[x+1]-1) );
-            return(read_genomic_data(gdm, pos.sorted[batch_indx,,drop=F], bw_plus_path, bw_minus_path));
-         }, mc.cores= ncores);
-      }
+      if(length(pos.list)>1)
+         feature_list <- sfLapply( pos.list, fun)
       else
-      {
-        if(!requireNamespace("snowfall"))
-           stop("Snowfall has not been installed fotr big data.");
+         feature_list[[1]] <- cpu.fun(pos.list[[1]]);
+      sfStop();
+     #}
 
-        pos.list = list();
-        for(x in n.start:n.stop)
-        {   print(paste(x, "of", length(interval)-1) );
-            batch_indx<- c( interval[x]:(interval[x+1]-1) );
-            pos.list[[x-n.start+1]] <- pos.sorted[batch_indx,,drop=F];
-        }
-
-        cpu.fun <- function(pos.bed)
-        {
-            requireNamespace("dREG");
-
-            cat("PID=", Sys.getpid(), "\n");
-            return(read_genomic_data(gdm, pos.bed, bw_plus_path, bw_minus_path));
-        }
-
-        sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
-        sfExport("gdm", "bw_plus_path", "bw_minus_path");
-        if(length(pos.list)>1)
-           feature_list <- sfLapply( pos.list, cpu.fun)
-        else   
-           feature_list[[1]] <- cpu.fun(pos.list[[1]]);
-        sfStop();
-      }
-
-      feature_list <- do.call("rbind", feature_list); gc(verbose=T, reset=T);
-      pred <- do.predict( feature_list );
+      pred <- do.predict( do.call("rbind", feature_list) );
 
       rm( feature_list );
       gc(verbose=T, reset=T);
