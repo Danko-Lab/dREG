@@ -1,9 +1,13 @@
 **Gateway Status:**
 ===============
 
-Comet(.sdsc.xsede.org) and Bridges(.psc.edu) are running normally.
+Comet(.sdsc.xsede.org): Healthy
+
+Bridges(.psc.edu): Healthy
+
+
 
 **Gateway Update:**
 ===============
 
-None
+09/08/2017: The dREG model is updated!
