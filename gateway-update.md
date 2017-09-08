@@ -1,7 +1,7 @@
-**Gateway Status**
+**Gateway Status:**
 
 Comet(.sdsc.xsede.org) and Bridges(.psc.edu) are running normally.
 
-**Gateway Update**
+**Gateway Update:**
 
 None
