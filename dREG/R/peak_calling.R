@@ -15,8 +15,8 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
   if(is.null(min_score))
      min_score <- rp$min_score;
 
-  cat("min_score=", min_score, "\n");	
-  
+  cat("min_score=", min_score, "\n");
+
   peak.idx <- which( rp$peak_sum$max>=min_score );
   k.sect <- 1:ceiling(NROW(peak.idx)/500)
 
@@ -77,7 +77,7 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
   dregP <- dregP [,-2, drop=F];
   colnames(dregP) <- c("chr", "start", "end", "score", "prob.ml", "prob.mn", "smooth.mode", "original.mode", "centroid");
 
-  rp$peak_bed <- dregP[dregP$prob_ml<=0.05,, drop=F];
+  rp$peak_bed <- dregP[dregP$prob.ml<=0.05,, drop=F];
   rp$peak_sum <- rp$peak_sum[rp$peak_sum$max>=min_score,,drop=F];
 
   return(rp);
