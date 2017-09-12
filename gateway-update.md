@@ -3,7 +3,7 @@
 
 Comet(.sdsc.xsede.org): Healthy
 
-Bridges(.psc.edu): Healthy
+Bridges(.psc.edu): Healthy, see https://www.psc.edu/
 
 
 
