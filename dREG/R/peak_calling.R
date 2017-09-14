@@ -42,8 +42,8 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
       {
         #P <- try( find_peaks( xp, yp, SlopeThreshold=0.01, AmpThreshold=min_score, smoothwidth=smoothwidth, smoothtype=2, cor_mat=cor_mat) );
         P <- find_peaks( xp, yp, SlopeThreshold=0.01, AmpThreshold=min_score, smoothwidth=smoothwidth, smoothtype=2, cor_mat=cor_mat);
-        if(class(P)=="try-error")
-          P<-NULL;
+        #if(class(P)=="try-error")
+        #  P<-NULL;
       }
 
       if(!is.null(P)) P <- data.frame(chr=rp$peak_sum[kk,]$chr, kk, P[,-1,drop=F]);
@@ -142,16 +142,17 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
 {
   dreg_pred <- dreg_pred[with( dreg_pred, order(chr, start)),];
 
-  r.gap <- list();
-  for(chr in unique(dreg_pred$chr))
+  cpu.fun<-function(chr)
   {
+	require(data.table);
+
     predx <- dreg_pred[ as.character(dreg_pred$chr)==as.character(chr),];
 
     ## the distance between two ajacent informative sites.
     dist  <- predx[-1,]$start - predx[-NROW(predx),]$start;
 
     ## select the gap if distance > 50
-    r.gap[[chr]] <- rbindlist( mclapply(which(dist>50), function(k){
+    r.chr <- rbindlist( lapply(which(dist>50), function(k){
       r.pos <- c();
 
       ## if thecurrent site has a high score
@@ -161,8 +162,8 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
           r.maxpos <- floor((dist[k]-50)/50)
         else
           r.maxpos <- ceiling((predx[k,4] - threshold)/0.05)
-        r.pos <- c(r.pos, predx[k,2]+c(1:r.maxpos)*50);
 
+        r.pos <- c(r.pos, predx[k,2]+c(1:r.maxpos)*50);
       }
 
       ## if the neighbor site has a high score
@@ -179,8 +180,24 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
       if(NROW(r.pos)>0)
         return( data.frame( chr=chr, start=r.pos, end=r.pos+1))
       else
-        return(c()); }, mc.cores = ncores ));
+        return(c()); } ));
+
+    return(r.chr);
   }
+
+  if(ncores>1)
+  {
+    sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
+    sfExport("dreg_pred", "threshold" );
+
+    fun <- as.function(cpu.fun);
+    environment(fun)<-globalenv();
+
+    r.gap <- sfClusterApplyLB( unique(dreg_pred$chr), fun=fun);
+    sfStop();
+  }
+  else
+    r.gap <- lapply( unique(dreg_pred$chr), cpu.fun );
 
   ## return a bed data containing all sites which are not predicted by the first run(informative sites)
   return( as.data.frame(unique(rbindlist(r.gap))));
