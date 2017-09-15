@@ -5,6 +5,8 @@ Detection of Regulatory DNA Sequences using GRO-seq Data.
 
 Online computational site:
 --------
+We provide a computation site to run dREG on GPU server, the users don't need to install any software, only upload the bigWig files and wait for your results, it is simple and easy. Please click here to try this site:
+
 https://dreg.dnasequence.org/
 
 Abstract
