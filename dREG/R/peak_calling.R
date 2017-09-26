@@ -250,8 +250,8 @@ merge_broad_peak<-function( pred.bed, threshold, join = 500)
 
     peak.idx <- data.frame(start=separe.idx[-NROW(separe.idx)]+1, end=separe.idx[-1])
     peak.idx <- peak.idx[ peak.idx[,1] != peak.idx[,2], ];
-    
-    if (length(peak.idx)>0)
+
+    if (NROW(peak.idx)>0)
     	peak.bed <- rbind(peak.bed,  data.frame(chr=chr, start=pred.chr[ peak.idx[,1] , 2 ], end=pred.chr[ peak.idx[,2], 3 ]) );
   }
 
