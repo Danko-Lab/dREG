@@ -207,11 +207,16 @@ get_peak_summary <- function( infp_bed, threshold=0 )
 {
   tb.peak <- merge_broad_peak(infp_bed, threshold);
 
+  ## remove unknown contig, e.g.g chr1_gl000192_random chr10, chr17_ctg5_hap1, chr6_mann_hap4,chr6_qbl_hap6
+  ## Notice: chr1_gl000192_random causes Bedmap is failed to get summary information for chr10-chr19
+  ##         remove these contigs temporally
+  tb.peak <- tb.peak[ grep("_", tb.peak$chr,invert=TRUE), ]
+
   options("scipen"=100, "digits"=4)
-  file.peak <- tempfile("peak", ".", "bed");
+  file.peak <- tempfile("peak", ".", ".peak.bed");
   write.table(data.frame( tb.peak[,-4 ], 1:NROW(tb.peak)), file.peak, col.names=F, row.names=F, quote=F, sep="\t");
 
-  file.infp_bed <- tempfile("temp", ".", "pred.bed");
+  file.infp_bed <- tempfile("temp", ".", ".pred.bed");
   write.table(data.frame( infp_bed[,c(1,2,3)], "n", infp_bed[,4]), file.infp_bed, col.names=F, row.names=F, quote=F, sep="\t");
 
   tb.peak.sum <- read.table(pipe(paste("bedmap --echo --min --max --mean --sum --stdev --count --delim '\t' ", file.peak, file.infp_bed, sep=" ")), header=F);
@@ -238,9 +243,9 @@ merge_broad_peak<-function( pred.bed, threshold, join = 500)
   pred.bed <- pred.bed[with(pred.bed, order(chr, start)),];
 
   peak.bed <- c();
-  for( chr in unique(pred.bed[,1]) )
+  for( chr in unique(as.character(pred.bed[,1])) )
   {
-    pred.chr <- pred.bed[ pred.bed[,1] == chr, ];
+    pred.chr <- pred.bed[ as.character(pred.bed[,1]) == chr, ];
 
     dist <- pred.chr[ -1, 2 ] - pred.chr[ -NROW(pred.chr), 3 ];
     ## only select the long distance with right neighbor
