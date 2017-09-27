@@ -132,6 +132,15 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
   newinfp <- newinfp[with( newinfp, order(chr, start)),];
 
   peak_sum <- get_peak_summary( newinfp[,-5], threshold=0.05 );
+  if (NROW(peak_sum) != sum( !is.na(peak_sum$max)) )
+  {	
+    ## remove unknown contig, e.g.g chr1_gl000192_random chr10, chr17_ctg5_hap1, chr6_mann_hap4,chr6_qbl_hap6
+    ## Notice: chr1_gl000192_random causes Bedmap is failed to get summary information for chr10-chr19
+    ##         remove these contigs temporally
+    infp_bed <- newinfp[ grep("_", newinfp$chr,invert=TRUE), ]
+    peak_sum <- get_peak_summary( infp_bed[,-5], threshold=0.05 );
+  }
+  
   dense_infp <- pred_dense_infp( peak_sum[ peak_sum$max>=min_score,,drop=F ], newinfp );
 
   return(list(peak_sum=peak_sum, infp_bed=dense_infp, min_score=min_score ));
@@ -206,11 +215,6 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
 get_peak_summary <- function( infp_bed, threshold=0 )
 {
   tb.peak <- merge_broad_peak(infp_bed, threshold);
-
-  ## remove unknown contig, e.g.g chr1_gl000192_random chr10, chr17_ctg5_hap1, chr6_mann_hap4,chr6_qbl_hap6
-  ## Notice: chr1_gl000192_random causes Bedmap is failed to get summary information for chr10-chr19
-  ##         remove these contigs temporally
-  tb.peak <- tb.peak[ grep("_", tb.peak$chr,invert=TRUE), ]
 
   options("scipen"=100, "digits"=4)
   file.peak <- tempfile("peak", ".", ".peak.bed");
