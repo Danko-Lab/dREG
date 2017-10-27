@@ -31,7 +31,7 @@ Required software
 
 This software is already installed on many UNIX systems.  Users can install the most appropriate version of these files for Ubuntu using: 
 
-    sudo apt-get r-base-core
+    sudo apt-get install r-base-core
     sudo apt-get install libmysqlclient-dev
     sudo apt-get install libssl1.0.0 libssl-dev
 
