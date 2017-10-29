@@ -23,7 +23,7 @@ inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0
 
 cat("Genome Loci=", NROW(inf_positions), "\n");
 
-t <- system.time( pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000, ncores=ncores, use_rgtsvm=use_rgtsvm, use_snowfall=TRUE) )
+t <- system.time( pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000, ncores=ncores, use_rgtsvm=use_rgtsvm) )
 
 cat("Running time [User]:", t[1], "[System]:", t[2], "[Elapsed]:", t[3], "\n");
 
