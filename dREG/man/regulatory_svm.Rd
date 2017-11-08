@@ -16,7 +16,9 @@ regulatory_svm(gdm,
       extra_enrich_frac = 0.1, 
       enrich_negative_near_pos = 0.15, 
       use_rgtsvm = FALSE,
-      svm_type = "SVR", ..., 
+      svm_type = "SVR", 
+      ncores = 1, 
+      ..., 
       debug = TRUE)
 }
 \arguments{
@@ -35,6 +37,7 @@ regulatory_svm(gdm,
   \item{enrich_negative_near_pos}{Fraction of training examples chosen to be nearby (<=5kb) a positive example [0,1].}
   \item{use_rgtsvm}{Indictating whether the predict will be performed on GPU through the Rgtsvm package.}
   \item{svm_type}{Two options, "SVR" for support vecctor regression (epsilon-regression). "P_SVM" for probabilistic SVM (C-classification).}
+  \item{ncores}{Integer indicating how many cores are used to improve the performance.}
   \item{\dots}{The parameters for \code{plot} function}
   \item{debug}{Logical value indication the process detail is outputted.}
 }
