@@ -77,8 +77,14 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
   dregP <- dregP [,-2, drop=F];
   colnames(dregP) <- c("chr", "start", "end", "score", "prob.ml", "prob.mn", "smooth.mode", "original.mode", "centroid");
 
-  rp$peak_bed <- dregP[dregP$prob.ml<=0.05,, drop=F];
+  # only select prob.ml as probability and 'origina model' as center
+  dregP <- dregP [,c("chr", "start", "end", "score", "prob.ml", "original.mode"), drop=F];
+
   rp$peak_sum <- rp$peak_sum[rp$peak_sum$max>=min_score,,drop=F];
+  rp$peak_bed <- dregP[dregP$prob.ml<=0.05,, drop=F];
+  if(NROW(rp$peak_bed)>0) colnames(rp$peak_bed) <- c("chr", "start", "end", "score", "prob", "center");
+
+  if(NROW(rp$infp_bed)>0) colnames(rp$infp_bed) <- c("chr", "start", "end", "score", "infp");
 
   return(rp);
 }
