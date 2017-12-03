@@ -3,11 +3,20 @@ dREG
 
 Detection of Regulatory DNA Sequences using GRO-seq Data.
 
-Online computational site
---------
-We provide a computation site to run dREG on GPU server, the users don't need to install any software, only upload the bigWig files and wait for the results, it is simple and easy. Please click the link to try this site:
+Online computational gateway
+-------------------------
+We provide a computational gateway to run dREG on GPU server, the users don't need to install any software, only upload the bigWig files and wait for the results, it is simple and easy. Please click the link to try this site:
 
 https://dreg.dnasequence.org/
+
+Important note for or Exchange email users:
+------------------------
+
+The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in the text. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
+
+Unfortunately, some emails from dREG gateway are quarantined by this spam policy. Usually these quarantined emails are not delivered to the email box, so they can not be checked in  junk email folders. If you find the emails dREG gateway are not delivered into your email box, please conect the administrator of your email system. For the Cornell email, please check this link:
+
+https://it.cornell.edu/spam-control/log-quarantine-management-spam-control
 
 Abstract
 --------
@@ -18,16 +27,6 @@ Installation instructions:
 ==========================
 
 dREG will ultimately be availiable in the R repository CRAN to ease installation, and source code will be availiable on GitHub (https://github.com/Danko-Lab/dREG).  
-
-For Exchange Email Users:
-----------------
-
-The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in the text. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
-
-Unfortunately, some emails from dREG gateway are quarantined by this spam policy. Usually these quarantined emails are not delivered to the email box, so they can not be checked in  junk email folders. If you find the emails dREG gateway are not delivered into your email box, please conect the administrator of your email system. For the Cornell email, please check this link:
-
-https://it.cornell.edu/spam-control/log-quarantine-management-spam-control
-
 
 Supported OS:
 -------------
