@@ -14,7 +14,7 @@ Important note for or Exchange email users:
 
 The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in the text. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
 
-Unfortunately, some emails from dREG gateway are quarantined by this spam policy. Usually these quarantined emails are not delivered to the email box, so they can not be checked in  junk email folders. If you find the emails dREG gateway are not delivered into your email box, please conect the administrator of your email system. For the Cornell email, please check this link:
+Unfortunately, some emails from dREG gateway are quarantined by this spam policy. Usually these quarantined emails are not delivered to the email box, so they can not be checked in any email folders, including junk, spam or inbox. If you find the emails from dREG gateway are not delivered into your email box, please conect the administrator of your email system. For the Cornell email, please check this link:
 
 https://it.cornell.edu/spam-control/log-quarantine-management-spam-control
 
