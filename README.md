@@ -146,4 +146,4 @@ Three files below are generated in this solution:
 
 That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package.
 
-dREG is an R package, and that provides some additional flexibility for users familiar with R. Currently you can get details about each R function from the dREG manual (https://github.com/Danko-Lab/dREG/blob/master/dREG-manual.pdf)  We are actively working to document each function in the package.  
+dREG is an R package, and that provides some additional flexibility for users familiar with R. Currently you can get details about each R function from the dREG manual (https://github.com/Danko-Lab/dREG/blob/master/dREG-manual.pdf).  We are actively working to document each function in the package.  
