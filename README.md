@@ -79,8 +79,7 @@ The first solution implemented in the early package, is to ***predict dREG score
 
 The second solution implements the peak calling function using the dREG scores based on the imporved SVR model. Compared with the broad peaks, this solution generate the narrow peaks with peak score, probability, center position.
 
-1) ***Predicting dREG scores***
--------------------
+## 1) ***Predicting dREG scores***
 
 For this solution, dREG takes three files as input, and outputs one file.  Input files include the PRO-seq read distributions on the plus and minus strand (which are separate files), and parameters of the pre-trained support vector regression (SVR) model.  
 
@@ -117,8 +116,7 @@ Here `0.8` denotes the threshold to call a regulatory element, and the out_prefi
 
 The threshold `0.8` is used to the predictions from SVR model in this page(https://bedops.readthedocs.org/en/latest/). For huge SVR model, we suggest to use `0.25` as threshold this solution. 
 
-2) ***Peak calling***
--------------------
+## 2) ***Peak calling***
 
 To use this solution, type: 
 
