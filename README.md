@@ -114,7 +114,7 @@ dREG outputs a bedGraph file of scores.  If desired, users can convert this file
 
 Here `0.8` denotes the threshold to call a regulatory element, and the out_prefix.bedGraph.gz is the output of the dREG run.  Note that this feature requires the bedOps package (https://bedops.readthedocs.org/en/latest/).
 
-The threshold `0.8` is used to the predictions from the SVR models in this page(https://bedops.readthedocs.org/en/latest/). For the huge SVR models, we suggest to use `0.25` as threshold this solution. 
+The threshold `0.8` is used to the predictions from the SVR models in this page(https://bedops.readthedocs.org/en/latest/). For the huge SVR models, we suggest to use `0.25` as threshold in this solution. 
 
 ## 2) Peak calling
 
