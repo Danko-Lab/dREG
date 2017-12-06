@@ -129,11 +129,11 @@ To use this solution, type:
     [nthreads]      -- [optional, default=1] The number of threads to use.
     [GPU]           -- [`suggested`, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
 
-For example, to run dREG on the example data (PRO-seq from chr21 in K562 cells), use:
+For example, to run dREG on the PRO-seq data, use:
 
     bash run_dREG2.bsh proseq.plus.bw proseq.minus.bw proseq.test asvm.gdm.6.6M.20170828.rdata 16 GPU
 
-That command takes 8~12 hours to execute on K80 GPU using Rgtsvm package.
+That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package.
 
 dREG is an R package, and that provides some additional flexibility for users familiar with R.  We are actively working to document each function in the package.  
 
