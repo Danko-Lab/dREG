@@ -79,7 +79,7 @@ The first solution implemented in the early package, is to ***predict dREG score
 
 The second solution implements the peak calling function using the dREG scores based on the imporved SVR model. Compared with the broad peaks, this solution generate the narrow peaks with peak score, probability, center position.
 
-## 1) ***Predicting dREG scores***
+## 1) Predicting dREG scores
 
 For this solution, dREG takes three files as input, and outputs one file.  Input files include the PRO-seq read distributions on the plus and minus strand (which are separate files), and parameters of the pre-trained support vector regression (SVR) model.  
 
@@ -92,10 +92,10 @@ To use dREG, type:
 
     plus_strand.bw	-- PRO-seq data (plus strand).  Read counts (not normalized) formatted as a bigWig file.
     minus_strand.bw	-- PRO-seq data (minus strand). Read counts (not normalized) formatted as a bigWig file.
-    out_prefix		-- The prefix of the output file.
-    asvm.RData		-- The path to the RData file containing the pre-trained SVM.
-    [nthreads]		-- [optional, default=1] The number of threads to use.
-    [GPU]		    -- [optional, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
+    out_prefix      -- The prefix of the output file.
+    asvm.RData      -- The path to the RData file containing the pre-trained SVM.
+    [nthreads]      -- [optional, default=1] The number of threads to use.
+    [GPU]           -- [optional, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
 
 
 For example, to run dREG on the example data (PRO-seq from chr21 in K562 cells), use:
@@ -116,18 +116,18 @@ Here `0.8` denotes the threshold to call a regulatory element, and the out_prefi
 
 The threshold `0.8` is used to the predictions from SVR model in this page(https://bedops.readthedocs.org/en/latest/). For huge SVR model, we suggest to use `0.25` as threshold this solution. 
 
-## 2) ***Peak calling***
+## 2) Peak calling
 
 To use this solution, type: 
 
-    bash run_dREG2.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]
+    bash run_peakcalling.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]
 
     plus_strand.bw	-- PRO-seq data (plus strand).  Read counts (not normalized) formatted as a bigWig file.
     minus_strand.bw	-- PRO-seq data (minus strand). Read counts (not normalized) formatted as a bigWig file.
-    out_prefix		-- The prefix of the output file.
-    asvm.RData		-- The path to the RData file containing the pre-trained SVM.
-    [nthreads]		-- [optional, default=1] The number of threads to use.
-    [GPU]		    -- [`suggested`, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
+    out_prefix      -- The prefix of the output file.
+    asvm.RData      -- The path to the RData file containing the pre-trained SVM.
+    [nthreads]      -- [optional, default=1] The number of threads to use.
+    [GPU]           -- [`suggested`, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
 
 For example, to run dREG on the example data (PRO-seq from chr21 in K562 cells), use:
 
