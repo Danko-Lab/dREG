@@ -133,8 +133,12 @@ For example, to run dREG on the PRO-seq data, use:
 
     bash run_dREG2.bsh proseq.plus.bw proseq.minus.bw proseq.test asvm.gdm.6.6M.20170828.rdata 16 GPU
 
+Three files below are generated in this solution:  
+
+    <out_prefix>.dREG.infp.bed.gz: all informative sites with dREG scores.
+    <out_prefix>.dREG.peak.full.bed.gz: full peak information, including peak position, max score, probability, center.
+    <out_prefix>.dREG.peak.score.bed.gz: reduced peak information, only including peak position, max score.
+
 That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package.
 
 dREG is an R package, and that provides some additional flexibility for users familiar with R.  We are actively working to document each function in the package.  
-
-
