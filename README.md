@@ -137,15 +137,15 @@ Three files below are generated in this solution:
 
 1. <out_prefix>.dREG.infp.bed.gz
 
-⋅⋅⋅all informative sites with dREG scores.
+   all informative sites with dREG scores.
 
 2. <out_prefix>.dREG.peak.full.bed.gz 
 
-⋅⋅⋅full peak information, including peak position, max score, probability, center.
+   full peak information, including peak position, max score, probability, center.
 
 3. <out_prefix>.dREG.peak.score.bed.gz
 
-⋅⋅⋅reduced peak information, only including peak position, max score.
+   reduced peak information, only including peak position, max score.
 
 That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package.
 
