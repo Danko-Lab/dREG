@@ -9,7 +9,7 @@ We provide a computational gateway to run dREG on GPU server, the users don't ne
 
 https://dreg.dnasequence.org/
 
-###Important note for the Exchange email users:
+### Important note for the Exchange email users:
 
 The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in the text. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
 
