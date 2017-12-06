@@ -11,7 +11,7 @@ https://dreg.dnasequence.org/
 
 ### Important note for the Exchange email users:
 
-The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in the text. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
+The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in links. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
 
 Unfortunately, some emails from dREG gateway are quarantined by this spam policy. Usually these quarantined emails are not delivered to the email box, so they can not be checked in any email folders, including junk, spam or inbox. If you find the emails from dREG gateway are not delivered into your email box, please conect the administrator of your email system. For the Cornell email, please check this link:
 
@@ -72,6 +72,17 @@ ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata
 
 Usage instructions:
 ===================
+
+dREG provides two solutions to identify TREs in this R packages. 
+
+The first solution implemented in the early package, is to predict dREG scores and detect the broad dREG peaks with the aid of Perl program. In order to identify narrow peak, these broad peaks need to be refined using dREG-HD package.
+
+The second solution implements the peak calling function using the dREG scores based on the imporved SVR model. Compared with the broad peaks, this solution generate the narrow peaks with peak score, probability, center position.
+
+1) Predicting dREG scores
+-------------------
+
+For this solution,  
 dREG takes three files as input, and outputs one file.  Input files include the PRO-seq read distributions on the plus and minus strand (which are separate files), and parameters of the pre-trained support vector regression (SVR) model.  
 
 * PRO-seq files are required to be in the bigWig format standard created by the UCSC (more information can be found here: http://genome.ucsc.edu/goldenPath/help/bigWig.html).  
@@ -104,6 +115,13 @@ dREG outputs a bedGraph file of scores.  If desired, users can convert this file
     bash writeBed.bsh 0.8 out_prefix.bedGraph.gz
 
 Here 0.8 denotes the threshold to call a regulatory element, and the out_prefix.bedGraph.gz is the output of the dREG run.  Note that this feature requires the bedOps package (https://bedops.readthedocs.org/en/latest/).
+
+2) Peak calling 
+----------------
+
+
+
+
 
 dREG is an R package, and that provides some additional flexibility for users familiar with R.  We are actively working to document each function in the package.  
 
