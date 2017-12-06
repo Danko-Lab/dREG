@@ -73,11 +73,11 @@ ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata
 Usage instructions:
 ===================
 
-dREG provides two solutions to identify TREs in this R packages. 
+dREG provides two solutions to identify TREs in this R package. 
 
 The first solution implemented in the early package, is to ***predict dREG scores*** and detect the broad dREG peaks with the aid of Perl program. In order to identify narrow peak, these broad peaks need to be refined using dREG-HD package.
 
-The second solution implements the peak calling function using the dREG scores based on the imporved SVR model. Compared with the broad peaks, this solution generate the narrow peaks with peak score, probability, center position.
+The second solution implements the peak calling function using the dREG scores based on the imporved SVR model. Compared with the broad peaks in the first solution, this solution generates the narrow peaks with peak score, probability, center position.
 
 ## 1) Predicting dREG scores
 
