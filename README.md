@@ -9,6 +9,8 @@ We provide a computational gateway to run dREG on GPU server, the users don't ne
 
 https://dreg.dnasequence.org/
 
+![Hi](https://github.com/Danko-Lab/dREG/raw/master/dreg-gateway.png?v=4&s=200 "dREG gateway")
+
 ### Important note for the Exchange email users:
 
 The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in links. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
