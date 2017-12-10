@@ -25,7 +25,7 @@ if (!is.na(use_gpu) && (use_gpu=="GPU" || use_gpu=="TRUE") )
 if (!is.na(use_gpu) && (use_gpu=="FALSE") )
 	use_rgtsvm <- FALSE;
 
-src_path = as.character(args[7]);
+#src_path = as.character(args[7]);
 
 cat("Bigwig(plus):", ps_plus_path, "\n");
 cat("Bigwig(minus):", ps_minus_path, "\n");
@@ -33,16 +33,19 @@ cat("Output:", outfile, "\n");
 cat("dREG model:", args[4], "\n");
 cat("ncores:", ncores, "\n");
 cat("GPU:", use_rgtsvm, "\n");
-cat("SRC PATH:", src_path, "\n");
+#cat("SRC PATH:", src_path, "\n");
 
 ## Now scan all positions in the genome ...
 cat("1) -------- Checking the informative positions\n");
 load(args[4]);
-r <- peak_calling( svm, gdm, ps_plus_path, ps_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm)
+
+run.time <- system.time(r <- peak_calling( svm, gdm, ps_plus_path, ps_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm));
 
 out.file1 <- paste(outfile, "dREG.infp.bed", sep=".")
 out.file2 <- paste(outfile, "dREG.peak.full.bed", sep=".")
 out.file3 <- paste(outfile, "dREG.peak.score.bed", sep=".")
+out.file4 <- paste(outfile, "dREG.peak.broad.bed", sep=".")
+out.rdata <- paste(outfile, "dREG.rdata", sep=".")
 
 make_index_gz<-function( df_bed, out_file)
 {
@@ -53,9 +56,12 @@ make_index_gz<-function( df_bed, out_file)
 	unlink(file.tmp)
 }
 
+save(r, run.time, file=out.rdata );
+
 make_index_gz( r$infp_bed, out.file1 );
 make_index_gz( r$peak_bed, out.file2 );
 make_index_gz( r$peak_bed[,c(1:4)], out.file3 );
+make_index_gz( r$peak_broad, out.file4 );
 
 
 #system( paste("tar -cvzf ", outfile, ".dREG.tar.gz", " ", outfile, ".dREG.*", sep="") );
