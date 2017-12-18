@@ -2,7 +2,7 @@
 ===============
 dREG gateway: maintainance
 
-**Computational Nodes:**
+**Computational Node(s):**
 ===============
 Comet(.sdsc.xsede.org): healthy
 
