@@ -4,7 +4,7 @@ dREG gateway: maintainance
 
 **Computational Nodes:**
 ===============
-Comet(.sdsc.xsede.org): Healthy
+Comet(.sdsc.xsede.org): healthy
 
 **Update:**
 ===============
