@@ -1,6 +1,6 @@
 **Gateway Status:**
 ===============
-dREG gateway: maintainance
+dREG gateway: healthy
 
 **Computational Node(s):**
 ===============
