@@ -146,7 +146,7 @@ Three files below are generated in this solution:
 3. <out_prefix>.dREG.peak.score.bed.gz
    reduced peak information, only including peak position, max score.
 
-**Notice** 
+**Notice:** 
 
 (1) This solution doesn't work with the model trained before 2017. The new SVR model can be downloaded from FTP:
 (ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata)
