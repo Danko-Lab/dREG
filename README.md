@@ -146,7 +146,11 @@ Three files below are generated in this solution:
 3. <out_prefix>.dREG.peak.score.bed.gz
    reduced peak information, only including peak position, max score.
 
-That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
+**Notice** 
+(1) This solution doesn't work with the model trained before 2017. The new SVR model can be downloaded from FTP:
+(ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata)
+
+(2) That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
 
 # Reference
 
