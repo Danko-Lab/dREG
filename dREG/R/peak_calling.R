@@ -1,4 +1,27 @@
-peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, ncores=1, use_rgtsvm=TRUE, min_score=NULL, smoothwidth=4 )
+peak_calling_nopred<-function( infp_bed, min_score, pv_adjust="fdr", pv_threshold=0.05, smoothwidth=4, ncores=1 )
+{
+  colnames(infp_bed) <- c("chr", "start", "end", "score", "infp");
+
+  broadpeak_sum <- get_broadpeak_summary( infp_bed[,-5], threshold=0.05 );
+  if (NROW(broadpeak_sum) != sum( !is.na(broadpeak_sum$max)) )
+  {
+    ## remove unknown contig, e.g.g chr1_gl000192_random chr10, chr17_ctg5_hap1, chr6_mann_hap4,chr6_qbl_hap6
+    ## Notice: chr1_gl000192_random causes Bedmap is failed to get summary information for chr10-chr19
+    ##         remove these contigs temporally
+    infp_bed <- infp_bed[ grep("_", infp_bed$chr,invert=TRUE), ]
+    broadpeak_sum <- get_broadpeak_summary( infp_bed[,-5], threshold=0.05 );
+  }
+
+  cat("min_score=", min_score, "\n");
+
+  rp <- list( infp_bed = infp_bed, peak_broad=broadpeak_sum, min_score=min_score );
+
+  rp <- start_calling( rp, min_score, pv_adjust, pv_threshold, smoothwidth, ncores )
+
+  return(rp);
+}
+
+peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, use_rgtsvm=TRUE, min_score=NULL, pv_adjust="fdr", pv_threshold=0.05, smoothwidth=4, ncores=1 )
 {
   if( is.null(infp_bed) )
   {
@@ -7,17 +30,28 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
   }
 
   colnames(infp_bed) <- c("chr", "start", "end", "pred");
+
+  ## broad peaks with information are returned back.
   rp <- get_dense_infp( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, ncores, use_rgtsvm);
+  if( NROW(rp$infp_bed)>0 )
+     colnames(rp$infp_bed) <- c("chr", "start", "end", "score", "infp");
+
+  rp <- start_calling( rp, min_score, pv_adjust, pv_threshold, smoothwidth, ncores )
+
+  return(rp);
+}
+
+start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, ncores )
+{
+  if(!is.null(min_score))
+     rp$min_score <- min_score;
+  min_score <- rp$min_score;
+  cat("min_score=", min_score, "\n");
 
   cor_mat <- build_cormat( rp$infp_bed, dist=20 );
   show(cor_mat);
 
-  if(is.null(min_score))
-     min_score <- rp$min_score;
-
-  cat("min_score=", min_score, "\n");
-
-  peak.idx <- which( rp$peak_sum$max>=min_score );
+  peak.idx <- which( rp$peak_broad$max>=min_score );
   k.sect <- 1:ceiling(NROW(peak.idx)/500)
 
   cpu.fun <- function(k)
@@ -29,12 +63,12 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
     idx.k <- idx.k[ idx.k <= NROW(peak.idx) ]
 
     P_list <- lapply(peak.idx[idx.k], function(kk){
-      ki <- which( as.character(rp$infp_bed[,1])== as.character(rp$peak_sum[kk,]$chr) &
-                                rp$infp_bed[,2] >= rp$peak_sum[kk,]$start &
-                                rp$infp_bed[,3] <= rp$peak_sum[kk,]$end )
+      ki <- which( as.character(rp$infp_bed[,1])== as.character(rp$peak_broad[kk,]$chr) &
+                                rp$infp_bed[,2] >= rp$peak_broad[kk,]$start &
+                                rp$infp_bed[,3] <= rp$peak_broad[kk,]$end )
       xp <- rp$infp_bed[ki,2]
       yp <- rp$infp_bed[ki,4]
-      if(NROW(xp)<=3 || max(yp)<=0.1 )
+      if(NROW(xp) <= 3 || max(yp) <= min_score )
       {
         P <- NULL;
       }
@@ -46,9 +80,9 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
         #  P<-NULL;
       }
 
-      if(!is.null(P)) P <- data.frame(chr=rp$peak_sum[kk,]$chr, kk, P[,-1,drop=F]);
+      if(!is.null(P)) P <- data.frame(chr=rp$peak_broad[kk,]$chr, kk, P[,-1,drop=F]);
       return(P);
-        });
+      });
 
     P_list <- as.data.frame(do.call("rbind", P_list))
     return(list(k=k, idx.k=idx.k, kk=peak.idx[idx.k], ret=P_list));
@@ -69,25 +103,62 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, n
     sfStop();
   }
   else
-    dregP_list <- lapply(  k.sect, cpu.fun );
+    dregP_list <- lapply( k.sect, cpu.fun );
 
   unlink(tmp.rdata);
 
-  dregP <- as.data.frame(do.call("rbind", lapply(dregP_list, function(x){if(!is.null(x)) return(x$ret) else return(NULL) })));
-  dregP <- dregP [,-2, drop=F];
-  colnames(dregP) <- c("chr", "start", "end", "score", "prob.ml", "prob.mn", "smooth.mode", "original.mode", "centroid");
+  rp$raw_peak <- as.data.frame(do.call("rbind", lapply(dregP_list, function(x){if(!is.null(x)) return(x$ret) else return(NULL) })));
+  colnames(rp$raw_peak) <- c("chr", "kk", "start", "end", "score", "prob", "smooth.mode", "original.mode", "centroid");
 
-  # only select prob.ml as probability and 'origina model' as center
-  dregP <- dregP [,c("chr", "start", "end", "score", "prob.ml", "original.mode"), drop=F];
+  if( NROW(rp$raw_peak)>0 )
+    rp$peak_bed <- select_sig_peak( rp$raw_peak,  pv_adjust, pv_threshold );
 
-  rp$peak_sum <- rp$peak_sum[rp$peak_sum$max>=min_score,,drop=F];
-  rp$peak_bed <- dregP[dregP$prob.ml<=0.05,, drop=F];
-  if(NROW(rp$peak_bed)>0) colnames(rp$peak_bed) <- c("chr", "start", "end", "score", "prob", "center");
-
-  if(NROW(rp$infp_bed)>0) colnames(rp$infp_bed) <- c("chr", "start", "end", "score", "infp");
+  rp$peak_sum <- summary_peak( rp$raw_peak, rp$peak_bed );
 
   return(rp);
 }
+
+select_sig_peak <- function( raw_peak, pv_adjust, pv_threshold )
+{
+  ## only select score, prob and center
+  peak_bed <- raw_peak[,c("chr", "start", "end", "score", "prob", "original.mode"), drop=F];
+  colnames(peak_bed) <- c("chr", "start", "end", "score", "prob", "center");
+
+  ## remove peaks which width < 100bp;
+  peak_bed <- peak_bed [ peak_bed$prob != -1,, drop=F];
+
+  ## make multiple correction.
+  peak_bed$prob <- p.adjust( peak_bed$prob, method = pv_adjust);
+
+  ## only select significant peaks
+  peak_bed <- peak_bed[ peak_bed$prob <= pv_threshold,, drop=F];
+
+  return(peak_bed);
+}
+
+
+summary_peak <- function( raw_peak, peak_bed )
+{
+  peak_sum <- list();
+  peak_sum$adjust.BH.0.05 <- sum( p.adjust(raw_peak$prob[ raw_peak$prob != -1 ], method="BH")<0.05)
+  peak_sum$adjust.bonferroni.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="bonferroni")<0.05)
+  peak_sum$adjust.holm.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="holm")<0.05)
+  peak_sum$adjust.hochberg.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="hochberg")<0.05)
+  peak_sum$adjust.BY.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="BY")<0.05)
+  peak_sum$adjust.fdr.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="fdr")<0.05)
+  peak_sum$adjust.none.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="none")<0.05)
+
+  peak_sum$peak.narrow100 <- sum(raw_peak$prob == -1)
+
+  peak <- cbind(raw_peak, prob2=raw_peak$prob)
+  peak[which(peak$prob2!=-1),7]  <- p.adjust(peak$prob2[peak$prob2!=-1], method="fdr")
+  peak_sum$peak.sig.score <- range(peak$score[which(peak[,7]<=0.05)])
+  peak_sum$peak.narrow100.sig <- sum(raw_peak$prob==-1 & raw_peak$score > peak_sum$peak.sig.score [2] )
+  peak_sum$peak.narrow100.score <- range(peak$score[peak$prob==-1] )
+
+  return(peak_sum);
+}
+
 
 get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, ncores=1, use_rgtsvm=TRUE)
 {
@@ -97,9 +168,10 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
 
     for(chr in unique( dreg_peak$chr ))
     {
-      cat("=====", chr, "\n");
       idx.chr <- which( as.character(dreg_peak$chr)==as.character(chr))
       if(NROW(idx.chr)==0) next;
+
+      cat("=====", chr, "\n");
 
       predx <- dreg_peak[idx.chr, ];
       r.dense <- as.data.frame(rbindlist( lapply(1:NROW(predx), function(k){
@@ -107,7 +179,8 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
         return( data.frame( chr=chr, start=r.pos, end=r.pos+1));
       })));
 
-      dup.rm <- which(paste(r.dense[,1], r.dense[,2], sep=":") %in% paste(newinfp[,1], newinfp[,2], sep=":"))
+      newinfp.chr <- newinfp[ newinfp$chr == as.character(chr),,drop=FALSE ];
+      dup.rm <- which(paste(r.dense[,1], r.dense[,2], sep=":") %in% paste(newinfp.chr[,1], newinfp.chr[,2], sep=":"))
       if( NROW(dup.rm)>0 ) r.dense <- r.dense[-dup.rm,]
 
 	  infp_dense <- data.frame(r.dense, pred=eval_reg_svm( gdm, asvm, r.dense, bw_plus_path, bw_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm, debug= TRUE));
@@ -137,19 +210,19 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
   newinfp <- rbind( cbind(gap_bed, INFP=0), cbind(infp_bed, INFP=1));
   newinfp <- newinfp[with( newinfp, order(chr, start)),];
 
-  peak_sum <- get_peak_summary( newinfp[,-5], threshold=0.05 );
-  if (NROW(peak_sum) != sum( !is.na(peak_sum$max)) )
-  {	
+  broadpeak_sum <- get_broadpeak_summary( newinfp[,-5], threshold=0.05 );
+  if (NROW(broadpeak_sum) != sum( !is.na(broadpeak_sum$max)) )
+  {
     ## remove unknown contig, e.g.g chr1_gl000192_random chr10, chr17_ctg5_hap1, chr6_mann_hap4,chr6_qbl_hap6
     ## Notice: chr1_gl000192_random causes Bedmap is failed to get summary information for chr10-chr19
     ##         remove these contigs temporally
     infp_bed <- newinfp[ grep("_", newinfp$chr,invert=TRUE), ]
-    peak_sum <- get_peak_summary( infp_bed[,-5], threshold=0.05 );
+    broadpeak_sum <- get_broadpeak_summary( infp_bed[,-5], threshold=0.05 );
   }
-  
-  dense_infp <- pred_dense_infp( peak_sum[ peak_sum$max>=min_score,,drop=F ], newinfp );
 
-  return(list(peak_sum=peak_sum, infp_bed=dense_infp, min_score=min_score ));
+  dense_infp <- pred_dense_infp( broadpeak_sum[ broadpeak_sum$max>=min_score,,drop=F ], newinfp );
+
+  return(list(peak_broad=broadpeak_sum, infp_bed=dense_infp, min_score=min_score ));
 }
 
 
@@ -170,7 +243,7 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
     r.chr <- rbindlist( lapply(which(dist>50), function(k){
       r.pos <- c();
 
-      ## if thecurrent site has a high score
+      ## if the current site has a high score
       if( predx[k,4] > threshold)
       {
         if(dist[k]<500)
@@ -191,6 +264,9 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
 
         r.pos <- c(r.pos, predx[k+1,2]-c(r.maxpos:1)*50);
       }
+
+      #remove duplicated postion
+      r.pos <- unique(r.pos);
 
       if(NROW(r.pos)>0)
         return( data.frame( chr=chr, start=r.pos, end=r.pos+1))
@@ -215,10 +291,16 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
     r.gap <- lapply( unique(dreg_pred$chr), cpu.fun );
 
   ## return a bed data containing all sites which are not predicted by the first run(informative sites)
-  return( as.data.frame(unique(rbindlist(r.gap))));
+  gap.bed <- as.data.frame(unique(rbindlist(r.gap)))
+
+  ## remove duplciated position
+  dup.rm <- which(paste(gap.bed[,1], gap.bed[,2], sep=":") %in% paste(dreg_pred[,1], dreg_pred[,2], sep=":"))
+  if( NROW(dup.rm)>0 ) gap.bed <- gap.bed[-dup.rm,]
+
+  return( gap.bed);
 }
 
-get_peak_summary <- function( infp_bed, threshold=0 )
+get_broadpeak_summary <- function( infp_bed, threshold=0 )
 {
   tb.peak <- merge_broad_peak(infp_bed, threshold);
 
@@ -408,8 +490,13 @@ find_peaks <- function( x, y, SlopeThreshold, AmpThreshold, smoothwidth, smootht
         }
       }
     }
-  }
+    else
+    {
+	   y.p <- which.max(y[i.left:i.right]) + i.left - 1;
+       P <- rbind(P, c(i, x[i.left], x[i.right], max(y.org[i.left:i.right]), -1, x[y.p], 0, 0) );
+    }
 
+  }
 
   return(P);
 }
@@ -436,10 +523,10 @@ build_cormat<-function(dreg_bed, dist=20, order=5)
   rho <- c(1)
   for(i in 1:4)
   {
-    rho <- c(rho, cor(cor.bed$pred[-c(1:i)], cor.bed$pred[-NROW(cor.bed$pred)+c(0:(i-1)) ]))
+    rho <- c(rho, cor(cor.bed$score[-c(1:i)], cor.bed$score[-NROW(cor.bed$score)+c(0:(i-1)) ]))
   }
 
-  sigma2 <- var.fun( dreg_bed$pred, trunc=T );
+  sigma2 <- var.fun( dreg_bed$score, trunc=T );
   mat <- matrix(1:order, nrow=order, ncol = order);
   cormat <-  sigma2*matrix( rho[abs( mat - t(mat) ) + 1 ], nrow=order, ncol=order);
   cormat;
@@ -477,7 +564,8 @@ pmvLaplace<-function(x, cor_mat )
   ## when prob is approching 1, the different between normal distr. and laplace distr. is very few.
   p.norm <- pmvnorm(lower=-abs(x), upper=abs(x), mean=rep(0,length(x)), sigma=cor_mat)[1];
   if(p.norm>0.99)
-    return(c(p.norm, p.norm));
+    #return(c(p.norm, p.norm));
+    return( p.norm );
 
   z <- c(10^-100, 10^seq(-20,-2, 1), seq( 0.02, 1, 0.04 ), seq(1, 10, 0.2), seq( 10.5, 100, 0.5 ), 10^(3:20), 10^100)
   p0 <- unlist( lapply(z, function(z0) {pmvnorm(lower=-abs(x/sqrt(z0)), upper=abs(x/sqrt(z0)), mean=rep(0,length(x)), sigma=cor_mat)*  exp(-z0)[1]} ) );
@@ -486,7 +574,8 @@ pmvLaplace<-function(x, cor_mat )
   p.min <- sum((z[-1] - z[-NROW(z)])*p0[-1]);
   if(p.min>1) p.min<-1
 
-  return(c(mean(p.max, p.min), p.norm) );
+  #return(c(mean(p.max, p.min), p.norm) );
+  return( mean(p.max, p.min) );
 }
 
 
