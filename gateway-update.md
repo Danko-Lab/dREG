@@ -2,7 +2,7 @@
 ===============
 dREG gateway: healthy
 
-**Computational Node(s):**
+**GPU Node(s):**
 ===============
 Comet(.sdsc.xsede.org): healthy
 
