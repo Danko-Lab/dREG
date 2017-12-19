@@ -146,7 +146,7 @@ Three files below are generated in this solution:
 3. <out_prefix>.dREG.peak.score.bed.gz
    reduced peak information, only including peak position, max score.
 
-That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package.
+That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
 
 # Reference
 
