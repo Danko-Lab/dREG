@@ -9,6 +9,8 @@ We provide a computational gateway to run dREG on GPU server, the users don't ne
 
 https://dreg.dnasequence.org/
 
+Before you run your data on the dREG gateway, please check the server status [here](https://github.com/Danko-Lab/dREG/blob/master/gateway-update.md).
+
 ![Hi](https://github.com/Danko-Lab/dREG/raw/master/dreg-gateway.png?v=4&s=200 "dREG gateway")
 
 ### Important note for the Exchange email users:
