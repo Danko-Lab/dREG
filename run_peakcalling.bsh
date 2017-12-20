@@ -37,4 +37,4 @@ if [ "$#" -gt 5 ]; then
 fi
 
 echo "Using: R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $ncores $gpu< $bsh_path/run_peakcalling.R"
-R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $ncores $gpu< $bsh_path/run_peakcalling.R
+R --vanilla --slave --args $bwPL $bwMN $out $SVM $ncores $gpu< $bsh_path/run_peakcalling.R

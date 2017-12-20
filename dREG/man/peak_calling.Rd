@@ -35,9 +35,9 @@ peak_calling(asvm, gdm,
 }
 \value{
 
-This function returns a list containing 3 items, which include: \cr
+This function returns a list containing 6 items, including: \cr
 
-1) dREG Peaks: \code{peak_bed} \cr
+1) dREG peaks: \code{peak_bed} \cr
 
 \item{chr}{ Chromosome}
 \item{start}{ Start position}
@@ -46,7 +46,7 @@ This function returns a list containing 3 items, which include: \cr
 \item{prob}{Probability of multivariate Laplace distribution indicating the probability of the peak points belonging to negative set (No divergent peak). }
 \item{center}{the center position in original peak}
 
-2) Informative Sites with score \code{infp_bed} \cr
+2) Informative sites with score \code{infp_bed} \cr
 \item{chr}{ Chromosome}
 \item{start}{ Start position}
 \item{end}{End position}
