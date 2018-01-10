@@ -58,6 +58,10 @@ make_index_gz<-function( df_bed, out_file)
 
 save(r, run.time, file=out.rdata );
 
+#Rounding to 2 digits for predicted scores
+r$infp_bed[,4] <- round( r$infp_bed[,4], 3 );
+r$peak_bed[,4] <- round( r$peak_bed[,4], 3 );
+
 make_index_gz( r$infp_bed, out.file1 );
 make_index_gz( r$peak_bed, out.file2 );
 make_index_gz( r$peak_bed[,c(1:4)], out.file3 );
