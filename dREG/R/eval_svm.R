@@ -11,12 +11,18 @@
 #' @return Returns the value of the SVM for each genomic coordinate specified.
 eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batch_size=50000, ncores=3, use_rgtsvm=FALSE, debug= TRUE) {
 
-  if( batch_size>NROW(positions)) 
+  if(!file.exists(bw_plus_path))
+    stop( paste("Can't find the bigwig of plus strand(", bw_plus_path, ")"));
+
+  if(!file.exists(bw_minus_path))
+    stop( paste("Can't find the bigwig of minus strand(", bw_minus_path, ")"));
+
+  if( batch_size>NROW(positions))
   	 batch_size= NROW(positions)
-  
+
   if(NROW(positions)/ncores < batch_size)
   	batch_size <- ceiling(NROW(positions)/ncores);
-  
+
   n_elem <- NROW(positions)
   interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
 
@@ -36,12 +42,25 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
     if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
     if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
 
-    if(asvm$type == 0) { ## Probabilistic SVM
-      batch_pred <- predict( asvm, mat_features, probability=TRUE );
-    }
-    else { ## epsilon-regression (SVR)
-      batch_pred <- predict( asvm, mat_features, probability=FALSE)
-    }
+	## if using the preload way to accerate the predict speed
+    if( !is.null(asvm$cluster) || !is.null(asvm$pointer) )
+    {
+		if(asvm$type == 0) { ## Probabilistic SVM
+		  batch_pred <- predict.run( asvm, mat_features, probability=TRUE );
+		}
+		else { ## epsilon-regression (SVR)
+		  batch_pred <- predict.run( asvm, mat_features, probability=FALSE)
+		}
+	}
+	else
+	{
+		if(asvm$type == 0) { ## Probabilistic SVM
+		  batch_pred <- predict( asvm, mat_features, probability=TRUE );
+		}
+		else { ## epsilon-regression (SVR)
+		  batch_pred <- predict( asvm, mat_features, probability=FALSE)
+		}
+	}
 
     return(batch_pred);
   }

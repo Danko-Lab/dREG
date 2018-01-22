@@ -15,7 +15,8 @@ peak_calling(asvm, gdm,
       pv_adjust="fdr",
       pv_threshold=0.05,
       smoothwidth = 4,
-      ncores = 1 )
+      cpu_cores=1, 
+      gpu_cores=1)
 }
 \arguments{
   \item{asvm}{SVR model pre-trained for dREG package, which can be downloaded from the dREG page in Github.}
@@ -28,7 +29,8 @@ peak_calling(asvm, gdm,
   \item{pv_adjust}{String value indictating which correction method is used to do multiple comparison, see details in \code{\link{p.adjust}}, default is 'fdr'. }
   \item{pv_threshold}{Numerical value indicating the threshold is used to report the dREG peaks.}
   \item{smoothwidth}{Numerical value indicating the parameter of curve smooth in the moving average.}
-  \item{ncores}{Number of CPU cores in parallel computing.}
+  \item{cpu_cores}{Number of CPU cores in parallel computing.}
+  \item{gpu_cores}{Number of GPU cores in parallel computing if \pkg{Rgtsvm} is used.}
 }
 \details{
 
@@ -90,7 +92,7 @@ This function returns a list containing 6 items, including: \cr
 # gdm <- genomic_data_model(window_sizes= c(10, 25, 50, 500, 5000), half_nWindows= c(10, 10, 30, 20, 20) )
 # bw_plus_path <- "K562.chr21.plus.bw"
 # bw_minus_path <- "K562.chr21.minus.bw"
-# x <- peak_calling( svm, gdm, bw_plus_path, bw_minus_path, ncores=12, use_rgtsvm=T)
+# x <- peak_calling( svm, gdm, bw_plus_path, bw_minus_path, cpu_cores=12, use_rgtsvm=T)
 # show(x$peak_bed);
 
 

@@ -2,7 +2,7 @@
 
 if [ "$#" -lt 4 ]; then
 	echo ""
-	echo "USAGE: bash dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]"
+	echo "USAGE: bash run_dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]"
 	echo ""
 	echo "plus_strand.bw	-- PRO-seq data (plus  strand).  Read counts (not normalized) formatted as a bigWig file."
         echo "minus_strand.bw	-- PRO-seq data (minus strand).  Read counts (not normalized) formatted as a bigWig file."

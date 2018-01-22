@@ -21,22 +21,38 @@ peak_calling_nopred<-function( infp_bed, min_score, pv_adjust="fdr", pv_threshol
   return(rp);
 }
 
-peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, use_rgtsvm=TRUE, min_score=NULL, pv_adjust="fdr", pv_threshold=0.05, smoothwidth=4, ncores=1 )
+peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, use_rgtsvm=TRUE, min_score=NULL, pv_adjust="fdr", pv_threshold=0.05, smoothwidth=4, cpu_cores=1, gpu_cores=1 )
 {
+  if(!file.exists(bw_plus_path))
+	stop( paste("Can't find the bigwig of plus strand(", bw_plus_path, ")"));
+
+  if(!file.exists(bw_minus_path))
+	stop( paste("Can't find the bigwig of minus strand(", bw_minus_path, ")"));
+
+  if(use_rgtsvm)
+  {
+	require(Rgtsvm);
+    if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
+    asvm <- predict.load( asvm, gpu_cores, verbose=T);
+  }
+
   if( is.null(infp_bed) )
   {
     infp_bed <- get_informative_positions(bw_plus_path, bw_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE);
-    infp_bed <- data.frame(infp_bed, pred=eval_reg_svm(gdm, asvm, infp_bed, bw_plus_path, bw_minus_path, batch_size= 50000, ncores=ncores, use_rgtsvm=use_rgtsvm));
+    infp_bed <- data.frame(infp_bed, pred=eval_reg_svm(gdm, asvm, infp_bed, bw_plus_path, bw_minus_path, batch_size= 50000, ncores=cpu_cores, use_rgtsvm=use_rgtsvm));
   }
 
   colnames(infp_bed) <- c("chr", "start", "end", "pred");
 
   ## broad peaks with information are returned back.
-  rp <- get_dense_infp( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, ncores, use_rgtsvm);
+  rp <- get_dense_infp( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, cpu_cores, use_rgtsvm);
   if( NROW(rp$infp_bed)>0 )
      colnames(rp$infp_bed) <- c("chr", "start", "end", "score", "infp");
 
-  rp <- start_calling( rp, min_score, pv_adjust, pv_threshold, smoothwidth, ncores )
+  if(use_rgtsvm)
+    predict.unload( asvm );
+
+  rp <- start_calling( rp, min_score, pv_adjust, pv_threshold, smoothwidth, cpu_cores )
 
   return(rp);
 }

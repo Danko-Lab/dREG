@@ -5,11 +5,11 @@ data.one_bigwig<- function(x, chr, bw, depth, window) {
   chr_n <- which(bw$chroms == chr)
 #  qbw <- queryByStep.bigWig(bw, bw$chroms[chr_n], 0+x, bw$chromSizes[chr_n], window, do.sum=TRUE)
   qbw <- step.bpQuery.bigWig(bw, bw$chroms[chr_n], 0+x, bw$chromSizes[chr_n], window, with.attributes=FALSE)
-  
+
   if(NROW(qbw) == 0) {
     return(integer(0))
   }
-  
+
   indx <- which(abs(qbw)>depth)
   centers <- (indx-1)*window+x+as.integer(window/2) ## Index is 1-based.  x is the offset.
   return(centers)
@@ -46,9 +46,9 @@ data.two_bigwig.OR <- function(x, chr, bw1, bw2, depth, window) {
 
   chrbw1_n <- which(bw1$chroms == chr)
   chrbw2_n <- which(bw2$chroms == chr)
-  
+
 #  q1 <- c(queryByStep.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, do.sum=TRUE))
-#  q2 <- c(((-1)*queryByStep.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, do.sum=TRUE))) 
+#  q2 <- c(((-1)*queryByStep.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, do.sum=TRUE)))
   q1 <- c(step.bpQuery.bigWig(bw1, bw1$chroms[chrbw1_n], 0+x, bw1$chromSizes[chrbw1_n], window, with.attributes=FALSE))
   q2 <- c(step.bpQuery.bigWig(bw2, bw2$chroms[chrbw2_n], 0+x, bw2$chromSizes[chrbw2_n], window, abs.value=TRUE, with.attributes=FALSE))
 
@@ -61,7 +61,7 @@ data.two_bigwig.OR <- function(x, chr, bw1, bw2, depth, window) {
   } else {
     indx <- which(rowSums(data.frame(q1, q2)) >depth) ## Assume minus values.
   }
- 
+
   centers <- (indx-1)*window+x+as.integer(window/2) ## Index is 1-based.  x is the offset.
   return(centers)
 }
@@ -70,16 +70,23 @@ data.two_bigwig.OR <- function(x, chr, bw1, bw2, depth, window) {
 #'
 #' @param bw Path to bigwig file.
 #' @param bw_minus If specified, takes the windows that pass the step in both bigWig files.
-#' @param depth Minimum number of reads to return.  
+#' @param depth Minimum number of reads to return.
 #' @param half_window Distance between to search for #depth reads [bp].
 #' @return Returns a data.frame representing a bed file.
 get_informative_positions <- function(bw_path, bw_minus_path=NULL, depth= 0, window= 400, step=50, use_OR=TRUE, use_ANDOR=TRUE, debug= TRUE) {
+
+  if(!file.exists(bw_path))
+    stop( paste("Can't find the bigwig of plus strand(", bw_path, ")"));
+
+  if(!is.null(bw_minus_path) && !file.exists(bw_minus_path))
+    stop( paste("Can't find the bigwig of minus strand(", bw_minus_path, ")"));
+
   minChromSize <- 2500 # window+step ## FAILS IF use_ANDOR
 
   ## Load bigWigs
   bw  <- load.bigWig(bw_path)
   q_chroms <- bw$chroms[bw$chromSizes > minChromSize]
-  
+
   if(!is.null(bw_minus_path)) {
     bw_minus <- load.bigWig(bw_minus_path)
     q_chroms.minus <- bw_minus$chroms[bw_minus$chromSizes+step > minChromSize]
@@ -99,7 +106,7 @@ get_informative_positions <- function(bw_path, bw_minus_path=NULL, depth= 0, win
     else {
 	  if(use_ANDOR) {
         windowAND <- 1000; depthAND <- 0; windowOR <- 100; depthOR <- 2
-        vals <- c(unlist(lapply(seq(0,window,step), data.two_bigwig.OR, chr= chr, bw1= bw, bw2= bw_minus, depth= depthOR, window= windowOR)), 
+        vals <- c(unlist(lapply(seq(0,window,step), data.two_bigwig.OR, chr= chr, bw1= bw, bw2= bw_minus, depth= depthOR, window= windowOR)),
                   unlist(lapply(seq(0,window,step), data.two_bigwig,    chr= chr, bw1= bw, bw2= bw_minus, depth= depthAND, window= windowAND)))
 	  }
 	  else {
@@ -120,7 +127,7 @@ get_informative_positions <- function(bw_path, bw_minus_path=NULL, depth= 0, win
   unload.bigWig(bw)
   if(!is.null(bw_minus_path))
     unload.bigWig(bw_minus)
-  
+
   return(data.frame(chrom= chroms, chromStart= starts, chromEnds= starts+1))
 }
 

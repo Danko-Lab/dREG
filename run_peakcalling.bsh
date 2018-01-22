@@ -2,14 +2,15 @@
 
 if [ "$#" -lt 4 ]; then
 	echo ""
-	echo "USAGE: bash dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]"
+	echo "USAGE: bash run_peakcalling.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [CPU.threads] [GPU] [GPU.threads]"
 	echo ""
-	echo "plus_strand.bw	-- PRO-seq data (plus  strand).  Read counts (not normalized) formatted as a bigWig file."
-    echo "minus_strand.bw	-- PRO-seq data (minus strand).  Read counts (not normalized) formatted as a bigWig file."
-    echo "out_prefix	-- The prefix of the output file."
-	echo "asvm.RData	-- The path to the RData file containing the pre-trained SVM."
-    echo "[nthreads]	-- [optional, default=1] The number of threads to use when evaluating dREG sites."
-    echo "[GPU]	        -- [suggested, gpu or blank, default is blank] indicating whether GPU package can be used."
+	echo "plus_strand.bw    -- PRO-seq data (plus  strand).  Read counts (not normalized) formatted as a bigWig file."
+    echo "minus_strand.bw   -- PRO-seq data (minus strand).  Read counts (not normalized) formatted as a bigWig file."
+    echo "out_prefix        -- The prefix of the output file."
+	echo "asvm.RData        -- The path to the RData file containing the pre-trained SVM."
+    echo "[CPU.threads]	    -- [optional, default=1] The number of threads to use when evaluating dREG sites."
+    echo "[GPU]	            -- [suggested, gpu or blank, default is blank] indicating whether GPU package can be used."
+    echo "[GPU.threads]     -- [suggested, number or blank, default is blank ] indicating how many GPU cards can be used."
 	echo ""
 	exit 1
 fi
@@ -23,18 +24,23 @@ bwMN=$2
 out=$3
 SVM=$4
 gpu=FALSE
-ncores=1
+cpucores=1
+gpucores=1
 
 if [ "$#" -gt 4 ]; then
 #	[[ $5 !~ ^?[0-9]+$ ]]
-	ncores=$5
-else
-	ncores=1
+	cpucores=$5
 fi
 
 if [ "$#" -gt 5 ]; then
 	gpu=$6
 fi
 
-echo "Using: R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $ncores $gpu< $bsh_path/run_peakcalling.R"
-R --vanilla --slave --args $bwPL $bwMN $out $SVM $ncores $gpu< $bsh_path/run_peakcalling.R
+if [ "$#" -gt 6 ]; then
+	gpucores=$7
+fi
+
+
+
+echo "Using: R --vanilla --slave --args $bwPL $bwMN $out.bedgraph $SVM $cpucores $gpu $gpucores < $bsh_path/run_peakcalling.R"
+R --vanilla --slave --args $bwPL $bwMN $out $SVM $cpucores $gpu $gpucores < $bsh_path/run_peakcalling.R

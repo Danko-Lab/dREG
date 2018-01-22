@@ -26,6 +26,12 @@ genomic_data_model <- function(window_sizes, half_nWindows) {
 #' centered on a
 read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_matrix= TRUE, scale.method=c("logistic", "linear"), batch_size=50000, ncores=1) {
 
+  if(!file.exists(file_bigwig_plus))
+    stop( paste("Can't find the bigwig of plus strand(", file_bigwig_plus, ")"));
+
+  if(!file.exists(file_bigwig_minus))
+    stop( paste("Can't find the bigwig of minus strand(", file_bigwig_minus, ")"));
+
   stopifnot(NROW(gdm@window_sizes) == NROW(gdm@half_nWindows))
 
   zoom<- list(as.integer(gdm@window_sizes), as.integer(gdm@half_nWindows))

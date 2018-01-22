@@ -24,6 +24,13 @@
 #' @param svm_type "SVR" for support vecctor regression (epsilon-regression).  "P_SVM" for probabilistic SVM (C-classification).
 #' @return Returns a trained SVM.
 regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive, allow= NULL, n_train=25000, n_eval=1000, pdf_path= "roc_plot.pdf", plot_raw_data=TRUE, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, enrich_negative_near_pos= 0.15, use_rgtsvm=FALSE, svm_type= "SVR", ncores=1, ..., debug= TRUE) {
+
+  if(!file.exists(bw_plus_path))
+    stop( paste("Can't find the bigwig of plus strand(", bw_plus_path, ")"));
+
+  if(!file.exists(bw_minus_path))
+    stop( paste("Can't find the bigwig of minus strand(", bw_minus_path, ")"));
+
   ########################################
   ## Divide into positives and negatives.
 

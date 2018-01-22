@@ -20,5 +20,6 @@ export(get_test_set)
 export(peak_calling)
 export(peak_calling_nopred)
 export(find_peaks)
+export(check_bigwig)
 export(roc.calc, logreg.roc.calc, combine.roc, roc.auc, roc.plot)
 

@@ -15,8 +15,8 @@ ps_minus_path <- args[2]
 ## Read arguments from default parameters in run_dREG.sh
 outfile <- args[3]
 
-ncores <- as.integer(args[5])
-if (is.na(ncores)) ncores <- 1;
+cpu_cores <- as.integer(args[5])
+if (is.na(cpu_cores)) cpu_cores <- 1;
 
 use_rgtsvm <- FALSE;
 use_gpu <- toupper(as.character(args[6]))
@@ -25,21 +25,34 @@ if (!is.na(use_gpu) && (use_gpu=="GPU" || use_gpu=="TRUE") )
 if (!is.na(use_gpu) && (use_gpu=="FALSE") )
 	use_rgtsvm <- FALSE;
 
-#src_path = as.character(args[7]);
+gpu_cores <- as.integer(args[7])
+if (is.na(gpu_cores)) gpu_cores <- 1;
 
 cat("Bigwig(plus):", ps_plus_path, "\n");
 cat("Bigwig(minus):", ps_minus_path, "\n");
 cat("Output:", outfile, "\n");
 cat("dREG model:", args[4], "\n");
-cat("ncores:", ncores, "\n");
+cat("CPU cores:", cpu_cores, "\n");
 cat("GPU:", use_rgtsvm, "\n");
-#cat("SRC PATH:", src_path, "\n");
+cat("GPU cores:", gpu_cores, "\n");
+
+
+if(!file.exists(ps_plus_path))
+	stop( paste("Can't find the bigwig of plus strand(", ps_plus_path, ")"));
+if(!file.exists(ps_minus_path))
+	stop( paste("Can't find the bigwig of minus strand(", ps_minus_path, ")"));
+if(!file.exists(args[4]))
+	stop( paste("Can't find the SVR model(", args[4], ")"));
 
 ## Now scan all positions in the genome ...
 cat("1) -------- Checking the informative positions\n");
 load(args[4]);
 
-run.time <- system.time(r <- peak_calling( asvm, gdm, ps_plus_path, ps_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm));
+cat("[", as.character(Sys.time()), "]", "Starting peak calling", "\n");
+run.time <- system.time(r <- peak_calling( asvm, gdm, ps_plus_path, ps_minus_path, cpu_cores=cpu_cores, use_rgtsvm=use_rgtsvm, gpu_cores=gpu_cores));
+cat("[", as.character(Sys.time()), "]", "Ending peak calling", "\n");
+
+show( run.time/60 );
 
 out.file1 <- paste(outfile, "dREG.infp.bed", sep=".")
 out.file2 <- paste(outfile, "dREG.peak.full.bed", sep=".")
