@@ -54,7 +54,10 @@ check_bigwig<-function(bw_path, strand="+")
 	}
   }
 
-  b.pointReads <- (mean(per.pointReads)>0.8);
+  unload.bigWig(bw);
+
+  if( NROW(per.pointReads)>1 )
+	  b.pointReads <- (mean(per.pointReads)>0.8);
 
 #cat("mean(per.pointReads", mean(per.pointReads), "\n");
 
@@ -62,7 +65,7 @@ check_bigwig<-function(bw_path, strand="+")
 	 cat("The bigwig file might be normalized.\n");
 
   if(!b.Strand)
-	 cat("Read count should be >0 in plus strand and <0 in minus strand.\n");
+	 cat("Read count should be >= 0 in plus strand and <= 0 in minus strand.\n");
 
   if(!b.pointReads)
 	 cat("Every read might be mapped to a region, not a locus.\n");
