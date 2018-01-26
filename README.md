@@ -173,3 +173,7 @@ Three files below are generated in this solution:
 # Reference
 
 dREG is an R package, and that provides some additional flexibility for users familiar with R. Currently you can get details about each R function from the dREG manual (https://github.com/Danko-Lab/dREG/blob/master/dREG-manual.pdf).  We are actively working to document each function in the package.  
+
+How to cite
+===================
+Danko, C. G., Hyland, S. L., Core, L. J., Martins, A. L., Waters, C. T., Lee, H. W., ... & Siepel, A. (2015). Identification of active transcriptional regulatory elements from GRO-seq data. Nature methods, 12(5), 433-438.
