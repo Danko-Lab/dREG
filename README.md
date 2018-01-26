@@ -32,7 +32,7 @@ dREG takes bigWig files with double strands as the input. The bigWig files shoul
 
 1) Each read is mapped at 5’ or 3’ position (point mode) , not mapped to a continuous region starting from 5’ or 3’.  This is different with the software Tfit.
 
-2) Positive values in plus strand and negative value in minus strand
+2) Positive values in plus strand and negative values in minus strand
 
 3) No normalization
 
