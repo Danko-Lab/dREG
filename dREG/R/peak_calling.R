@@ -75,6 +75,9 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
 	require(dREG);
     load(tmp.rdata);
 
+    file.RDS <- system.file("extdata", "rf-model-201803.RDS", package="dREG");
+    model <- readRDS(file.RDS);
+
     idx.k <- (k-1)*500 + c(1:500);
     idx.k <- idx.k[ idx.k <= NROW(peak.idx) ]
 
@@ -90,10 +93,15 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
       }
       else
       {
-        #P <- try( find_peaks( xp, yp, SlopeThreshold=0.01, AmpThreshold=min_score, smoothwidth=smoothwidth, smoothtype=2, cor_mat=cor_mat) );
-        P <- find_peaks( xp, yp, SlopeThreshold=0.01, AmpThreshold=min_score, smoothwidth=smoothwidth, smoothtype=2, cor_mat=cor_mat);
-        #if(class(P)=="try-error")
-        #  P<-NULL;
+		## Timestamp: 201803
+        ## using Random Forest to split or merge the two adjacent local maximas.
+        ## Removing any peaks less than 50
+        P <- find_rf_peaks( model, xp, yp, SlopeThreshold=0.01, AmpThreshold=min_score, smoothwidth=smoothwidth, smoothtype=2, cor_mat=cor_mat);
+
+		## Timestamp: 201712
+        ## using 250 bp as the mimnial peak width to merge narrow peaks.
+        ## Removing any peaks less than 100
+        ## P <- find_peaks( xp, yp, SlopeThreshold=0.01, AmpThreshold=min_score, smoothwidth=smoothwidth, smoothtype=2, cor_mat=cor_mat);
       }
 
       if(!is.null(P)) P <- data.frame(chr=rp$peak_broad[kk,]$chr, kk, P[,-1,drop=F]);
@@ -394,26 +402,41 @@ find_peaks <- function( x, y, SlopeThreshold, AmpThreshold, smoothwidth, smootht
 
   if(NROW(peak.loci)>1)
   {
+	fake.rm.loci <- c();
     while( NROW(peak.loci)> 1 && any( x[peak.loci[-1]] - x[peak.loci[-NROW(peak.loci)]] <= 250) )
     {
       dist <- x[ peak.loci[-1] ] - x[ peak.loci[-NROW(peak.loci)]];
 
-      if ( y[ peak.loci[ which.min(dist) ] ] < y[ peak.loci[ which.min(dist)+1 ] ] )
+	  d.min <- which.min(dist);
+	  if ( y[ peak.loci[ d.min ] ] >= y[ peak.loci[ d.min+1 ] ] && min(y[ peak.loci[d.min]:peak.loci[d.min+1] ]) < 0.5*y[ peak.loci[ d.min+1 ] ] )
+	  {
+		  fake.rm.loci <- c(fake.rm.loci, peak.loci [ d.min+1 ] );
+          peak.loci <- peak.loci [ - (d.min+1) ]
+      }
+	  else if ( y[ peak.loci[ d.min ] ] < y [ peak.loci[ d.min+1 ] ] && min(y[ peak.loci[d.min]:peak.loci[d.min+1] ]) < 0.5*y[ peak.loci[ d.min ] ] )
+	  {
+		  fake.rm.loci <- c(fake.rm.loci, peak.loci [ d.min] );
+          peak.loci <- peak.loci [ - d.min ]
+      }
+	  else if ( y[ peak.loci[ d.min ] ] < y[ peak.loci[ d.min+1 ] ] )
       {
-        peak.rm <- peak.loci [ which.min(dist) ]
-        peak.kp <- peak.loci [ which.min(dist) + 1  ]
-        peak.loci <- peak.loci [ - which.min(dist) ]
+        peak.rm <- peak.loci [ d.min ]
+        peak.kp <- peak.loci [ d.min + 1  ]
+        peak.loci <- peak.loci [ - d.min ]
         y[peak.rm:peak.kp] <- (y[peak.kp] - y[peak.rm] ) / ( peak.kp-peak.rm )*(c( peak.rm:peak.kp)-peak.rm) + y[peak.rm];
       }
       else
       {
-        peak.rm <- peak.loci [ which.min(dist) +1]
-        peak.kp <- peak.loci [ which.min(dist) ]
-        peak.loci <- peak.loci [ -( which.min(dist)+1) ]
+        peak.rm <- peak.loci [ d.min +1]
+        peak.kp <- peak.loci [ d.min ]
+        peak.loci <- peak.loci [ -( d.min+1) ]
         y[peak.kp:peak.rm] <- y[peak.kp] - (y[peak.kp] - y[peak.rm] )/( peak.rm-peak.kp )*(c( peak.kp:peak.rm)-peak.kp) ;
       }
+
       next;
     }
+
+    peak.loci <- sort( c(peak.loci, fake.rm.loci) );
   }
 
   P <- c(); i<-1;
