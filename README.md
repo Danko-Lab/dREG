@@ -25,6 +25,19 @@ Abstract
 --------
 Identification of the genomic regions that regulate transcription remains an important open problem.  We have recently shown that global run-on and sequencing (GRO-seq) with enrichment for 5-prime-capped RNAs reveals patterns of divergent transcription that accurately mark active transcriptional regulatory elements (TREs), including enhancers and promoters.  Here, we demonstrate that active TREs can be identified with comparable accuracy by applying sensitive machine-learning methods to standard GRO-seq and PRO-seq data, allowing TREs to be assayed together with transcription levels, elongation rates, and other transcriptional features, in a single experiment.  Our method, called discriminative Regulatory Element detection from GRO-seq (dREG), summarizes GRO-seq read counts at multiple scales and uses support vector regression to predict active TREs.  The predicted TREs are strongly enriched for marks associated with functional elements, including H3K27ac, transcription factor binding sites, eQTLs, and GWAS-associated SNPs.  Using dREG, we survey TREs in eight cell types and provide new insights into global patterns of TRE assembly and function. 
 
+Data preparation: 
+==========================
+
+dREG takes bigWig files with double strands as the input. The bigWig files should follow 3 rules:
+
+1) Each read is mapped at 5’ or 3’ position (point mode) , not mapped to a continuous region starting from 5’ or 3’.  This is different with the software Tfit.
+
+2) Positive values in plus strand and negative values in minus strand
+
+3) No normalization
+
+As for how to generate bigWig files from fastq data, please refer to https://github.com/Danko-Lab/tutorials/blob/master/PRO-seq.md.
+
 
 Installation instructions: 
 ==========================
@@ -38,7 +51,6 @@ Linux and Mac OSX are currently supported.
 Required software
 -----------------
 * R (http://www.r-project.org/)
-* mysql-dev (http://dev.mysql.com/downloads/).
 * bigWig R package (https://github.com/andrelmartins/bigWig; will be public very soon).
 
 This software is already installed on many UNIX systems.  Users can install the most appropriate version of these files for Ubuntu using: 
@@ -139,22 +151,29 @@ For example, to run dREG on the PRO-seq data, use:
 
 Three files below are generated in this solution:  
 
-1. <out_prefix>.dREG.infp.bed.gz
-   all informative sites with dREG scores.
+1. <out_prefix>.dREG.infp.bed.gz:
 
-2. <out_prefix>.dREG.peak.full.bed.gz 
-   full peak information, including peak position, max score, probability, center.
+    all informative sites with dREG scores.
 
-3. <out_prefix>.dREG.peak.score.bed.gz
-   reduced peak information, only including peak position, max score.
+2. <out_prefix>.dREG.peak.full.bed.gz: 
+
+    full peak information, including peak position, max score, probability, center.
+
+3. <out_prefix>.dREG.peak.score.bed.gz:
+
+    reduced peak information, only including peak position, max score.
 
 **Notice:** 
 
 (1) This solution doesn't work with the model trained before 2017. The new SVR model can be downloaded from FTP:
 (ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata)
 
-(2) That command takes 8~12 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
+(2) That command takes 4~6 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
 
-# Reference
+# Document
 
 dREG is an R package, and that provides some additional flexibility for users familiar with R. Currently you can get details about each R function from the dREG manual (https://github.com/Danko-Lab/dREG/blob/master/dREG-manual.pdf).  We are actively working to document each function in the package.  
+
+How to cite
+===================
+Danko, C. G., Hyland, S. L., Core, L. J., Martins, A. L., Waters, C. T., Lee, H. W., ... & Siepel, A. (2015). Identification of active transcriptional regulatory elements from GRO-seq data. Nature methods, 12(5), 433-438. (https://www.nature.com/articles/nmeth.3329)

@@ -1,14 +1,16 @@
 **Gateway Status:**
 ===============
-dREG gateway: suspending
+dREG gateway: healthy
 
 **GPU Node(s):**
 ===============
-None
+Comet.sdsc.xsede.org: healthy
 
 **Update:**
 ===============
-12/22/2017: GPU allocation ran out onComet(.sdsc.xsede.org)
+01/25/2018: New allocation on Comet
+
+12/22/2017: GPU allocation ran out on Comet(.sdsc.xsede.org)
 
 10/22/2017： GPU allocation ran out on Bridegs.psc.edu
 
