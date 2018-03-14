@@ -117,11 +117,11 @@ For example, to run dREG on the example data (PRO-seq from chr21 in K562 cells),
 
     bash run_dREG.bsh example/K562.chr21.plus.bw example/K562.chr21.minus.bw k562.test dREG_model/asvm.RData 2
 
+That command takes ~2-3 hours to execute on Ubuntu on a core i5 desktop computer (CPU only).
+
 If GPU is available with 16 CPU cores, use:
 
-    bash run_dREG.bsh example/K562.chr21.plus.bw example/K562.chr21.minus.bw k562.test dREG_model/asvm.RData 15 GPU
-
-That command takes ~2-3 hours to execute on Ubuntu on a core i5 desktop computer (CPU version).
+    bash run_dREG.bsh example/K562.chr21.plus.bw example/K562.chr21.minus.bw k562.test dREG_model/asvm.RData 16 1
 
 dREG outputs a bedGraph file of scores.  If desired, users can convert this file into a merged file of dREG 'peaks', or regions which fit the profile of a transcribed regulatory element.   For convenience, users can use the included bash script (writeBed.bsh) to identify dREG peaks.  This script is used as follows:
 
@@ -147,7 +147,7 @@ To use this solution, type:
 
 For example, to run dREG on the PRO-seq data, use:
 
-    bash run_peakcalling.bsh proseq.plus.bw proseq.minus.bw proseq.test asvm.gdm.6.6M.20170828.rdata 16 GPU
+    bash run_peakcalling.bsh proseq.plus.bw proseq.minus.bw proseq.test asvm.gdm.6.6M.20170828.rdata 16 1
 
 Three files below are generated in this solution:  
 
