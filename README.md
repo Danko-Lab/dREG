@@ -110,9 +110,8 @@ To use dREG, type:
     minus_strand.bw	-- PRO-seq data (minus strand). Read counts (not normalized) formatted as a bigWig file.
     out_prefix      -- The prefix of the output file.
     asvm.RData      -- The path to the RData file containing the pre-trained SVM.
-    [nthreads]      -- [optional, default=1] The number of threads to use.
-    [GPU]           -- [optional, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
-
+    cpu_cores       -- [optional, default=1] indicating how many CPU cores can be used.
+    gpu_cores       -- [optional, default=0] indicating how many GPU cards can be used.
 
 For example, to run dREG on the example data (PRO-seq from chr21 in K562 cells), use:
 
@@ -142,8 +141,9 @@ To use this solution, type:
     minus_strand.bw	-- PRO-seq data (minus strand). Read counts (not normalized) formatted as a bigWig file.
     out_prefix      -- The prefix of the output file.
     asvm.RData      -- The path to the RData file containing the pre-trained SVM.
-    [nthreads]      -- [optional, default=1] The number of threads to use.
-    [GPU]           -- [`suggested`, GPU or _blank_, default=_blank_] GPU can be used in this operation through the Rgtsvm package.
+    cpu_cores       -- [optional, default=1] indicating how many CPU cores can be used.
+    gpu_cores       -- [optional, default=0] indicating how many GPU cards can be used.
+    
 
 For example, to run dREG on the PRO-seq data, use:
 
