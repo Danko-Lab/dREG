@@ -1,5 +1,10 @@
 useDynLib(dREG, .registration = TRUE)
 
+import(methods)
+import(graphics)
+import(grDevices)
+import(utils)
+import(stats)
 import(parallel)
 import(e1071)
 import(bigWig)
@@ -8,8 +13,8 @@ import(snowfall)
 import(data.table)
 import(mvtnorm)
 import(rmutil)
-import(methods)
 import(randomForest)
+
 
 exportClasses("genomic_data_model")
 export(read_genomic_data)

@@ -33,7 +33,7 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, u
   {
 	require(Rgtsvm);
     if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
-    asvm <- predict.load( asvm, gpu_cores, verbose=T);
+    asvm <- Rgtsvm::predict.load( asvm, gpu_cores, verbose=T);
   }
 
   if( is.null(infp_bed) )
@@ -50,7 +50,7 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, u
      colnames(rp$infp_bed) <- c("chr", "start", "end", "score", "infp");
 
   if(use_rgtsvm)
-    predict.unload( asvm );
+    Rgtsvm::predict.unload( asvm );
 
   rp <- start_calling( rp, min_score, pv_adjust, pv_threshold, smoothwidth, cpu_cores )
 

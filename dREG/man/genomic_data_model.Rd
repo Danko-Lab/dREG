@@ -1,34 +1,25 @@
 \name{genomic_data_model}
 \alias{genomic_data_model}
 \title{
-Creates a genome data model.
+Builds a multiscale window object for feature extracting.
 }
 \description{
-Creates a genome data model.
 }
 \usage{
 genomic_data_model(window_sizes, half_nWindows)
 }
 \arguments{
-  \item{window_sizes}{Number indicating the width of genomic window.}
-  \item{half_nWindows}{Number indicating the count of genomic window at each side(left side or right side).}
+  \item{window_sizes}{vector of integer, indicating the genomic size (bp) for each window.}
+  \item{half_nWindows}{vector of integer, specifying the window count for each above window. Because the windows are extended at the both sides of an observed position, here this number is considered as half number(left or right side). }
 }
-
+\details{
+The total number of features including plus and strand is sum(half_nWindows)*2 sides * 2 strands.\cr
+The covered region are max(window_sizes)*half_nWindows[which.max(window_sizes)]*2 bps.
+}
 \value{
-A s4 object is returned with 
-\item{n_zooms}{Number indicating zoom ratio.}
-\item{window_sizes}{Vector indicating window sizes.}
-\item{half_nWindows}{Vector indicating number of half windows.}
-}
-\references{
-Danko, C. G., Hyland, S. L., Core, L. J., Martins, A. L., Waters, C. T., Lee, H. W., ... & Siepel, A. (2015). 
-Identification of active transcriptional regulatory elements from GRO-seq data. Nature methods, 12(5), 433-438.
-}
-\seealso{
-\code{\link{read_genomic_data}}, \code{\link{regulatory_svm}},  \code{\link{eval_reg_svm}}
+A S4 object including two attributes.
 }
 \examples{
-gdm <- genomic_data_model( c(10,20,30), c(10, 10, 10) )
+  gdm <- genomic_data_model(window_sizes = c(10, 25, 50, 500, 5000), 
+                            half_nWindows= c(10, 10, 30, 20, 20) );
 }
-\keyword{ function }
-

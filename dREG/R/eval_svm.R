@@ -46,10 +46,10 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
     if( !is.null(asvm$cluster) || !is.null(asvm$pointer) )
     {
 		if(asvm$type == 0) { ## Probabilistic SVM
-		  batch_pred <- predict.run( asvm, mat_features, probability=TRUE );
+		  batch_pred <- Rgtsvm::predict.run( asvm, mat_features, probability=TRUE );
 		}
 		else { ## epsilon-regression (SVR)
-		  batch_pred <- predict.run( asvm, mat_features, probability=FALSE)
+		  batch_pred <- Rgtsvm::predict.run( asvm, mat_features, probability=FALSE)
 		}
 	}
 	else

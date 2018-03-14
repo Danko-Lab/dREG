@@ -10,25 +10,26 @@ load(dreg_model) ## Should have (by default) gdm and asvm.
 ## Read PRO-seq data.
 ps_plus_path  <- args[1]
 ps_minus_path <- args[2]
-outfile <- args[3]
-ncores <- as.integer(args[5])
-if (is.na(ncores)) ncores <- 1;
+outfile <- args[3];
 
-use_rgtsvm <- FALSE;
-use_gpu <- toupper(as.character(args[6]))
-if (!is.na(use_gpu) && ( use_gpu=="GPU" || use_gpu=="TRUE")  ) use_rgtsvm <- TRUE;
+cpu_cores <- as.integer(args[5])
+if (is.na(cpu_cores)) cpu_cores <- 1;
+
+gpu_cores <- as.integer(args[6])
+if (is.na(gpu_cores)) gpu_cores <- 0;
 
 ## Now scan all positions in the genome ...
 inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
 
 cat("Genome Loci=", NROW(inf_positions), "\n");
 
-t <- system.time( pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000, ncores=ncores, use_rgtsvm=use_rgtsvm) )
+t <- system.time( pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000, ncores=cpu_cores, use_rgtsvm=gpu_cores>0) )
 
 cat("Running time [User]:", t[1], "[System]:", t[2], "[Elapsed]:", t[3], "\n");
 
 final_data <- data.frame(inf_positions, pred_val)
 options("scipen"=100, "digits"=4)
-write.table(final_data, file=outfile, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+
+write.table(final_data, file=paste(outfile, ".bed", sep=""), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
 
 
