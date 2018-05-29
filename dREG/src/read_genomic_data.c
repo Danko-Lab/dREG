@@ -220,8 +220,8 @@ void get_genomic_data_fast( int left_pos, int right_pos, zoom_params_t zoom, raw
   if( right_idx >= chrom_counts.size) right_idx = chrom_counts.size;
 
   // Loop through incrementing each vector.
-  for(int bp=left_idx; bp<right_idx; bp++) {
-	if( bp<0 || ((chrom_counts.forward[ bp ]==0 )  && (chrom_counts.reverse[ bp ]==0 ) ) )
+  for(int bp=left_idx;bp<right_idx; bp++) {
+	if( bp<0 || ((chrom_counts.forward[ bp ]==0 )  && (chrom_counts.reverse[ bp ]==0 )) )
 		continue;
 
     for(int i=0;i<zoom.n_sizes;i++) {
@@ -545,6 +545,8 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
 		Free(pLocal_range_table);
 		return(R_NilValue);
 	}
+
+	if(nLocal_start<0) nLocal_start=0;
 
 	// Read bigwig using a big merged range
     raw_data_t rd_local= read_from_bigWig_r( pszChr, nLocal_start, nLocal_stop, bw_fwd, bw_rev);
