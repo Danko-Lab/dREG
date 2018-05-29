@@ -24,24 +24,27 @@ peak_calling_nopred<-function( infp_bed, min_score, pv_adjust="fdr", pv_threshol
 peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, use_rgtsvm=TRUE, min_score=NULL, pv_adjust="fdr", pv_threshold=0.05, smoothwidth=4, cpu_cores=1, gpu_cores=1 )
 {
   if(!file.exists(bw_plus_path))
-	stop( paste("Can't find the bigwig of plus strand(", bw_plus_path, ")"));
+    stop( paste("Can't find the bigwig of plus strand(", bw_plus_path, ")"));
 
   if(!file.exists(bw_minus_path))
-	stop( paste("Can't find the bigwig of minus strand(", bw_minus_path, ")"));
+    stop( paste("Can't find the bigwig of minus strand(", bw_minus_path, ")"));
 
+  #cat("[1]", as.character(Sys.time()), "\n");
   if(use_rgtsvm)
   {
-	require(Rgtsvm);
+    require(Rgtsvm);
     if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
     asvm <- Rgtsvm::predict.load( asvm, gpu_cores, verbose=T);
   }
 
+  #cat("[2]", as.character(Sys.time()), "\n");
   if( is.null(infp_bed) )
   {
     infp_bed <- get_informative_positions(bw_plus_path, bw_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE);
     infp_bed <- data.frame(infp_bed, pred=eval_reg_svm(gdm, asvm, infp_bed, bw_plus_path, bw_minus_path, batch_size= 50000, ncores=cpu_cores, use_rgtsvm=use_rgtsvm));
   }
 
+  #cat("[3]", as.character(Sys.time()), "\n");
   colnames(infp_bed) <- c("chr", "start", "end", "pred");
 
   ## broad peaks with information are returned back.
@@ -52,15 +55,17 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, u
   if(use_rgtsvm)
     Rgtsvm::predict.unload( asvm );
 
+  #cat("[4]", as.character(Sys.time()), "\n");
   rp <- start_calling( rp, min_score, pv_adjust, pv_threshold, smoothwidth, cpu_cores )
 
+  #cat("[5]", as.character(Sys.time()), "\n");
   return(rp);
 }
 
 start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, ncores )
 {
   if(!is.null(min_score))
-     rp$min_score <- min_score;
+    rp$min_score <- min_score;
   min_score <- rp$min_score;
   cat("min_score=", min_score, "\n");
 
@@ -172,13 +177,13 @@ summary_peak <- function( raw_peak, peak_bed )
   peak_sum$adjust.fdr.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="fdr")<0.05)
   peak_sum$adjust.none.0.05 <- sum(p.adjust(raw_peak$prob[ raw_peak$prob != -1], method="none")<0.05)
 
-  peak_sum$peak.narrow100 <- sum(raw_peak$prob == -1)
+  peak_sum$peak.narrow50 <- sum(raw_peak$prob == -1)
 
   peak <- cbind(raw_peak, prob2=raw_peak$prob)
   peak[which(peak$prob2!=-1),7]  <- p.adjust(peak$prob2[peak$prob2!=-1], method="fdr")
   peak_sum$peak.sig.score <- range(peak$score[which(peak[,7]<=0.05)])
-  peak_sum$peak.narrow100.sig <- sum(raw_peak$prob==-1 & raw_peak$score > peak_sum$peak.sig.score [2] )
-  peak_sum$peak.narrow100.score <- range(peak$score[peak$prob==-1] )
+  peak_sum$peak.narrow50.sig <- sum(raw_peak$prob==-1 & raw_peak$score > peak_sum$peak.sig.score [1] )
+  peak_sum$peak.narrow50.score <- range(peak$score[peak$prob==-1] )
 
   return(peak_sum);
 }

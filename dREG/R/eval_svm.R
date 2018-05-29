@@ -111,7 +111,8 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
 
       pos.list = list();
       for(x in n.start:n.stop)
-      {   print(paste(x, "of", length(interval)-1) );
+      {
+        print(paste(x, "of", length(interval)-1) );
         batch_indx<- c( interval[x]:(interval[x+1]-1) );
         pos.list[[x-n.start+1]] <- pos.sorted[batch_indx,,drop=F];
       }
