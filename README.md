@@ -57,12 +57,11 @@ Required software
 This software is already installed on many UNIX systems.  Users can install the most appropriate version of these files for Ubuntu using: 
 
     sudo apt-get install r-base-core
-    sudo apt-get install libmysqlclient-dev
     sudo apt-get install libssl1.0.0 libssl-dev
 
 Users who are not sure how to install the proper dependencies on their system should check with their system administrator for help.  
 
-dREG also has several dependencies within R.  These include **rphast**, **grid**, **boot**, **e1071**, **data.table**, **mvtnorm**,  **rmutil**,  **randomForest** and **snowfall**.  These packages are all availiable on the CRAN repository.  For convenience, users can install these packages using the makefile:
+dREG also has several dependencies within R.  These include **data.table**, **e1071**, **mvtnorm**, **parallel**, **randomForest**, **rmutil**, **rphast**, and **snowfall**.  These packages are all availiable on the CRAN repository.  For convenience, users can install these packages using the makefile:
 
     make R_dependencies
 
