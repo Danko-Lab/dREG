@@ -1,3 +1,4 @@
+install.packages("parallel", repos = "http://cran.us.r-project.org")
 install.packages("snowfall", repos = "http://cran.us.r-project.org")
 install.packages("rmutil", repos = "http://cran.us.r-project.org")
 install.packages("mvtnorm", repos = "http://cran.us.r-project.org")
