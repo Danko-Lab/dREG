@@ -17,6 +17,7 @@ use_rgtsvm <- FALSE;
 gpu_id <- as.integer(args[6])
 if (!is.na(gpu_id)) use_rgtsvm<-TRUE
 
+cat("------------ Parameters ------------- \n");
 cat("Bigwig(plus):", ps_plus_path, "\n");
 cat("Bigwig(minus):", ps_minus_path, "\n");
 cat("Output:", outfile, "\n");
@@ -24,6 +25,7 @@ cat("dREG model:", args[4], "\n");
 cat("CPU cores:", cpu_cores, "\n");
 cat("GPU ID:", gpu_id, "\n");
 cat("Using Rgtsvm:", use_rgtsvm, "\n");
+cat("-------------------------------------\n ");
 
 if(!file.exists(ps_plus_path))
 	stop( paste("Can't find the bigwig of plus strand(", ps_plus_path, ")"));

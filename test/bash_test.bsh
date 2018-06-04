@@ -1,9 +1,9 @@
-#bash run_dREG.bsh /workdir/zw355/proj/prj10-dreg/k562/groseq_plus.bigWig /workdir/zw355/proj/prj10-dreg/k562/groseq_minus.bigWig groseq.k562.eval asvm.gdm.6.6M.20170828.rdata 16 2 
+#bash run_dREG.bsh /workdir/zw355/proj/prj10-dreg/k562/groseq_plus.bigWig /workdir/zw355/proj/prj10-dreg/k562/groseq_minus.bigWig groseq.k562.eval asvm.gdm.6.6M.20170828.rdata 16 1 
 
-#bash run_peakcalling.bsh /workdir/zw355/proj/prj10-dreg/k562/groseq_plus.bigWig /workdir/zw355/proj/prj10-dreg/k562/groseq_minus.bigWig groseq.k562 asvm.gdm.6.6M.20170828.rdata 16 2 
+#bash run_peakcalling.bsh /workdir/zw355/proj/prj10-dreg/k562/groseq_plus.bigWig /workdir/zw355/proj/prj10-dreg/k562/groseq_minus.bigWig groseq.k562 asvm.gdm.6.6M.20170828.rdata 16 1 
 
-bash run_dREG.bsh ../example/K562.chr21.plus.bw ../example/K562.chr21.minus.bw test.eval asvm.gdm.6.6M.20170828.rdata 16 2 
+bash ../run_dREG.bsh ../example/K562.chr21.plus.bw ../example/K562.chr21.minus.bw test.k562.dreg ../asvm.gdm.6.6M.20170828.rdata 16 1 
 
-bash run_peakcalling.bsh ../example/K562.chr21.plus.bw ../example/K562.chr21.minus.bw test.k562 asvm.gdm.6.6M.20170828.rdata 16 2 
+bash ../run_peakcalling.bsh ../example/K562.chr21.plus.bw ../example/K562.chr21.minus.bw test.k562.pk ../asvm.gdm.6.6M.20170828.rdata 16 1
 
 

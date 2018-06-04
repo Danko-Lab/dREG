@@ -9,7 +9,7 @@ if [ "$#" -lt 4 ]; then
     echo "out_prefix        -- The prefix of the output file."
     echo "asvm.RData        -- The path to the RData file containing the pre-trained SVM."
     echo "[cpu_cores]	    -- [optional, default=1] indicating how many CPU cores can be used."
-    echo "[gpu_id]          -- [optional, default=0] indicating GPU id when multiple GPU cards are available."
+    echo "[gpu_id]          -- [optional, default=NA] indicating GPU id when multiple GPU cards are available."
     echo ""
     exit 1
 fi
