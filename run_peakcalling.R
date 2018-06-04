@@ -2,12 +2,7 @@ require(dREG)
 options("scipen"=100, "digits"=4)
 
 ## Process command arguments
-args <- commandArgs(trailingOnly=TRUE)
-
-## Load the dRGE model including two ojects 'asvm' and 'gdm'.
-## Do this before loading ps_plus_path, just in case those are saved in the model file.
-## Should have (by default) gdm and asvm.
-load(args[4])
+args <- commandArgs(trailingOnly=TRUE);
 
 ## Read arguments from thwe web page.
 ps_plus_path  <- args[1]
@@ -18,15 +13,17 @@ outfile <- args[3]
 cpu_cores <- as.integer(args[5])
 if (is.na(cpu_cores)) cpu_cores <- 1;
 
-gpu_cores <- as.integer(args[7])
-if (is.na(gpu_cores)) gpu_cores <- 1;
+use_rgtsvm <- FALSE;
+gpu_id <- as.integer(args[6])
+if (!is.na(gpu_id)) use_rgtsvm<-TRUE
 
 cat("Bigwig(plus):", ps_plus_path, "\n");
 cat("Bigwig(minus):", ps_minus_path, "\n");
 cat("Output:", outfile, "\n");
 cat("dREG model:", args[4], "\n");
 cat("CPU cores:", cpu_cores, "\n");
-cat("GPU cores:", gpu_cores, "\n");
+cat("GPU ID:", gpu_id, "\n");
+cat("Using Rgtsvm:", use_rgtsvm, "\n");
 
 if(!file.exists(ps_plus_path))
 	stop( paste("Can't find the bigwig of plus strand(", ps_plus_path, ")"));
@@ -37,10 +34,20 @@ if(!file.exists(args[4]))
 
 ## Now scan all positions in the genome ...
 cat("1) -------- Checking the informative positions\n");
+
+## Load the dRGE model including two ojects 'asvm' and 'gdm'.
+## Do this before loading ps_plus_path, just in case those are saved in the model file.
+## Should have (by default) gdm and asvm.
 load(args[4]);
 
+if(gpu_id>0)
+{
+	library(Rgtsvm);
+	selectGPUdevice(gpu_id);
+}
+
 cat("[", as.character(Sys.time()), "]", "Starting peak calling", "\n");
-run.time <- system.time(r <- peak_calling( asvm, gdm, ps_plus_path, ps_minus_path, cpu_cores=cpu_cores, use_rgtsvm=gpu_cores>0, gpu_cores=gpu_cores));
+run.time <- system.time(r <- peak_calling( asvm, gdm, ps_plus_path, ps_minus_path, cpu_cores=cpu_cores, use_rgtsvm=use_rgtsvm, gpu_cores=1));
 cat("[", as.character(Sys.time()), "]", "Ending peak calling", "\n");
 
 show( run.time/60 );
