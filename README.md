@@ -50,6 +50,7 @@ Linux and Mac OSX are currently supported.
 
 Required software
 -----------------
+* bedops (http://bedops.readthedocs.org/en/latest/index.html)
 * R (http://www.r-project.org/)
 * bigWig R package (https://github.com/andrelmartins/bigWig; will be public very soon).
 
