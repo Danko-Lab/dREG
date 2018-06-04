@@ -62,7 +62,7 @@ This software is already installed on many UNIX systems.  Users can install the 
 
 Users who are not sure how to install the proper dependencies on their system should check with their system administrator for help.  
 
-dREG also has several dependencies within R.  These include rphast, grid, boot, e1071, and parallel.  These packages are all availiable on the CRAN repository.  For convenience, users can install these packages using the makefile:
+dREG also has several dependencies within R.  These include **rphast**, **grid**, **boot**, **e1071**, **data.table**, **mvtnorm**,  **rmutil**,  **randomForest** and **snowfall**.  These packages are all availiable on the CRAN repository.  For convenience, users can install these packages using the makefile:
 
     make R_dependencies
 
