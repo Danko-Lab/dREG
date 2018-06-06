@@ -84,8 +84,7 @@ Get the dREG models
 Pre-trained models that can be used to predict dREG scores across the genome are availiable in mammals and drosophila.  Get the appropriate model for your system here: https://github.com/Danko-Lab/dREG-Model
 
 or download the newest model from here:
-
-ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata
+[ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata](ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata)
 
 Usage instructions:
 ===================
@@ -180,4 +179,7 @@ dREG is an R package, and that provides some additional flexibility for users fa
 
 How to cite
 ===================
-Danko, C. G., Hyland, S. L., Core, L. J., Martins, A. L., Waters, C. T., Lee, H. W., ... & Siepel, A. (2015). Identification of active transcriptional regulatory elements from GRO-seq data. Nature methods, 12(5), 433-438. (https://www.nature.com/articles/nmeth.3329)
+(1) Danko, C. G., Hyland, S. L., Core, L. J., Martins, A. L., Waters, C. T., Lee, H. W., ... & Siepel, A. (2015). Identification of active transcriptional regulatory elements from GRO-seq data. Nature methods, 12(5), 433-438. (https://www.nature.com/articles/nmeth.3329)
+
+(2) Wang, Z., Chu, T., Choate, L. A., & Danko, C. G. (2018). Identification of regulatory elements from nascent transcription using dREG. bioRxiv, 321539. (https://www.biorxiv.org/content/early/2018/05/14/321539.abstract)
+
