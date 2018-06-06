@@ -83,7 +83,8 @@ Get the dREG models
 -------------------
 Pre-trained models that can be used to predict dREG scores across the genome are availiable in mammals and drosophila.  Get the appropriate model for your system here: https://github.com/Danko-Lab/dREG-Model
 
-or download the newest model from FTP:
+or download the newest model from here:
+
 ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata
 
 Usage instructions:
