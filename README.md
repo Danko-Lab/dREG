@@ -134,7 +134,7 @@ Three files below are generated in this solution:
 (1) This solution doesn't work with the model trained before 2017. The new SVR model can be downloaded from FTP:
 (ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata)
 
-(2) That command takes 4~6 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
+(2) That command takes 4~12 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
 
 ## 2) Predicting dREG scores
 
