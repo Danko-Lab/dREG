@@ -52,17 +52,18 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   indx_train <- c(1:n_train, (inter_indx+1):(inter_indx+n_train))
   indx_eval  <- c((n_train+1):(inter_indx), (inter_indx+n_train+1):(2*inter_indx))
 
-  parallel_read_genomic_data <- function( x_train_bed, bw_plus_file, bw_minus_file )
-  {
-      interval <- unique(c( seq( 1, NROW(x_train_bed)+1, by=batch_size ), NROW(x_train_bed)+1))
-      feature_list<- mclapply(1:(length(interval)-1), function(x) {
-            print(paste(x, "of", length(interval)-1) );
-            batch_indx<- c( interval[x]:(interval[x+1]-1) );
-            return(read_genomic_data(gdm, x_train_bed[batch_indx,,drop=F], bw_plus_file, bw_minus_file));
-      }, mc.cores= ncores);
-
-	  return( do.call("rbind", feature_list) );
-  }
+  #parallel_read_genomic_data <- function( x_train_bed, bw_plus_file, bw_minus_file )
+  #{
+  #    interval <- unique(c( seq( 1, NROW(x_train_bed)+1, by=batch_size ), NROW(x_train_bed)+1))
+  #    feature_list<- mclapply(1:(length(interval)-1), function(x) {
+  #          print(paste(x, "of", length(interval)-1) );
+  #          batch_indx<- c( interval[x]:(interval[x+1]-1) );
+  #          return(read_genomic_data(gdm, x_train_bed[batch_indx,,drop=F], bw_plus_file, bw_minus_file));
+  #    }, mc.cores= ncores);
+  #
+  #    return( do.call("rbind", feature_list) );
+  #
+  #}
 
   ## Read genomic data.
   if(debug) print("Collecting training data.")
@@ -75,13 +76,14 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     x_predict_bed <- tset[indx_eval,c(1:3)]
     y_predict <- tset[indx_eval,4]
 
-	## Write out a bed of training positions to avoid during test ...
+    ## Write out a bed of training positions to avoid during test ...
     if(debug) {
       write.table(x_train_bed, "TrainingSet.bed", quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
-	  write.table(indx_train, "TrainIndx.Rflat")
+    write.table(indx_train, "TrainIndx.Rflat")
     }
 
-    x_train <- parallel_read_genomic_data( x_train_bed, bw_plus_path, bw_minus_path)
+    # x_train <- parallel_read_genomic_data( x_train_bed, bw_plus_path, bw_minus_path)
+    x_train <- read_genomic_data ( gdm, x_train_bed, bw_plus_path, bw_minus_path, ncores = ncores);
 
   } else {
     x_train <- NULL
@@ -93,7 +95,9 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
       x_train_bed <- tset_x[indx_train,c(1:3)]
       y_train <- c(y_train, tset_x[indx_train,4])
 
-      x_train <- rbind(x_train, parallel_read_genomic_data( x_train_bed, bw_plus_path[[x]], bw_minus_path[[x]]) );
+      # x_train <- rbind(x_train, parallel_read_genomic_data( x_train_bed, bw_plus_path[[x]], bw_minus_path[[x]]) );
+      x_train <- rbind( x_train, read_genomic_data( gdm, x_train_bed, bw_plus_path[[x]], bw_minus_path[[x]], ncores = ncores) );
+
     }
   }
 
@@ -103,12 +107,12 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   ## Train the model.
   if(debug) print("Fitting SVM.")
   if (svm_type == "SVR") {
-    if(debug) print("Training a epsilon-regression SVR.")
-    asvm <- svm( x_train, y_train, type="eps-regression" )
+    if(debug) print("Training a epsilon-regression SVR.");
+    asvm <- svm( x_train, y_train, type="eps-regression" );
   }
   if (svm_type == "P_SVM") {
-    if(debug) print("Training a probabilistic SVM.")
-    asvm <- svm( x_train, as.factor(y_train), probability=TRUE)
+    if(debug) print("Training a probabilistic SVM.");
+    asvm <- svm( x_train, as.factor(y_train), probability=TRUE);
   }
 
   gc();
@@ -117,18 +121,22 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   ## If a PDF file is specified, test performance, and write ROC plots to a PDF file.
   ## Currently *NOT* supported when training with >1 dataset.
  if(!is.null(pdf_path) && !is.na(pdf_path) && n_eval>0 && length(bw_plus_path) == 1) {
-  pdf(pdf_path)
+
+    pdf(pdf_path);
+
     # Plot raw data, if desired.
     if(plot_raw_data) {
       plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
       points(colSums(x_train[y_train == 0,]), col="gray", type="l", ...)
     }
-    remove(x_train)
+
+    remove(x_train);
 
     ## Predict on a randomly chosen set of sequences.
     if(debug) print("Collecting predicted data.")
 
-    x_predict <- parallel_read_genomic_data( x_predict_bed, bw_plus_path, bw_minus_path );
+    #x_predict <- parallel_read_genomic_data( x_predict_bed, bw_plus_path, bw_minus_path );
+    x_predict <- read_genomic_data( gdm, x_predict_bed, bw_plus_path, bw_minus_path, ncores = ncores );
 
     pred <- predict( asvm, x_predict )
 
@@ -140,16 +148,17 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     remove(x_predict)
 
     ## Write ROC plots.
-    roc_values <- logreg.roc.calc(y_predict, pred)
-    AUC<- roc.auc(roc_values)
-    roc.plot(roc_values, main=AUC, ...)
-    print(paste("Model AUC: ",AUC))
-    remove(roc_values)
-  dev.off()
+    roc_values <- logreg.roc.calc(y_predict, pred);
+    AUC<- roc.auc(roc_values);
+    roc.plot(roc_values, main=AUC, ...);
+    print(paste("Model AUC: ",AUC));
+    remove(roc_values);
+
+    dev.off();
  }
  else {
-   remove(x_train)
+   remove(x_train);
  }
 
-  return(asvm)
+  return(asvm);
 }

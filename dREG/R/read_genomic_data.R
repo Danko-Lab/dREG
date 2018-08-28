@@ -32,6 +32,8 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
   if(!file.exists(file_bigwig_minus))
     stop( paste("Can't find the bigwig of minus strand(", file_bigwig_minus, ")"));
 
+  if(missing(scale.method)){ scale.method <- "logistic" };
+
   stopifnot(NROW(gdm@window_sizes) == NROW(gdm@half_nWindows))
 
   zoom<- list(as.integer(gdm@window_sizes), as.integer(gdm@half_nWindows))
@@ -40,15 +42,9 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
   n_batches = floor( n_elem/batch_size )
   if(n_batches < ncores)
   {
-	  batch_size = ceiling( n_elem/ncores );
-	  n_batches = floor( n_elem/batch_size);
+      batch_size = ceiling( n_elem/ncores );
+      n_batches = floor( n_elem/batch_size);
   }
-
-  interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
-
-  if(missing(scale.method)){ scale.method <- "logistic" };
-
-  total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
 
   bed.ord <- order(bed[,1], bed[,2], bed[,3]);
   if ( all( bed.ord == c(1:NROW(bed)) ) )
@@ -56,70 +52,70 @@ read_genomic_data <- function(gdm, bed, file_bigwig_plus, file_bigwig_minus, as_
   else
      bed.sorted <- bed[ bed.ord, ];
 
-  datList <- list();
-  for(i in 1:ceiling( (length(interval)-1)/ncores ))
+  cpu.fun <- function(x)
   {
-	  start_batch <- (i-1)*ncores+1;
-	  stop_batch <- i*ncores;
-	  if(stop_batch>(length(interval)-1)) stop_batch <- length(interval)-1;
+    require(dREG);
 
-	  datList[start_batch:stop_batch] <- mclapply(start_batch:stop_batch, function(x) {
-		  batch_indx<- c( interval[x]:(interval[x+1]-1) )
+    batch_indx<- c( interval[x]:(interval[x+1]-1) )
 
-		  # The output from C/C++ is changed to matrix(n_windows, n_sample)) since 6/20/2016
-		  # The original result was a list, which needs to rbind() to matrix.
+    # The output from C/C++ is changed to matrix(n_windows, n_sample)) since 6/20/2016
+    # The original result was a list, which needs to rbind() to matrix.
+    dat <- .Call("get_genomic_data_R",
+                            as.character( bed.sorted[ batch_indx,1 ] ),
+                            as.integer( floor((bed.sorted[ batch_indx,3 ] + bed.sorted[ batch_indx,2 ])/2) ),
+                            as.character( file_bigwig_plus ),
+                            as.character( file_bigwig_minus ),
+                            zoom,
+                            as.logical(scale.method=="logistic"),
+                            PACKAGE= "dREG")
+    if( is.null(dat))
+       stop("Failed to Call C/C++ functions.\n");
 
-		  if(scale.method=="logistic"){
-			  dat <- .Call("get_genomic_data_R",
-							as.character( bed.sorted[ batch_indx,1 ] ),
-							as.integer( floor((bed.sorted[ batch_indx,3 ] + bed.sorted[ batch_indx,2 ])/2) ),
-							as.character( file_bigwig_plus ),
-							as.character( file_bigwig_minus ),
-							zoom,
-							as.logical(TRUE),
-							PACKAGE= "dREG")
-		  }
-		  else{
-			  dat <- .Call("get_genomic_data_R",
-						   as.character( bed.sorted[ batch_indx,1 ] ),
-						   as.integer( floor((bed.sorted[ batch_indx,3 ] + bed.sorted[ batch_indx,2 ])/2) ),
-						   as.character( file_bigwig_plus ),
-						   as.character( file_bigwig_minus ),
-						   zoom,
-						   as.logical(FALSE),
-						   PACKAGE= "dREG")
-
-			  if( !is.null(dat) )
-				  ##dat<-lapply(dat, "/", total.read.count);
-				  dat <- dat/total.read.count;
-		  }
-
-		  if( is.null(dat))
-		  	stop("Failed to Call C/C++ functions.\n");
-
-#	cat(x, NROW(dat), NCOL(dat), "\n");
-		  return( as.data.frame(t(dat) ) );
-	  }, mc.cores=ncores);
+#cat(x, NROW(dat), NCOL(dat), "\n");
+    return( as.data.frame(t(dat) ) );
   }
 
-  if( length(datList)==1)
-    dat <- datList[[1]]
+  interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
+
+  if(ncores==1)
+    datList <- lapply(1:(length(interval)-1),  cpu.fun )
+  else
+  {
+    sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
+    sfExport("gdm", "bed.sorted", "file_bigwig_plus", "file_bigwig_minus", "interval", "scale.method", "zoom" );
+
+    fun <- as.function(cpu.fun);
+    environment(fun)<-globalenv();
+
+    datList<- sfLapply( 1:(length(interval)-1), fun);
+    sfStop();
+  }
+
+  if(length(datList)==1)
+     dat <- datList[[1]]
   else
   {
     if(requireNamespace("data.table"))
-	  dat <- as.matrix( data.table::rbindlist(datList) )
+      dat <- as.matrix( data.table::rbindlist(datList) )
     else
-  	  dat <- as.matrix( do.call(rbind, datList) );
+        dat <- as.matrix( do.call(rbind, datList) );
   }
 
   rm(datList);
+
+  if( scale.method!="logistic" )
+  {
+    total.read.count<- sum(abs(get_reads_from_bigwig(file_bigwig_plus, file_bigwig_minus)));
+    ##dat<-lapply(dat, "/", total.read.count);
+    dat <- dat/total.read.count;
+  }
 
   if ( !all( bed.ord == c(1:NROW(bed)) ) )
      ## all(bed.sorted[order(bed.ord),] == bed)
      dat <- dat [ order(bed.ord), ];
 
   if( !as_matrix )
-	 dat <- c(t(dat));
+     dat <- c(t(dat));
 
   return(dat);
 }
@@ -136,8 +132,8 @@ get_reads_from_bigwig <- function(file_bigwig_plus, file_bigwig_minus)
     bw.plus  <- load.bigWig(file_bigwig_plus)
     bw.minus <- load.bigWig(file_bigwig_minus)
 
-	## 1) It takes long time
-	## 2) The offset is too big for some unmapped section, it will cause errors in library bigWig
+    ## 1) It takes long time
+    ## 2) The offset is too big for some unmapped section, it will cause errors in library bigWig
 
     #offset_dist <- 250;
     #df.bed.plus<-data.frame(bw.plus$chroms, offset_dist, bw.plus$chromSizes, names=".", scores=".",strands="+")
@@ -145,17 +141,14 @@ get_reads_from_bigwig <- function(file_bigwig_plus, file_bigwig_minus)
     #r.plus <- sum(abs(bed6.region.bpQuery.bigWig( bw.plus, bw.minus, df.bed.plus)));
     #r.minus <- sum(abs(bed6.region.bpQuery.bigWig( bw.plus, bw.minus, df.bed.minus)));
 
- 	r.plus  <- round(bw.plus$mean * bw.plus$basesCovered );
- 	r.minus <- round(bw.minus$mean * bw.minus$basesCovered );
+     r.plus  <- round(bw.plus$mean * bw.plus$basesCovered );
+     r.minus <- round(bw.minus$mean * bw.minus$basesCovered );
 
     try( unload.bigWig( bw.plus ) );
     try( unload.bigWig( bw.minus ) );
 
     return(c(r.plus,r.minus));
 }
-
-
-
 
 # improved list of objects
 # author: Dirk Eddelbuettel
@@ -165,20 +158,20 @@ get_reads_from_bigwig <- function(file_bigwig_plus, file_bigwig_minus)
                         decreasing=FALSE, head=FALSE, n=5) {
 
     napply <- function(names, fn, missing=NA) sapply(names, function(x){
-    	ret <- suppressWarnings( try(fn( if(is.null(envir)) get(x, pos = pos) else get(x, envir=envir) ), TRUE) );
-    	if (class(ret)=="try-error") return(missing);
-    	ret;
-    	});
+        ret <- suppressWarnings( try(fn( if(is.null(envir)) get(x, pos = pos) else get(x, envir=envir) ), TRUE) );
+        if (class(ret)=="try-error") return(missing);
+        ret;
+        });
 
     if(is.null(envir))
-    	names <- ls( pos = pos, pattern = pattern)
+        names <- ls( pos = pos, pattern = pattern)
     else
-		names <- ls( envir = envir )
+        names <- ls( envir = envir )
 
     obj.class <- napply(names, function(x) as.character(class(x))[1], "NA")
     obj.mode <- napply(names, mode)
     obj.type <- ifelse(is.na(obj.class), obj.mode, obj.class)
-    obj.prettysize <- napply(names, function(x)   	{
+    obj.prettysize <- napply(names, function(x)       {
                            capture.output(format(utils::object.size(x), units = "auto")) } )
     obj.size <- napply(names, object.size )
     obj.dim <- t(napply(names, function(x)
