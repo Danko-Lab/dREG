@@ -3,9 +3,9 @@
 \title{Check bigWig data meet the dREG requirement}
 \description{
 There are 3 check points for dREG:
-1) No normalization;
-2) Positive values in plus strand and negative values in minus strand ;
-3) Each read should be mapped to a locus, not a region;
+1) Each read should be mapped to a locus (3' for PRO-seq and 5' for GRO-seq), not a region;
+2) No normalization;
+3) Only positive values or negative values in one file;
 }
 \usage{
 check_bigwig(bw_path, strand = "+", out.file = "")

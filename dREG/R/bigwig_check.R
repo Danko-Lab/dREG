@@ -18,10 +18,9 @@ check_bigwig<-function(bw_path, strand="+", out.file="")
 
     # Normalization checking
     b.Norm <- b.Norm & all(round(qbw)==qbw);
-    if(strand=="+")
-    	b.Strand <- b.Strand & all(qbw>=0)
-    else
-    	b.Strand <- b.Strand & all(qbw<=0);
+
+    ## not allow mixture of negative and positive values
+  	b.Strand <- b.Strand & ( all(qbw>=0) || all(qbw<=0) );
 
     # Checking reads mapped at a point or a region
 	idx <- which( qbw == 1 );
