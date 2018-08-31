@@ -30,9 +30,9 @@ Data preparation:
 
 dREG takes bigWig files with double strands as the input. The bigWig files should follow 3 rules:
 
-1) Each read is mapped at 5’ or 3’ position (point mode) , not mapped to a continuous region starting from 5’ or 3’.  This is different with the software Tfit.
+1) Each read is mapped at 5’ (GRO-seq) or 3’ (PRO-seq) position (point mode) , not mapped to a continuous region starting from 5’ or 3’.  This is different with the software Tfit.
 
-2) Positive values in plus strand and negative values in minus strand
+2) Only positive values or only negative values in each strand, no mixture.
 
 3) No normalization
 
