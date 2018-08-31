@@ -61,13 +61,13 @@ check_bigwig<-function(bw_path, strand="+", out.file="")
 #cat("mean(per.pointReads", mean(per.pointReads), "\n");
 
   if(!b.Norm)
-	 cat("The bigwig file might be normalized.\n", file=out.file, append=TRUE);
+	 cat("[", bw_path, "]", "The bigwig file might be normalized.\n", file=out.file, append=TRUE);
 
   if(!b.Strand)
-	 cat("Read count should be >= 0 in plus strand and <= 0 in minus strand.\n", file=out.file, append=TRUE);
+	 cat("[", bw_path, "]", "Only positive values or only negative values in this file.\n", file=out.file, append=TRUE);
 
   if(!b.pointReads)
-	 cat("Every read might be mapped to a region, not a locus.\n", file=out.file, append=TRUE);
+	 cat("[", bw_path, "]", "Every read might be mapped to a region, not a locus.\n", file=out.file, append=TRUE);
 
   return( b.Norm & b.Strand & b.pointReads );
 }
