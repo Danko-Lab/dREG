@@ -36,7 +36,7 @@ dREG takes bigWig files with double strands as the input. The bigWig files shoul
 
 3) No normalization
 
-As for how to generate bigWig files from fastq data, please refer to https://github.com/Danko-Lab/tutorials/blob/master/PRO-seq.md.
+As for how to generate bigWig files from fastq data, please refer to https://github.com/Danko-Lab/proseq2.0/.
 
 
 Installation instructions: 
