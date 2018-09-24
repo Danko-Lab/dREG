@@ -34,9 +34,6 @@ if(!file.exists(ps_minus_path))
 if(!file.exists(args[4]))
 	stop( paste("Can't find the SVR model(", args[4], ")"));
 
-## Now scan all positions in the genome ...
-cat("1) -------- Checking the informative positions\n");
-
 ## Load the dRGE model including two ojects 'asvm' and 'gdm'.
 ## Do this before loading ps_plus_path, just in case those are saved in the model file.
 ## Should have (by default) gdm and asvm.
@@ -45,15 +42,28 @@ load(args[4]);
 if(gpu_id>0)
 {
 	library(Rgtsvm);
-	selectGPUdevice(gpu_id);
+	ret <- selectGPUdevice(gpu_id);
 }
 
-cat("[", as.character(Sys.time()), "]", "Starting peak calling", "\n");
+cat("[", as.character(Sys.time()), "] 1) Checking bigWig files.\n");
+b1 <- check_bigwig(ps_plus_path, strand="+" );
+b2 <- check_bigwig(ps_minus_path, strand="-" );
+if( !b1 || !b2 )
+{
+    cat("Warning: bigWig files maybe not meet the requirements. See dREG requirement in https://github.com/Danko-Lab/dREG#data-preparation\n");
+    stop("Stop");
+}
+
+## Now scan all positions in the genome ...
+cat("[", as.character(Sys.time()), "] 2) Starting peak calling.\n");
 run.time <- system.time(r <- peak_calling( asvm, gdm, ps_plus_path, ps_minus_path, cpu_cores=cpu_cores, use_rgtsvm=use_rgtsvm, gpu_cores=1));
-cat("[", as.character(Sys.time()), "]", "Ending peak calling", "\n");
 
-show( run.time/60 );
+r$run.time = run.time;
 
+## Now scan all positions in the genome ...
+cat("[", as.character(Sys.time()), "] 3) Saving the result to compressed bed files.\n");
+
+out.file0 <- paste(outfile, "dREG.raw.peak.bed", sep=".")
 out.file1 <- paste(outfile, "dREG.infp.bed", sep=".")
 out.file2 <- paste(outfile, "dREG.peak.full.bed", sep=".")
 out.file3 <- paste(outfile, "dREG.peak.score.bed", sep=".")
@@ -69,12 +79,13 @@ make_index_gz<-function( df_bed, out_file)
 	unlink(file.tmp)
 }
 
-save(r, run.time, file=out.rdata );
+save(r, file=out.rdata );
 
 #Rounding to 2 digits for predicted scores
 r$infp_bed[,4] <- round( r$infp_bed[,4], 3 );
 r$peak_bed[,4] <- round( r$peak_bed[,4], 3 );
 
+make_index_gz( r$raw_peak[,-2], out.file0 );
 make_index_gz( r$infp_bed, out.file1 );
 make_index_gz( r$peak_bed, out.file2 );
 make_index_gz( r$peak_bed[,c(1:4)], out.file3 );

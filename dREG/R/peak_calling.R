@@ -143,6 +143,9 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
     rp$peak_bed <- select_sig_peak( rp$raw_peak,  pv_adjust, pv_threshold );
 
   rp$peak_sum <- summary_peak( rp$raw_peak, rp$peak_bed );
+  
+  ## remove the "kk" column
+  rp$raw_peak <- rp$raw_peak[, -2];
 
   return(rp);
 }

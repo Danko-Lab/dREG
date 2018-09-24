@@ -45,7 +45,7 @@ This function returns a list containing 6 items, including: \cr
 \item{start}{ Start position}
 \item{end}{End position}
 \item{score}{Maxmimum score in the peak region}
-\item{prob}{Probability of multivariate Laplace distribution indicating the probability of the peak points belonging to negative set (No divergent peak). }
+\item{prob}{Probability of multivariate Laplace distribution indicating the probability of the peak points belonging to negative set (No divergent peak) }
 \item{center}{the center position in original peak}
 
 2) Informative sites with score \code{infp_bed} \cr
@@ -70,7 +70,14 @@ This function returns a list containing 6 items, including: \cr
 4) Threshold of dREG score \code{min_score}
 
 5) Raw results of peak calling \code{raw_peak}
-
+\item{chr}{ Chromosome}
+\item{start}{ Start position}
+\item{end}{End position}
+\item{score}{Maxmimum score in the peak region}
+\item{prob}{Probability of multivariate Laplace distribution indicating the probability of the peak points belonging to negative set (No divergent peak) }
+\item{smooth.mode}{the center position in smoothed peak}
+\item{original.mode}{the center position in original peak}
+\item{centroid}{the centroid}
 
 6) Summary of peak calling \code{peak_sum}
 \item{adjust.none.0.05}{The count of dREG peak withou p-value correction.}
