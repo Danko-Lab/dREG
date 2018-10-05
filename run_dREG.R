@@ -1,24 +1,21 @@
 require(dREG)
+options("scipen"=100, "digits"=4)
 
 ## Process command arguments
-args <- commandArgs(trailingOnly=TRUE)
+args <- commandArgs(trailingOnly=TRUE);
 
-## Read PRO-seq data.
+## Read arguments from thwe web page.
 ps_plus_path  <- args[1]
 ps_minus_path <- args[2]
-outfile <- args[3];
+## Read arguments from default parameters in run_dREG.sh
+outfile <- args[3]
 
 cpu_cores <- as.integer(args[5])
 if (is.na(cpu_cores)) cpu_cores <- 1;
 
+use_rgtsvm <- FALSE;
 gpu_id <- as.integer(args[6])
-if (!is.na(gpu_id))
-{
-  library(Rgtsvm);
-  ret <- selectGPUdevice( gpu_id );
-}
-
-use_rgtsvm=!is.na(gpu_id);
+if (!is.na(gpu_id)) use_rgtsvm<-TRUE
 
 cat("------------ Parameters ------------- \n");
 cat("Bigwig(plus):", ps_plus_path, "\n");
@@ -28,7 +25,7 @@ cat("dREG model:", args[4], "\n");
 cat("CPU cores:", cpu_cores, "\n");
 cat("GPU ID:", gpu_id, "\n");
 cat("Using Rgtsvm:", use_rgtsvm, "\n");
-cat("------------------------------------- \n");
+cat("-------------------------------------\n ");
 
 if(!file.exists(ps_plus_path))
 	stop( paste("Can't find the bigwig of plus strand(", ps_plus_path, ")"));
@@ -37,11 +34,16 @@ if(!file.exists(ps_minus_path))
 if(!file.exists(args[4]))
 	stop( paste("Can't find the SVR model(", args[4], ")"));
 
+## Load the dRGE model including two ojects 'asvm' and 'gdm'.
+## Do this before loading ps_plus_path, just in case those are saved in the model file.
+## Should have (by default) gdm and asvm.
+load(args[4]);
 
-## Load the model.  Do this before loading ps_plus_path, just in case those are saved in the model file.
-dreg_model <- args[4]
-load(dreg_model) ## Should have (by default) gdm and asvm.
-
+if(gpu_id>0)
+{
+	library(Rgtsvm);
+	ret <- selectGPUdevice(gpu_id);
+}
 
 cat("[", as.character(Sys.time()), "] 1) Checking bigWig files.\n");
 b1 <- check_bigwig(ps_plus_path, strand="+" );
@@ -52,25 +54,44 @@ if( !b1 || !b2 )
     stop("Stop");
 }
 
-cat("[", as.character(Sys.time()), "] 2) Scaning informative positions.\n");
+## Now scan all positions in the genome ...
+cat("[", as.character(Sys.time()), "] 2) Starting peak calling.\n");
+run.time <- system.time(r <- peak_calling( asvm, gdm, ps_plus_path, ps_minus_path, cpu_cores=cpu_cores, use_rgtsvm=use_rgtsvm, gpu_cores=1));
+
+r$run.time = run.time;
 
 ## Now scan all positions in the genome ...
-inf_positions <- get_informative_positions(ps_plus_path, ps_minus_path, depth= 0, step=50, use_ANDOR=TRUE, use_OR=FALSE) ## Get informative positions.
+cat("[", as.character(Sys.time()), "] 3) Saving the result to compressed bed files.\n");
 
-cat("Genome Loci=", NROW(inf_positions), "\n");
+out.file0 <- paste(outfile, "dREG.raw.peak.bed", sep=".")
+out.file1 <- paste(outfile, "dREG.infp.bed", sep=".")
+out.file2 <- paste(outfile, "dREG.peak.full.bed", sep=".")
+out.file3 <- paste(outfile, "dREG.peak.score.bed", sep=".")
+out.file4 <- paste(outfile, "dREG.peak.broad.bed", sep=".")
+out.rdata <- paste(outfile, "dREG.rdata", sep=".")
 
-cat("[", as.character(Sys.time()), "] 3) Calling dREG prediction.\n");
+make_index_gz<-function( df_bed, out_file)
+{
+	file.tmp <- tempfile(fileext=".bed");
+	write.table( df_bed, file=file.tmp, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t");
+	system(paste( "sort-bed ", file.tmp, " | bgzip -f > ", out_file, ".gz", sep="") );
+	system(paste( "tabix -f -p bed ", out_file, ".gz", sep="") );
+	unlink(file.tmp)
+}
 
-t <- system.time( pred_val<- eval_reg_svm(gdm, asvm, inf_positions, ps_plus_path, ps_minus_path, batch_size= 50000, ncores=cpu_cores, use_rgtsvm = use_rgtsvm ) )
+save(r, file=out.rdata );
 
-cat("[", as.character(Sys.time()), "] 4) Saving the result to compressed bed files.\n");
+#Rounding to 2 digits for predicted scores
+r$infp_bed[,4] <- round( r$infp_bed[,4], 3 );
+r$peak_bed[,4] <- round( r$peak_bed[,4], 3 );
 
-final_data <- data.frame(inf_positions, pred_val);
-options("scipen"=100, "digits"=4)
+make_index_gz( r$raw_peak[,-2], out.file0 );
+make_index_gz( r$infp_bed, out.file1 );
+make_index_gz( r$peak_bed, out.file2 );
+make_index_gz( r$peak_bed[,c(1:4)], out.file3 );
+make_index_gz( r$peak_broad, out.file4 );
 
-write.table(final_data, file=paste(outfile, ".bed", sep=""), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+#system( paste("tar -cvzf ", outfile, ".dREG.tar.gz", " ", outfile, ".dREG.*", sep="") );
+#cat("Result:", paste(outfile, ".dREG.tar.gz", sep=""), "\n");
 
-cat("Running time [User]:", t[1], "[System]:", t[2], "[Elapsed]:", t[3], "\n");
 cat("Done!\n");
-
-

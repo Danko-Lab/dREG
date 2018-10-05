@@ -1,0 +1,38 @@
+#!/usr/bin/bash
+
+if [ "$#" -lt 4 ]; then
+    echo ""
+    echo "USAGE: bash run_predict.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]"
+    echo ""
+    echo "plus_strand.bw	-- PRO-seq data (plus  strand).  Read counts (not normalized) formatted as a bigWig file."
+    echo "minus_strand.bw	-- PRO-seq data (minus strand).  Read counts (not normalized) formatted as a bigWig file."
+    echo "out_prefix	    -- The prefix of the output file."
+    echo "asvm.RData	    -- The path to the RData file containing the pre-trained SVM."
+    echo "[cpu_cores]	    -- [optional, default=1] indicating how many CPU cores can be used."
+    echo "[gpu_id]          -- [optional, default=NA] indicating GPU id when multiple GPU cards are available."
+    echo ""
+    exit 1
+fi
+
+pushd `dirname $0` > /dev/null
+bsh_path=`pwd`
+popd > /dev/null
+
+bwPL=$1
+bwMN=$2
+out=$3
+SVM=$4
+cpucores=1
+gpuid=''
+
+if [ "$#" -gt 4 ]; then
+#	[[ $5 !~ ^?[0-9]+$ ]]
+	cpucores=$5
+fi
+
+if [ "$#" -gt 5 ]; then
+	gpuid=$6
+fi
+
+echo "Using: R --vanilla --slave --args $bwPL $bwMN $out.eval $SVM $cpucores $gpuid< $bsh_path/run_predict.R"
+R --vanilla --slave --args $bwPL $bwMN $out.eval $SVM $cpucores $gpuid< $bsh_path/run_predict.R

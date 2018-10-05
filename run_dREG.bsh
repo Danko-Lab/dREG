@@ -2,12 +2,12 @@
 
 if [ "$#" -lt 4 ]; then
     echo ""
-    echo "USAGE: bash run_dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [nthreads] [GPU]"
+    echo "USAGE: bash run_dREG.bsh plus_strand.bw minus_strand.bw out_prefix asvm.RData [CPU.threads] [GPU] [GPU.threads]"
     echo ""
-    echo "plus_strand.bw	-- PRO-seq data (plus  strand).  Read counts (not normalized) formatted as a bigWig file."
-    echo "minus_strand.bw	-- PRO-seq data (minus strand).  Read counts (not normalized) formatted as a bigWig file."
-    echo "out_prefix	    -- The prefix of the output file."
-    echo "asvm.RData	    -- The path to the RData file containing the pre-trained SVM."
+    echo "plus_strand.bw    -- PRO-seq data (plus  strand).  Read counts (not normalized) formatted as a bigWig file."
+    echo "minus_strand.bw   -- PRO-seq data (minus strand).  Read counts (not normalized) formatted as a bigWig file."
+    echo "out_prefix        -- The prefix of the output file."
+    echo "asvm.RData        -- The path to the RData file containing the pre-trained SVM."
     echo "[cpu_cores]	    -- [optional, default=1] indicating how many CPU cores can be used."
     echo "[gpu_id]          -- [optional, default=NA] indicating GPU id when multiple GPU cards are available."
     echo ""
@@ -34,5 +34,5 @@ if [ "$#" -gt 5 ]; then
 	gpuid=$6
 fi
 
-echo "Using: R --vanilla --slave --args $bwPL $bwMN $out.eval $SVM $cpucores $gpuid< $bsh_path/run_dREG.R"
-R --vanilla --slave --args $bwPL $bwMN $out.eval $SVM $cpucores $gpuid< $bsh_path/run_dREG.R
+echo "Using: R --vanilla --slave --args $bwPL $bwMN $out $SVM $cpucores $gpuid < $bsh_path/run_dREG.R"
+R --vanilla --slave --args $bwPL $bwMN $out $SVM $cpucores $gpuid < $bsh_path/run_dREG.R
