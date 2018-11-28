@@ -73,25 +73,61 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
   show(cor_mat);
 
   peak.idx <- which( rp$peak_broad$max>=min_score );
-  k.sect <- 1:ceiling(NROW(peak.idx)/500)
+  rp$peak_broad <- rp$peak_broad[peak.idx,]; 
 
-  cpu.fun <- function(k)
+  #tmp.rdata = tempfile(".rdata");
+  #save( rp, file=tmp.rdata);
+  BLOCKWIDTH <- 1000;
+
+  tmp.rdata.list <- c();
+  for(chr in as.character(unique(rp$peak_broad$chr)) )
+  {
+     peak_broad <- rp$peak_broad[ as.character(rp$peak_broad$chr) == chr,]
+     peak_broad <- peak_broad[order(peak_broad$start),,drop=F]
+     k.sect <- 1:ceiling(NROW(peak_broad)/BLOCKWIDTH)
+
+     for(k in k.sect)
+     {
+         rpx <- list( peak_broad=peak_broad, infp_bed=NULL, k=k);
+         
+         idx.min <- (k-1)*BLOCKWIDTH + 1;
+         idx.max <- (k-1)*BLOCKWIDTH + BLOCKWIDTH;
+         if(idx.max>NROW(peak_broad)) idx.max <- NROW(peak_broad);
+         
+         ki <- which( rp$infp_bed[,2] >= peak_broad[idx.min,]$start &
+                rp$infp_bed[,3] <= peak_broad[idx.max,]$end )
+
+         if( NROW(ki)>0 )
+            rpx$infp_bed <- rp$infp_bed[ki,,drop=F]
+       
+         tmp.rdata = tempfile(".rdata");
+         save(rpx, file=tmp.rdata);
+
+         tmp.rdata.list <- c( tmp.rdata.list, tmp.rdata);
+      }   
+  }
+  cat("block_number=", NROW(tmp.rdata.list), "\n");
+ 
+  cpu.fun <- function( tmp.rdata )
   {
 	require(dREG);
-    load(tmp.rdata);
-
+	
+	#load 'rpx' object from splitted rdata file.
+    load( tmp.rdata );
+    if( is.null(rpx$infp_bed) ) return(NULL);
+    unlink(tmp.rdata);
+    
     file.RDS <- system.file("extdata", "rf-model-201803.RDS", package="dREG");
     model <- readRDS(file.RDS);
 
-    idx.k <- (k-1)*500 + c(1:500);
-    idx.k <- idx.k[ idx.k <= NROW(peak.idx) ]
+    idx.k <- (rpx$k-1)*BLOCKWIDTH + c(1:BLOCKWIDTH);
+    idx.k <- idx.k[ idx.k <= NROW(rpx$peak_broad) ]
 
-    P_list <- lapply(peak.idx[idx.k], function(kk){
-      ki <- which( as.character(rp$infp_bed[,1])== as.character(rp$peak_broad[kk,]$chr) &
-                                rp$infp_bed[,2] >= rp$peak_broad[kk,]$start &
-                                rp$infp_bed[,3] <= rp$peak_broad[kk,]$end )
-      xp <- rp$infp_bed[ki,2]
-      yp <- rp$infp_bed[ki,4]
+    P_list <- lapply(idx.k, function(kk){
+      ki <- which( rpx$infp_bed[,2] >= rpx$peak_broad[kk,]$start &
+                   rpx$infp_bed[,3] <= rpx$peak_broad[kk,]$end )
+      xp <- rpx$infp_bed[ki,2]
+      yp <- rpx$infp_bed[ki,4]
       if(NROW(xp) <= 3 || max(yp) <= min_score )
       {
         P <- NULL;
@@ -109,32 +145,27 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
         ## P <- find_peaks( xp, yp, SlopeThreshold=0.01, AmpThreshold=min_score, smoothwidth=smoothwidth, smoothtype=2, cor_mat=cor_mat);
       }
 
-      if(!is.null(P)) P <- data.frame(chr=rp$peak_broad[kk,]$chr, kk, P[,-1,drop=F]);
+      if(!is.null(P)) P <- data.frame(chr=rpx$peak_broad[kk,]$chr, kk, P[,-1,drop=F]);
       return(P);
       });
 
     P_list <- as.data.frame(do.call("rbind", P_list))
-    return(list(k=k, idx.k=idx.k, kk=peak.idx[idx.k], ret=P_list));
+    return(list(k=rpx$k, idx.k=idx.k, kk=idx.k, ret=P_list));
   }
-
-  tmp.rdata = tempfile(".rdata");
-  save( rp, file=tmp.rdata);
 
   if(ncores>1)
   {
     sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )
-    sfExport("tmp.rdata", "min_score", "smoothwidth", "cor_mat", "peak.idx");
+    sfExport("BLOCKWIDTH", "min_score", "smoothwidth", "cor_mat" );
 
     fun <- as.function(cpu.fun);
     environment(fun)<-globalenv();
 
-    dregP_list <- sfClusterApplyLB( k.sect, fun=fun);
+    dregP_list <- sfClusterApplyLB( tmp.rdata.list, fun=fun);
     sfStop();
   }
   else
-    dregP_list <- lapply( k.sect, cpu.fun );
-
-  unlink(tmp.rdata);
+    dregP_list <- lapply( tmp.rdata.list, cpu.fun );
 
   rp$raw_peak <- as.data.frame(do.call("rbind", lapply(dregP_list, function(x){if(!is.null(x)) return(x$ret) else return(NULL) })));
   colnames(rp$raw_peak) <- c("chr", "kk", "start", "end", "score", "prob", "smooth.mode", "original.mode", "centroid");
@@ -235,11 +266,18 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
 
   ## fill the gaps between the two adjacent informative sites.
   gap_bed <- find_gap_infp( infp_bed, min_score, ncores=ncores );
-  gap_score <- eval_reg_svm( gdm, asvm, gap_bed, bw_plus_path, bw_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm)
-  gap_bed <- data.frame(gap_bed, pred=gap_score);
+  
+  if(NROW(gap_bed)>0)
+  {
+    gap_score <- eval_reg_svm( gdm, asvm, gap_bed, bw_plus_path, bw_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm)
+    gap_bed <- data.frame(gap_bed, pred=gap_score);
 
-  ## adding the INFP to new informative sites.
-  newinfp <- rbind( cbind(gap_bed, INFP=0), cbind(infp_bed, INFP=1));
+    ## adding the INFP to new informative sites.
+    newinfp <- rbind( cbind(gap_bed, INFP=0), cbind(infp_bed, INFP=1));
+  }
+  else
+    newinfp <- cbind(infp_bed, INFP=1);
+  
   newinfp <- newinfp[with( newinfp, order(chr, start)),];
 
   broadpeak_sum <- get_broadpeak_summary( newinfp[,-5], threshold=0.05 );
@@ -324,6 +362,8 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
 
   ## return a bed data containing all sites which are not predicted by the first run(informative sites)
   gap.bed <- as.data.frame(unique(rbindlist(r.gap)))
+  if(NROW(gap.bed)==0)
+     return(c());
 
   ## remove duplciated position
   dup.rm <- which(paste(gap.bed[,1], gap.bed[,2], sep=":") %in% paste(dreg_pred[,1], dreg_pred[,2], sep=":"))
