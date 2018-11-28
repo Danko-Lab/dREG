@@ -73,29 +73,29 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
   show(cor_mat);
 
   peak.idx <- which( rp$peak_broad$max>=min_score );
-  rp$peak_broad <- rp$peak_broad[peak.idx,]; 
+  peak_broad <- rp$peak_broad[peak.idx,]; 
 
   #tmp.rdata = tempfile(".rdata");
   #save( rp, file=tmp.rdata);
   BLOCKWIDTH <- 1000;
 
   tmp.rdata.list <- c();
-  for(chr in as.character(unique(rp$peak_broad$chr)) )
+  for(chr in as.character(unique(peak_broad$chr)) )
   {
-     peak_broad <- rp$peak_broad[ as.character(rp$peak_broad$chr) == chr,]
-     peak_broad <- peak_broad[order(peak_broad$start),,drop=F]
-     k.sect <- 1:ceiling(NROW(peak_broad)/BLOCKWIDTH)
+     peak_broad_chr <- peak_broad[ as.character(peak_broad$chr) == chr,]
+     peak_broad_chr <- peak_broad_chr[order(peak_broad_chr$start),,drop=F]
+     k.sect <- 1:ceiling(NROW(peak_broad_chr)/BLOCKWIDTH)
 
      for(k in k.sect)
      {
-         rpx <- list( peak_broad=peak_broad, infp_bed=NULL, k=k);
+         rpx <- list( peak_broad=peak_broad_chr, infp_bed=NULL, k=k);
          
          idx.min <- (k-1)*BLOCKWIDTH + 1;
          idx.max <- (k-1)*BLOCKWIDTH + BLOCKWIDTH;
-         if(idx.max>NROW(peak_broad)) idx.max <- NROW(peak_broad);
+         if(idx.max>NROW(peak_broad_chr)) idx.max <- NROW(peak_broad_chr);
          
-         ki <- which( rp$infp_bed[,2] >= peak_broad[idx.min,]$start &
-                rp$infp_bed[,3] <= peak_broad[idx.max,]$end )
+         ki <- which( rp$infp_bed[,2] >= peak_broad_chr[idx.min,]$start &
+                rp$infp_bed[,3] <= peak_broad_chr[idx.max,]$end )
 
          if( NROW(ki)>0 )
             rpx$infp_bed <- rp$infp_bed[ki,,drop=F]
