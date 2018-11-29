@@ -1,6 +1,7 @@
 peak_calling_nopred<-function( infp_bed, min_score, pv_adjust="fdr", pv_threshold=0.05, smoothwidth=4, ncores=1 )
 {
   colnames(infp_bed) <- c("chr", "start", "end", "score", "infp");
+  infp_bed <- infp_bed[with( infp_bed, order(chr, start)),];
 
   broadpeak_sum <- get_broadpeak_summary( infp_bed[,-5], threshold=0.05 );
   if (NROW(broadpeak_sum) != sum( !is.na(broadpeak_sum$max)) )
@@ -77,7 +78,7 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
 
   #tmp.rdata = tempfile(".rdata");
   #save( rp, file=tmp.rdata);
-  BLOCKWIDTH <- 1000;
+  BLOCKWIDTH <- 500;
 
   tmp.rdata.list <- c();
   for(chr in as.character(unique(peak_broad$chr)) )
@@ -94,7 +95,8 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
          idx.max <- (k-1)*BLOCKWIDTH + BLOCKWIDTH;
          if(idx.max>NROW(peak_broad_chr)) idx.max <- NROW(peak_broad_chr);
          
-         ki <- which( rp$infp_bed[,2] >= peak_broad_chr[idx.min,]$start &
+         ki <- which( as.character(rp$infp_bed[,1]) == chr &
+                rp$infp_bed[,2] >= peak_broad_chr[idx.min,]$start &
                 rp$infp_bed[,3] <= peak_broad_chr[idx.max,]$end )
 
          if( NROW(ki)>0 )
