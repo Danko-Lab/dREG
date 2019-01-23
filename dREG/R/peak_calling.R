@@ -35,7 +35,11 @@ peak_calling<-function( asvm, gdm, bw_plus_path, bw_minus_path, infp_bed=NULL, u
   {
     require(Rgtsvm);
     if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
-    asvm <- Rgtsvm::predict.load( asvm, gpu_cores, verbose=T);
+    
+    if(gpu_cores==1)
+       asvm <- Rgtsvm::predict.load( asvm, gpu.id=NULL, verbose=T)
+    else   
+       asvm <- Rgtsvm::predict.load( asvm, gpu.id=seq(1, gpu_cores)-1, verbose=T);
   }
 
   #cat("[2]", as.character(Sys.time()), "\n");
