@@ -4,7 +4,7 @@ dREG gateway: healthy
 
 **GPU Node(s):**
 ===============
-Comet.sdsc.xsede.org: healthy
+Comet.sdsc.xsede.org: Out of order
 
 **Update:**
 ===============
