@@ -78,10 +78,13 @@ if(!file.exists(args[4]))
 ## Should have (by default) gdm and asvm.
 load(args[4]);
 
-if(gpu_id>0)
-{
+if(use_rgtsvm)
+{	
+  if(gpu_id>0)
+  {
 	library(Rgtsvm);
 	ret <- selectGPUdevice(gpu_id);
+  }
 }
 
 cat("[", as.character(Sys.time()), "] 1) Checking bigWig files.\n");
