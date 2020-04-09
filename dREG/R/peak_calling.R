@@ -233,7 +233,7 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
 {
   pred_dense_infp<-function( dreg_peak, newinfp )
   {
-	if(NROW(dreg_peak)==0) return(NULL);
+    if(NROW(dreg_peak)==0) return(NULL);
 
     for(chr in unique( dreg_peak$chr ))
     {
@@ -252,7 +252,7 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
       dup.rm <- which(paste(r.dense[,1], r.dense[,2], sep=":") %in% paste(newinfp.chr[,1], newinfp.chr[,2], sep=":"))
       if( NROW(dup.rm)>0 ) r.dense <- r.dense[-dup.rm,]
 
-	  infp_dense <- data.frame(r.dense, pred=eval_reg_svm( gdm, asvm, r.dense, bw_plus_path, bw_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm, debug= TRUE));
+      infp_dense <- data.frame(r.dense, pred=eval_reg_svm( gdm, asvm, r.dense, bw_plus_path, bw_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm, debug= TRUE));
       infp_dense<- infp_dense[ infp_dense$pred > 0.05,,drop=F];
 
       if(NROW(infp_dense)>0)
