@@ -1,3 +1,5 @@
+New trial site: https://django.dreg.scigap.org/
+
 **Gateway Status:**
 ===============
 dREG gateway: healthy
