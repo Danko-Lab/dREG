@@ -1,9 +1,7 @@
 **Gateway Status:**
 ===============
 
-dREG gateway is unavailable now.
-
-Currently we ran out of GPU allocation funded by XSEDE. Although the new allocation application has been submitted, we don't think it would start until April 1st. Sorry for your inconvenience.
+dREG gateway is healthy.
 
 **New trial site:**
 ===============
