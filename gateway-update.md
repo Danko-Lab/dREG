@@ -13,7 +13,6 @@ Comet.sdsc.xsede.org: healthy
 
 **Update:**
 ===============
-02/09/2021: dREG gateway is unavailable
 
 01/25/2018: New allocation on Comet
 
