@@ -1,3 +1,6 @@
+**Please use this new link**
+https://django.dreg.scigap.org/
+
 **Gateway Status:**
 ===============
 
