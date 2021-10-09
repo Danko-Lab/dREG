@@ -3,15 +3,11 @@ dREG
 
 Detection of Regulatory DNA Sequences using GRO-seq Data.
 
-Online computational gateway
+Cloud Computing Service:
 -------------------------
 We provide a computational gateway to run dREG on GPU server, the users don't need to install any software, only upload the bigWig files and wait for the results, it is simple and easy. Please click the link to try this site:
 
 https://dreg.dnasequence.org/
-
-Or 
-
-https://django.dreg.scigap.org/ (New one)
 
 Before you run your data on the dREG gateway, please check the server status [here](https://github.com/Danko-Lab/dREG/blob/master/gateway-update.md).
 
