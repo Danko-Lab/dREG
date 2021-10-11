@@ -85,9 +85,11 @@ Pre-trained models that can be used to predict dREG scores across the genome are
 
 Please download the newest model from here:
 
-(1) <span style="color:blue"> *ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata* </span>
+(1)  https://dreg.dnasequence.org/themes/dreg/assets/file/asvm.gdm.6.6M.20170828.rdata
 
-(2)  https://dreg.dnasequence.org/themes/dreg/assets/file/asvm.gdm.6.6M.20170828.rdata
+-- OR --
+
+(2) <span style="color:blue"> *ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata* </span>
 
 If you are failed to download this model file, please contact us.
 
