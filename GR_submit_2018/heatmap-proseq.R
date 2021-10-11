@@ -103,9 +103,9 @@ pheatmap_2layer <- function( hmat.plus, hmat.minus, breaks.plus=NULL, breaks.min
 		for(i in 1:NROW(pMat))
 		for(j in 1:NCOL(pMat))
 		{
-			R <- max( mMat[i,j], 1-pMat[i,j] );
+			B <- max( mMat[i,j], 1-pMat[i,j] );
 			G <- 1 - max( mMat[i,j], pMat[i,j] );
-			B <- max( 1- mMat[i,j], pMat[i,j] );
+			R <- max( 1- mMat[i,j], pMat[i,j] );
 
 			cMap[i,j] <- rgb(R, G,B);
 		}

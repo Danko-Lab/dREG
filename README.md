@@ -3,7 +3,7 @@ dREG
 
 Detection of Regulatory DNA Sequences using GRO-seq Data.
 
-Online computational gateway
+Cloud Computing Service:
 -------------------------
 We provide a computational gateway to run dREG on GPU server, the users don't need to install any software, only upload the bigWig files and wait for the results, it is simple and easy. Please click the link to try this site:
 
@@ -21,7 +21,7 @@ Unfortunately, some emails from dREG gateway are quarantined by this spam policy
 
 https://it.cornell.edu/spam-control/log-quarantine-management-spam-control
 
-Abstract
+Abstract:
 --------
 Identification of the genomic regions that regulate transcription remains an important open problem.  We have recently shown that global run-on and sequencing (GRO-seq) with enrichment for 5-prime-capped RNAs reveals patterns of divergent transcription that accurately mark active transcriptional regulatory elements (TREs), including enhancers and promoters.  Here, we demonstrate that active TREs can be identified with comparable accuracy by applying sensitive machine-learning methods to standard GRO-seq and PRO-seq data, allowing TREs to be assayed together with transcription levels, elongation rates, and other transcriptional features, in a single experiment.  Our method, called discriminative Regulatory Element detection from GRO-seq (dREG), summarizes GRO-seq read counts at multiple scales and uses support vector regression to predict active TREs.  The predicted TREs are strongly enriched for marks associated with functional elements, including H3K27ac, transcription factor binding sites, eQTLs, and GWAS-associated SNPs.  Using dREG, we survey TREs in eight cell types and provide new insights into global patterns of TRE assembly and function. 
 
@@ -81,10 +81,15 @@ Users should change to the directory containing this README.md file, and can the
 
 Get the dREG models
 -------------------
-Pre-trained models that can be used to predict dREG scores across the genome are availiable in mammals and drosophila.  Get the appropriate model for your system here: https://github.com/Danko-Lab/dREG-Model
+Pre-trained model that can be used to predict dREG scores across the genome is availiable here.
 
-or download the newest model from here:
-<span style="color:blue"> *ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata* </span>
+(1)  https://dreg.dnasequence.org/themes/dreg/assets/file/asvm.gdm.6.6M.20170828.rdata
+
+-- OR --
+
+(2) <span style="color:blue"> *ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata* </span>
+
+If you are failed to download this model file, please contact us.
 
 Usage instructions:
 ===================

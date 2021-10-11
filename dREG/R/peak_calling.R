@@ -106,7 +106,7 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
          if( NROW(ki)>0 )
             rpx$infp_bed <- rp$infp_bed[ki,,drop=F]
        
-         tmp.rdata = tempfile(".rdata");
+         tmp.rdata = tempfile(fileext=".rdata", tmpdir=".")
          save(rpx, file=tmp.rdata);
 
          tmp.rdata.list <- c( tmp.rdata.list, tmp.rdata);
@@ -155,8 +155,12 @@ start_calling<-function( rp, min_score, pv_adjust, pv_threshold, smoothwidth, nc
       return(P);
       });
 
-    P_list <- as.data.frame(do.call("rbind", P_list))
-    return(list(k=rpx$k, idx.k=idx.k, kk=idx.k, ret=P_list));
+    P_list <- do.call("rbind", P_list)
+    if(is.null( P_list ))
+      return(NULL)
+    else    
+      return(list(k=rpx$k, idx.k=idx.k, kk=idx.k, ret=as.data.frame(P_list)));
+
   }
 
   if(ncores>1)
