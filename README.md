@@ -81,9 +81,7 @@ Users should change to the directory containing this README.md file, and can the
 
 Get the dREG models
 -------------------
-Pre-trained models that can be used to predict dREG scores across the genome are availiable in mammals and drosophila.
-
-Please download the newest model from here:
+Pre-trained model that can be used to predict dREG scores across the genome is availiable here.
 
 (1)  https://dreg.dnasequence.org/themes/dreg/assets/file/asvm.gdm.6.6M.20170828.rdata
 
