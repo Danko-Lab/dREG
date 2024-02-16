@@ -52,7 +52,7 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   indx_train_pos <- c(1:round(n_train*pos_frac)) 
   indx_eval_pos  <- c(round(n_train*pos_frac)+1):round(n_total*pos_frac) 
   indx_train_neg <- round(n_total*pos_frac)+c(1:round(n_train*(1-pos_frac)))
-  indx_eval_neg  <- c(round(n_total*pos_frac)+round(n_train*(1-pos_frac))+1 ): n_total)
+  indx_eval_neg  <- c((round(n_total*pos_frac)+round(n_train*(1-pos_frac))+1 ): n_total)
 
   indx_train <- c(indx_train_pos, indx_train_neg)
   indx_eval  <- c(indx_eval_pos, indx_eval_neg)
