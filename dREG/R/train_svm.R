@@ -23,7 +23,7 @@
 #' @param plot_raw_data If TRUE (default), and if a PDF file is specified, plots the raw data used to train the model.
 #' @param svm_type "SVR" for support vecctor regression (epsilon-regression).  "P_SVM" for probabilistic SVM (C-classification).
 #' @return Returns a trained SVM.
-regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive, allow= NULL, n_train=25000, n_eval=1000, pdf_path= "roc_plot.pdf", plot_raw_data=TRUE, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, enrich_negative_near_pos= 0.15, use_rgtsvm=FALSE, svm_type= "SVR", ncores=1, ..., debug= TRUE) {
+regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive, negative, n_train=25000, n_eval=1000, pos_frac=0.03, pdf_path= "roc_plot.pdf", plot_raw_data=TRUE, use_rgtsvm=FALSE, svm_type= "SVR", ncores=1, ..., debug= TRUE) {
 
   if(!file.exists(bw_plus_path))
     stop( paste("Can't find the bigwig of plus strand(", bw_plus_path, ")"));
@@ -48,27 +48,21 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   #if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
   #if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
 
-  inter_indx <- (n_train+n_eval)
-  indx_train <- c(1:n_train, (inter_indx+1):(inter_indx+n_train))
-  indx_eval  <- c((n_train+1):(inter_indx), (inter_indx+n_train+1):(2*inter_indx))
+  n_total <- n_train+n_eval
+  indx_train_pos <- c(1:round(n_train*pos_frac)) 
+  indx_eval_pos  <- c(round(n_train*pos_frac)+1):round(n_total*pos_frac) 
+  indx_train_neg <- round(n_total*pos_frac)+c(1:round(n_train*(1-pos_frac)))
+  indx_eval_neg  <- c(round(n_total*pos_frac)+round(n_train*(1-pos_frac))+1 ): n_total)
 
-  #parallel_read_genomic_data <- function( x_train_bed, bw_plus_file, bw_minus_file )
-  #{
-  #    interval <- unique(c( seq( 1, NROW(x_train_bed)+1, by=batch_size ), NROW(x_train_bed)+1))
-  #    feature_list<- mclapply(1:(length(interval)-1), function(x) {
-  #          print(paste(x, "of", length(interval)-1) );
-  #          batch_indx<- c( interval[x]:(interval[x+1]-1) );
-  #          return(read_genomic_data(gdm, x_train_bed[batch_indx,,drop=F], bw_plus_file, bw_minus_file));
-  #    }, mc.cores= ncores);
-  #
-  #    return( do.call("rbind", feature_list) );
-  #
-  #}
+  indx_train <- c(indx_train_pos, indx_train_neg)
+  indx_eval  <- c(indx_eval_pos, indx_eval_neg)
 
   ## Read genomic data.
-  if(debug) print("Collecting training data.")
+  if(debug) 
+     print("Collecting training data.")
+  
   if(length(bw_plus_path) == 1) {
-    tset <- get_test_set(positions= positions, positive= positive, allow= allow, n_samp= (n_train+n_eval), extra_enrich_bed= extra_enrich_bed, extra_enrich_frac= extra_enrich_frac, enrich_negative_near_pos= enrich_negative_near_pos)
+    tset <- get_test_set(positions= positions, positive= positive, negative= negative, n_samp= (n_train+n_eval), pos_frac = pos_frac)
 
     ## Get training indices.
     x_train_bed <- tset[indx_train,c(1:3)]
@@ -90,8 +84,7 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
     y_train <- NULL
     stopifnot(NROW(bw_plus_path) == NROW(bw_minus_path) & NROW(bw_plus_path) == NROW(positive))
     for(x in 1:length(bw_plus_path)){
-      tset_x <- get_test_set(positions= positions[[x]], positive= positive[[x]], allow= allow[[x]], n_samp= (n_train+n_eval), extra_enrich_bed= extra_enrich_bed[[x]], extra_enrich_frac= extra_enrich_frac, enrich_negative_near_pos= enrich_negative_near_pos)
-
+      tset_x <- get_test_set(positions= positions[[x]], positive= positive[[x]], negative= negative[[x]], n_samp= (n_train+n_eval), pos_frac = pos_frac)
       x_train_bed <- tset_x[indx_train,c(1:3)]
       y_train <- c(y_train, tset_x[indx_train,4])
 
@@ -102,7 +95,6 @@ regulatory_svm <- function(gdm, bw_plus_path, bw_minus_path, positions, positive
   }
 
   gc();
-
   ########################################
   ## Train the model.
   if(debug) print("Fitting SVM.")

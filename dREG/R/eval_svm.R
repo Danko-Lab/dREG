@@ -17,6 +17,9 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
   if(!file.exists(bw_minus_path))
     stop( paste("Can't find the bigwig of minus strand(", bw_minus_path, ")"));
 
+  if(NROW(positions)==0)
+    stop("No informative positions in bigwig files");	  
+
   if( batch_size>NROW(positions))
   	 batch_size= NROW(positions)
 

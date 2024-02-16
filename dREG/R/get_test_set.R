@@ -9,8 +9,30 @@
 #' @param extra_enrich_frac Fraction of final positions sampled in the negative set which are in the bed file.  Unused if extra_enrich_bed is NULL.
 #' @param n_eval Number of examples on which to test performance.
 #' @return Returns a list of two data.frames first representing the _train set, second representing the _eval set.
+get_test_set <- function(positions, positive.bed, negative.bed, n_samp, pos_frac) {
 
-get_test_set <- function(positions, positive, n_samp, allow=NULL, enrich_negative_near_pos= 0.15, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, avoid_dist= 100) {
+  all_feat  <- feat( seqname= positions[,1], start= positions[,2], end= (positions[,3]) )
+  positive_feat <- feat(seqname= positive.bed[,1], start= positive.bed[,2], end= positive.bed[,3])
+  ol <- overlap.feat(x= all_feat, filter= positive_feat)
+  pos_indx <- match(paste(ol$seqname, ol$start, ol$end), paste(all_feat$seqname, all_feat$start, all_feat$end))
+
+  #all_feat  <- feat( seqname= positions[,1], start= positions[,2], end= (positions[,3]) )
+  negative_feat <- feat(seqname= negative.bed[,1], start= negative.bed[,2], end= negative.bed[,3])
+  ol <- overlap.feat(x= all_feat, filter= negative_feat)
+  neg_indx <- match(paste(ol$seqname, ol$start, ol$end), paste(all_feat$seqname, all_feat$start, all_feat$end))
+
+  cat("Pos:", NROW(pos_indx), "Neg:", NROW(neg_indx), "Fuzzy:", NROW(positions)-NROW(neg_indx)-NROW(pos_indx), "\n");
+
+  n_samp_neg = n_samp-round(n_samp*pos_frac);	
+  n_samp_pos = n_samp - n_samp_neg
+  pos_indx_train_test <- sample(pos_indx, n_samp_pos, replace=FALSE)
+  neg_indx_train_test <- sample(neg_indx, n_samp_neg, replace=FALSE)
+
+  return(cbind(positions[c(pos_indx_train_test, neg_indx_train_test),], c(rep(1,n_samp_pos), rep(0,n_samp_neg)))) ## Train on the first n_train examples.
+}
+
+get_test_set0 <- function(positions, positive, n_samp, allow=NULL, enrich_negative_near_pos= 0.15, extra_enrich_bed= NULL, extra_enrich_frac= 0.1, avoid_dist= 100) {
+  
   if(enrich_negative_near_pos < 0 | enrich_negative_near_pos > 1) stop('ERROR: enrich_negative_near_pos must be in the rage [0,1]!')
   if(is.null(extra_enrich_bed)) {
     extra_enrich_frac=0
