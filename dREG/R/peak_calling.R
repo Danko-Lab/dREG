@@ -4,13 +4,16 @@ peak_calling_nopred<-function( infp_bed, min_score, pv_adjust="fdr", pv_threshol
   infp_bed <- infp_bed[with( infp_bed, order(chr, start)),];
 
   broadpeak_sum <- get_broadpeak_summary( infp_bed[,-5], threshold=0.05 );
-  if (NROW(broadpeak_sum) != sum( !is.na(broadpeak_sum$max)) )
+  if (is.null(broadpeak_sum) || NROW(broadpeak_sum) != sum( !is.na(broadpeak_sum$max)) )
   {
     ## remove unknown contig, e.g.g chr1_gl000192_random chr10, chr17_ctg5_hap1, chr6_mann_hap4,chr6_qbl_hap6
     ## Notice: chr1_gl000192_random causes Bedmap is failed to get summary information for chr10-chr19
     ##         remove these contigs temporally
     infp_bed <- infp_bed[ grep("_", infp_bed$chr,invert=TRUE), ]
     broadpeak_sum <- get_broadpeak_summary( infp_bed[,-5], threshold=0.05 );
+    
+    if(is.null(broadpeak_sum))
+      cat("Error: there are some short contigs in your data set, or too few read counts inthe bigWigs. Stop.\n");
   }
 
   cat("min_score=", min_score, "\n");
@@ -237,7 +240,7 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
 {
   pred_dense_infp<-function( dreg_peak, newinfp )
   {
-	if(NROW(dreg_peak)==0) return(NULL);
+    if(NROW(dreg_peak)==0) return(NULL);
 
     for(chr in unique( dreg_peak$chr ))
     {
@@ -256,7 +259,7 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
       dup.rm <- which(paste(r.dense[,1], r.dense[,2], sep=":") %in% paste(newinfp.chr[,1], newinfp.chr[,2], sep=":"))
       if( NROW(dup.rm)>0 ) r.dense <- r.dense[-dup.rm,]
 
-	  infp_dense <- data.frame(r.dense, pred=eval_reg_svm( gdm, asvm, r.dense, bw_plus_path, bw_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm, debug= TRUE));
+      infp_dense <- data.frame(r.dense, pred=eval_reg_svm( gdm, asvm, r.dense, bw_plus_path, bw_minus_path, ncores=ncores, use_rgtsvm=use_rgtsvm, debug= TRUE));
       infp_dense<- infp_dense[ infp_dense$pred > 0.05,,drop=F];
 
       if(NROW(infp_dense)>0)
@@ -291,13 +294,16 @@ get_dense_infp <- function( asvm, gdm, infp_bed, bw_plus_path, bw_minus_path, nc
   newinfp <- newinfp[with( newinfp, order(chr, start)),];
 
   broadpeak_sum <- get_broadpeak_summary( newinfp[,-5], threshold=0.05 );
-  if (NROW(broadpeak_sum) != sum( !is.na(broadpeak_sum$max)) )
+  if ( is.null(broadpeak_sum) || NROW(broadpeak_sum) != sum( !is.na(broadpeak_sum$max)) )
   {
     ## remove unknown contig, e.g.g chr1_gl000192_random chr10, chr17_ctg5_hap1, chr6_mann_hap4,chr6_qbl_hap6
     ## Notice: chr1_gl000192_random causes Bedmap is failed to get summary information for chr10-chr19
     ##         remove these contigs temporally
     infp_bed <- newinfp[ grep("_", newinfp$chr,invert=TRUE), ]
     broadpeak_sum <- get_broadpeak_summary( infp_bed[,-5], threshold=0.05 );
+
+    if(is.null(broadpeak_sum))
+      cat("Error: there are some short contigs in your data set, or too few read counts inthe bigWigs. Stop.\n");   
   }
 
   dense_infp <- pred_dense_infp( broadpeak_sum[ broadpeak_sum$max>=min_score,,drop=F ], newinfp );
@@ -385,6 +391,8 @@ find_gap_infp <- function( dreg_pred, threshold=0.2, ncores=1 )
 get_broadpeak_summary <- function( infp_bed, threshold=0 )
 {
   tb.peak <- merge_broad_peak(infp_bed, threshold);
+  if (is.null(tb.peak) || NROW(tb.peak)==0)
+     return(NULL);  
 
   options("scipen"=100, "digits"=4)
   file.peak <- tempfile("peak", ".", ".peak.bed");

@@ -21,10 +21,10 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
     stop("No informative positions in bigwig files");	  
 
   if( batch_size>NROW(positions))
-  	 batch_size= NROW(positions)
+      batch_size= NROW(positions)
 
   if(NROW(positions)/ncores < batch_size)
-  	batch_size <- ceiling(NROW(positions)/ncores);
+      batch_size <- ceiling(NROW(positions)/ncores);
 
   n_elem <- NROW(positions)
   interval <- unique(c( seq( 1, n_elem+1, by = batch_size ), n_elem+1))
@@ -45,25 +45,25 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
     if( class(asvm)=="svm" && use_rgtsvm) class(asvm)<-"gtsvm";
     if( class(asvm)=="gtsvm" && !use_rgtsvm) class(asvm)<-"svm";
 
-	## if using the preload way to accerate the predict speed
+    ## if using the preload way to accerate the predict speed
     if( !is.null(asvm$cluster) || !is.null(asvm$pointer) )
     {
-		if(asvm$type == 0) { ## Probabilistic SVM
-		  batch_pred <- Rgtsvm::predict.run( asvm, mat_features, probability=TRUE );
-		}
-		else { ## epsilon-regression (SVR)
-		  batch_pred <- Rgtsvm::predict.run( asvm, mat_features, probability=FALSE)
-		}
-	}
-	else
-	{
-		if(asvm$type == 0) { ## Probabilistic SVM
-		  batch_pred <- predict( asvm, mat_features, probability=TRUE );
-		}
-		else { ## epsilon-regression (SVR)
-		  batch_pred <- predict( asvm, mat_features, probability=FALSE)
-		}
-	}
+        if(asvm$type == 0) { ## Probabilistic SVM
+          batch_pred <- Rgtsvm::predict.run( asvm, mat_features, probability=TRUE );
+        }
+        else { ## epsilon-regression (SVR)
+          batch_pred <- Rgtsvm::predict.run( asvm, mat_features, probability=FALSE)
+        }
+    }
+    else
+    {
+        if(asvm$type == 0) { ## Probabilistic SVM
+          batch_pred <- predict( asvm, mat_features, probability=TRUE );
+        }
+        else { ## epsilon-regression (SVR)
+          batch_pred <- predict( asvm, mat_features, probability=FALSE)
+        }
+    }
 
     return(batch_pred);
   }
@@ -74,11 +74,11 @@ eval_reg_svm <- function(gdm, asvm, positions, bw_plus_path, bw_minus_path, batc
      cpu.fun <- function(x)
      {
         require("dREG");
-      	batch_idx <- c( interval[x]:(interval[x+1]-1) );
-      	feature <- read_genomic_data(gdm, pos.sorted[batch_idx,,drop=F], bw_plus_path, bw_minus_path)
-      	pred <- do.predict( feature );
-      	gc();
-      	return( pred );
+          batch_idx <- c( interval[x]:(interval[x+1]-1) );
+          feature <- read_genomic_data(gdm, pos.sorted[batch_idx,,drop=F], bw_plus_path, bw_minus_path)
+          pred <- do.predict( feature );
+          gc();
+          return( pred );
      }
 
     sfInit(parallel = TRUE, cpus = ncores, type = "SOCK" )

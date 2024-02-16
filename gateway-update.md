@@ -1,9 +1,10 @@
+**Please use this new link**
+https://django.dreg.scigap.org/
+
 **Gateway Status:**
 ===============
 
-dREG gateway is unavailable now.
-
-Currently we ran out of GPU allocation funded by XSEDE. Although the new allocation application has been submitted, we don't think it would start until April 1st. Sorry for your inconvenience.
+dREG gateway is healthy.
 
 **New trial site:**
 ===============
@@ -15,7 +16,6 @@ Comet.sdsc.xsede.org: healthy
 
 **Update:**
 ===============
-02/09/2021: dREG gateway is unavailable
 
 01/25/2018: New allocation on Comet
 
