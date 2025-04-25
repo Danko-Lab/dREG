@@ -52,7 +52,9 @@ Required software
 -----------------
 * bedops (http://bedops.readthedocs.org/en/latest/index.html)
 * R (http://www.r-project.org/)
-* bigWig R package (https://github.com/andrelmartins/bigWig; will be public very soon).
+* bigWig R package (https://github.com/andrelmartins/bigWig).
+* tabix (frmo htslib)
+* bedgraphtobigwig (from ucsc tools)
 
 This software is already installed on many UNIX systems.  Users can install the most appropriate version of these files for Ubuntu using: 
 
