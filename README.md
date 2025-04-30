@@ -5,19 +5,21 @@ Detection of Regulatory DNA Sequences using GRO-seq Data.
 
 Cloud Computing Service:
 -------------------------
-We provide a computational gateway to run dREG on GPU server, the users don't need to install any software, only upload the bigWig files and wait for the results, it is simple and easy. Please click the link to try this site:
+We provide a cloud service that allows users to run dREG on a GPU server:
 
 https://dreg.dnasequence.org/
 
-Before you run your data on the dREG gateway, please check the server status [here](https://github.com/Danko-Lab/dREG/blob/master/gateway-update.md).
-
 ![Hi](https://github.com/Danko-Lab/dREG/raw/master/dreg-gateway.png?v=4&s=200 "dREG gateway")
+
+### Server status
+
+The dREG gateway runs on the [Bridges2 supercomputer](https://www.psc.edu/resources/bridges-2/) at the Pittsburgh Supercomputing Center, which is in turn supported by the [NSF ACCESS](https://access-ci.org/) program. If you're having issues with the gateway, please check the [ACCESS server status updates log](https://operations.access-ci.org/infrastructure_news) for any ongoing Bridges2 service outages.
 
 ### Important note for the Exchange email users:
 
 The Exchange email system might quarantine all emails including the word  “password” or other sensitive stuffs in links. (https://technet.microsoft.com/en-us/library/aa997692(v=exchg.160).aspx).
 
-Unfortunately, some emails from dREG gateway are quarantined by this spam policy. Usually these quarantined emails are not delivered to the email box, so they can not be checked in any email folders, including junk, spam or inbox. If you find the emails from dREG gateway are not delivered into your email box, please conect the administrator of your email system. For the Cornell email, please check this link:
+Unfortunately, some emails from dREG gateway are quarantined by this spam policy. Usually, these quarantined emails are not delivered to the email box, so they cannot be checked in any email folders, including junk, spam or inbox. If you find that emails from dREG gateway are not delivered into your email box, please conect the administrator of your email system. For the Cornell email, please check this link:
 
 https://it.cornell.edu/spam-control/log-quarantine-management-spam-control
 
@@ -42,7 +44,7 @@ As for how to generate bigWig files from fastq data, please refer to https://git
 Installation instructions: 
 ==========================
 
-dREG will ultimately be availiable in the R repository CRAN to ease installation, and source code will be availiable on GitHub (https://github.com/Danko-Lab/dREG).  
+dREG can either be installed from source as described below, or via a [docker image of dREG](https://hub.docker.com/r/biohpc/dreg) created by the BioHPC staff at Cornell University.
 
 Supported OS:
 -------------
@@ -67,7 +69,7 @@ dREG also has several dependencies within R.  These include **data.table**, **e1
 
     make R_dependencies
 
-If users run into any problems they should contact the package author for assistance.
+If users run into any problems, they should contact the package author for assistance.
 
 Install dREG
 ------------
@@ -81,30 +83,28 @@ Users should change to the directory containing this README.md file, and can the
 
     make dreg
 
-Get the dREG models
--------------------
-Pre-trained model that can be used to predict dREG scores across the genome is availiable here.
+Download dREG models
+--------------------
+The most recent pre-trained dREG model can be downloaded from one of the following sources:
 
-(1)  https://dreg.dnasequence.org/themes/dreg/assets/file/asvm.gdm.6.6M.20170828.rdata
+(1) https://dreg.dnasequence.org/themes/dreg/assets/file/asvm.gdm.6.6M.20170828.rdata
 
--- OR --
+(2) ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata
 
-(2) <span style="color:blue"> *ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata* </span>
+(3) https://zenodo.org/records/10113379
 
-If you are failed to download this model file, please contact us.
+If you have issues downloading this model file, please contact us.
 
 Usage instructions:
 ===================
 
 dREG provides two solutions to identify TREs in this R package. 
 
-The first solution implemented in the early package, is to ***predict dREG scores*** and detect the broad dREG peaks with the aid of Perl program. In order to identify narrow peak, these broad peaks need to be refined using [dREG-HD package](https://github.com/Danko-Lab/dREG.HD).
+The first solution implemented in the early package, is to ***predict dREG scores*** and detect the broad dREG peaks with the aid of Perl program. In order to identify narrow peak, these broad peaks need to be refined using [dREG-HD package](https://github.com/Danko-Lab/dREG.HD). This solution is generally no longer needed, but we have maintained this functionality in the package for backwards compatibility with older dREG SVR models.
 
-The second solution implements the ***peak calling*** function using the dREG scores based on the imporved SVR model. Compared with the broad peaks in the first solution, this solution generates the narrow peaks with peak score, probability, center position. Although this solution simplies the dREG process, it relies on GPU computing nodes to acceleratethe computational speed. If GPU computing resource is not available for you, please try our online computational gateway (https://dreg.dnasequence.org/). 
+The second solution implements the ***peak calling*** function using the dREG scores based on the improved SVR model. Compared with the broad peaks in the first solution, this solution directly generates the narrow peaks with peak score, probability, center position. **This is the primary method that we recommend, as it provides an all-in-one peak calling method**. However, this is only compatible with the newer dREG SVR model, which requires GPU acceleration. If you do not have access to GPUs, please try our online computational gateway described above. 
 
-In this section, we will introduce new solution following by old one.
-
-## 1) Peak calling
+## 1) Peak calling (recommended)
 
 To use this solution, type: 
 
@@ -138,12 +138,11 @@ Three files below are generated in this solution:
 
 **Notice:** 
 
-(1) This solution doesn't work with the model trained before 2017. The new SVR model can be downloaded from FTP:
-(ftp://cbsuftp.tc.cornell.edu/danko/hub/dreg.models/asvm.gdm.6.6M.20170828.rdata)
+(1) This solution doesn't work with the model trained before 2017. The new SVR model can be downloaded as described above.
 
-(2) That command takes 4~12 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU nodes, even in parallel mode.
+(2) That command takes 4~12 hours to execute on NVIDA K80 GPU using Rgtsvm package. Due to very long computational time, we don't suggest to run peak calling on CPU, even in parallel mode.
 
-## 2) Predicting dREG scores
+## 2) Predicting dREG scores (legacy)
 
 For this solution, dREG takes three files as input, and outputs one file.  Input files include the PRO-seq read distributions on the plus and minus strand (which are separate files), and parameters of the pre-trained support vector regression (SVR) model.  
 
